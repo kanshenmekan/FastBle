@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.FastBle" parent="Theme.MaterialComponents.Light.NoActionBar.Bridge">
+        <item name="android:statusBarColor">@color/colorPrimary</item>
+    </style>
+
+
+    <style name="Widget.App.Toolbar" parent="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="actionMenuTextColor">@android:color/white</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+<!--    <style name="Widget.App.TextInputLayout" parent="Widget.MaterialComponents.TextInputLayout.FilledBox">-->
+<!--        <item name="materialThemeOverlay">@style/ThemeOverlay.App.TextInputLayout</item>-->
+<!--        <item name="colorOnSurface">@color/colorPrimary</item>-->
+
+<!--    </style>-->
+
+<!--    <style name="ThemeOverlay.App.TextInputLayout" parent="">-->
+<!--        <item name="colorOnSurface">@color/colorPrimary</item>-->
+<!--        <item name="colorError">@android:color/holo_red_light</item>-->
+<!--    </style>-->
+</resources>

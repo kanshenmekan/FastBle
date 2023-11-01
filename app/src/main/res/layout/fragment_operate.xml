@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".operate.OperateFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_uuid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <LinearLayout
+            android:id="@+id/read_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_read"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/read"
+                app:backgroundTint="@color/colorPrimary" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_read"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:background="@color/gray"
+                android:paddingHorizontal="10dp"
+                android:scrollbarAlwaysDrawVerticalTrack="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/write_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:orientation="vertical">
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_marginHorizontal="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/input_hex"
+                app:endIconMode="clear_text">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/et_data"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="13sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_write"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxWidth="100dp"
+                    android:text="@string/write"
+                    app:backgroundTint="@color/colorPrimary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_write_no_response"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:layout_weight="1"
+                    android:maxWidth="100dp"
+                    android:text="@string/write_no_response"
+                    android:textSize="10sp"
+                    app:backgroundTint="@color/colorPrimary" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_write_signed"
+                    style="@style/Widget.MaterialComponents.Button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:maxWidth="100dp"
+                    android:text="@string/write_signed"
+                    android:textSize="10sp"
+                    app:backgroundTint="@color/colorPrimary" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_write"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:background="@color/gray"
+                android:paddingHorizontal="10dp"
+                android:scrollbarAlwaysDrawVerticalTrack="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/notify_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/sw_notify"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/notification"
+                android:textColor="@color/colorPrimary"
+                app:switchPadding="5dp" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_notify"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:background="@color/gray"
+                android:paddingHorizontal="10dp"
+                android:scrollbarAlwaysDrawVerticalTrack="true" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/indicate_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:orientation="vertical">
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/sw_indicate"
+                style="@style/Widget.MaterialComponents.Button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="@string/indicate"
+                android:textColor="@color/colorPrimary" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_indicate"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:background="@color/gray"
+                android:paddingHorizontal="10dp"
+                android:scrollbarAlwaysDrawVerticalTrack="true" />
+        </LinearLayout>
+    </LinearLayout>
+
+</ScrollView>

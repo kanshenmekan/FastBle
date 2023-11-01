@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/operator_nav"
+    app:startDestination="@id/serviceFragment">
+
+    <fragment
+        android:id="@+id/serviceFragment"
+        android:name="com.hyh.blesample.operate.ServiceFragment"
+        android:label="Service"
+        tools:layout="@layout/fragment_service" >
+        <action
+            android:id="@+id/action_serviceFragment_to_operateFragment"
+            app:destination="@id/operateFragment">
+            <argument android:name="bleDevice"
+                app:argType="android.os.Parcelable"
+                android:defaultValue="@null"/>
+            <argument android:name="characteristic"
+                app:argType="android.os.Parcelable"
+                android:defaultValue="@null"/>
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/operateFragment"
+        android:name="com.hyh.blesample.operate.OperateFragment"
+        android:label="Operate"
+        tools:layout="@layout/fragment_operate" />
+</navigation>

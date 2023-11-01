@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">FastBle</string>
+    <string name="scan">Scan</string>
+    <string name="stop">Stop</string>
+
+    <string name="notifyTitle">Prompt</string>
+    <string name="gpsNotifyMsg">Current mobile phone scanning Bluetooth needs to open the positioning function</string>
+    <string name="setting">Go to settings</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="expand_search_settings">Expand search settings</string>
+    <string name="retrieve_search_settings">Retrieve search settings</string>
+    <string name="connect_fail">connection failed</string>
+    <string name="active_disconnected">disconnect</string>
+    <string name="disconnected">Connection disconnect</string>
+    <string name="please_open_blue">Please turn on Bluetooth first</string>
+    <string name="select_operation_type">Select operation type</string>
+    <string name="characteristic">Characteristic</string>
+    <string name="data_changed">Data changes:</string>
+    <string name="read">Read</string>
+    <string name="write">Write</string>
+    <string name="write_no_response">Write No Response</string>
+    <string name="write_signed">Write Signed</string>
+    <string name="indicate">indicate</string>
+    <string name="notification">notification</string>
+    <string name="open_notification">Open notification</string>
+    <string name="close_notification">Close notification</string>
+    <string name="service_list">Service list</string>
+    <string name="characteristic_list">Characteristic list</string>
+    <string name="console">Console</string>
+    <string name="name">Device broadcast name：</string>
+    <string name="mac">MAC:</string>
+    <string name="service">Service</string>
+    <string name="primary_service">Service type (Primary service)</string>
+    <string name="secondary_service">Secondary type (Secondary service)</string>
+    <string name="type">Service type (main service)</string>
+    <string name="scan_setting">Below, you can configure the conditions that you need to scan the device, which can be empty,separated by English commas</string>
+    <string name="setting_name">Enter a broadcast name for Bluetooth devices</string>
+    <string name="setting_mac">Enter Bluetooth device MAC</string>
+    <string name="setting_uuid">Enter Bluetooth device UUID,16 bits or 128 bits</string>
+    <string name="input_hex">Please enter the HEX format command</string>
+    <string name="connect">Connect</string>
+    <string name="connected">Connected</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="enter">Enter</string>
+    <string name="detail">Detail</string>
+    <string name="permission_onDenied">The Bluetooth permission is not obtained</string>
+</resources>
