@@ -501,16 +501,18 @@ object BleManager {
     fun getBluetoothGatt(bleDevice: BleDevice?): BluetoothGatt? {
         return multipleBluetoothController.getBleBluetooth(bleDevice)?.bluetoothGatt
     }
-    fun getConnectedDevice(mac:String?):BleDevice?{
+
+    fun getConnectedDevice(mac: String?): BleDevice? {
         mac?.let {
             getAllConnectedDevice().forEach {
-                if (it.mac == mac){
+                if (it.mac == mac) {
                     return it
                 }
             }
         }
         return null
     }
+
     fun getBluetoothGattServices(bleDevice: BleDevice?): List<BluetoothGattService>? {
         return multipleBluetoothController.getBleBluetooth(bleDevice)?.bluetoothGatt?.services
     }

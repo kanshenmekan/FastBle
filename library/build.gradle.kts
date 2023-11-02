@@ -1,12 +1,11 @@
 import com.android.build.gradle.internal.api.LibraryVariantOutputImpl
 
 plugins {
-    id ("com.android.library")
-    id ("org.jetbrains.kotlin.android")
-    id ("maven-publish")
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
+    id("maven-publish")
 }
-val VERSION_NAME = "1.0.0"
-val VERSION_CODE = 1
+val VERSION_NAME = latestGitTag().ifEmpty { "1.0.1" }
 val GROUP_ID = "com.github.kanshenmekan"
 val ARTIFACT_ID = "FastBle"
 android {
@@ -14,7 +13,7 @@ android {
     compileSdk = 33
 
     defaultConfig {
-        minSdk = 23
+        minSdk = 21
     }
 
     compileOptions {
@@ -37,22 +36,25 @@ android {
 }
 fun latestGitTag(): String {
     val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0").start()
-    return  process.inputStream.bufferedReader().use {bufferedReader ->
+    return process.inputStream.bufferedReader().use { bufferedReader ->
         bufferedReader.readText().trim()
     }
 }
-afterEvaluate {
-    publishing{
-        publications{
-            register<MavenPublication>("release"){
-                groupId = GROUP_ID
-                artifactId = ARTIFACT_ID
-                version = latestGitTag().ifEmpty { VERSION_NAME }
+
+publishing {
+    publications {
+        create<MavenPublication>("release") {
+            groupId = GROUP_ID
+            artifactId = ARTIFACT_ID
+            version = VERSION_NAME
+            afterEvaluate {
+                from(components["release"])
             }
         }
     }
 }
+
 dependencies {
-    implementation ("androidx.core:core-ktx:1.10.1")
-    implementation ("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
 }

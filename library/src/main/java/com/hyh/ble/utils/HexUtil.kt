@@ -12,6 +12,7 @@ object HexUtil {
         '0', '1', '2', '3', '4', '5',
         '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     )
+
     @JvmStatic
     fun encodeHex(data: ByteArray?): CharArray? {
         return encodeHex(data, true)
@@ -40,19 +41,22 @@ object HexUtil {
     fun encodeHexStr(data: ByteArray?): String? {
         return encodeHexStr(data, true)
     }
+
     @JvmStatic
     fun encodeHexStr(data: ByteArray?, toLowerCase: Boolean): String? {
         return encodeHexStr(data, if (toLowerCase) DIGITS_LOWER else DIGITS_UPPER)
     }
 
 
-    private  fun encodeHexStr(data: ByteArray?, toDigits: CharArray): String? {
+    private fun encodeHexStr(data: ByteArray?, toDigits: CharArray): String? {
         return encodeHex(data, toDigits)?.let { String(it) }
     }
+
     @JvmStatic
     fun formatHexString(data: ByteArray?): String? {
         return formatHexString(data, false)
     }
+
     @JvmStatic
     fun formatHexString(data: ByteArray?, addSpace: Boolean): String? {
         if (data == null || data.isEmpty()) return null
@@ -111,7 +115,7 @@ object HexUtil {
         val length = string.length / 2
         val hexChars = string.toCharArray()
         hexChars.forEach {
-            if ("0123456789ABCDEF".indexOf(it) == -1)return null
+            if ("0123456789ABCDEF".indexOf(it) == -1) return null
         }
         val d = ByteArray(length)
         for (i in 0 until length) {
@@ -121,10 +125,12 @@ object HexUtil {
         }
         return d
     }
+
     @JvmStatic
     fun charToByte(c: Char): Byte {
         return "0123456789ABCDEF".indexOf(c).toByte()
     }
+
     @JvmStatic
     fun extractData(data: ByteArray, position: Int): String? {
         return formatHexString(byteArrayOf(data[position]))
