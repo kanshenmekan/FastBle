@@ -28,12 +28,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     private val connectTimeOutTask = TimeoutTask(
-        BleManager.connectOverTime,object :TimeoutTask.OnResultCallBack{
+        BleManager.connectOverTime, object : TimeoutTask.OnResultCallBack {
             override fun onError(task: TimeoutTask, e: Throwable?, isActive: Boolean) {
                 super.onError(task, e, isActive)
                 connectedFail(BleException.TimeoutException())
@@ -78,6 +79,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         autoConnect: Boolean,
         connectRetryCount: Int
     ): BluetoothGatt? {
+        ensureActive()
         BleLog.i(
             """
                 connect device: ${bleDevice.name}
@@ -93,8 +95,8 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 context, autoConnect, coreGattCallback,
                 BluetoothDevice.TRANSPORT_LE
             )
-        }else{
-            bleDevice.device?.connectGatt(context,autoConnect,coreGattCallback)
+        } else {
+            bleDevice.device?.connectGatt(context, autoConnect, coreGattCallback)
         }
         if (bluetoothGatt != null) {
             if (connectRetryCount == 0) {
@@ -292,7 +294,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             }
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 launch(Dispatchers.IO) {
-                    delay(500)
+                    delay(50)
                     discoverService()
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
@@ -302,7 +304,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     closeBluetoothGatt()
                     if (currentConnectRetryCount < BleManager.reConnectCount) {
                         BleLog.e(
-                            "Connect fail, try reconnect " + BleManager .reConnectInterval+ " millisecond later"
+                            "Connect fail, try reconnect " + BleManager.reConnectInterval + " millisecond later"
                         )
                         currentConnectRetryCount++
                         launch {

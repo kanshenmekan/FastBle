@@ -44,6 +44,16 @@ object BleManager {
     private const val DEFAULT_CONNECT_OVER_TIME: Long = 10000
 
     /**
+     * 当存在mac相同的设备已经在连接的时候，忽略掉后面发起的连接，直至这次连接失败或者成功,已经存在连接成功，不会发起连接
+     */
+    const val CONNECT_BACKPRESSURE_DROP: Int = 0
+
+    /**
+     * 当存在mac相同的设备已经在连接的时候，取消之前的链接，直接用最新发起的，已经存在连接成功，不会发起连接
+     */
+    const val CONNECT_BACKPRESSURE_LAST: Int = 1
+
+    /**
      * the maximum number of connections
      */
     var maxConnectCount = DEFAULT_MAX_MULTIPLE_DEVICE
@@ -147,10 +157,15 @@ object BleManager {
      *
      * @param bleDevice
      * @param bleGattCallback
+     * @param backpressure CONNECT_BACKPRESSURE_DROP,CONNECT_BACKPRESSURE_LAST
      * @return
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
-    fun connect(bleDevice: BleDevice, bleGattCallback: BleGattCallback): BluetoothGatt? {
+    fun connect(
+        bleDevice: BleDevice,
+        bleGattCallback: BleGattCallback,
+        backpressure: Int = CONNECT_BACKPRESSURE_DROP
+    ): BluetoothGatt? {
         if (!isBleEnable(context)) {
             BleLog.e("Bluetooth not enable!")
             bleGattCallback.onConnectFail(
@@ -168,10 +183,46 @@ object BleManager {
                 BleException.OtherException("Not Found Device Exception Occurred!")
             )
         } else {
-            val bleBluetooth: BleBluetooth =
-                multipleBluetoothController.buildConnectingBle(bleDevice)
-            val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
-            return bleBluetooth.connect(context, autoConnect, bleGattCallback)
+            if (backpressure == CONNECT_BACKPRESSURE_DROP) {
+                return if (multipleBluetoothController.isConnecting(bleDevice)) {
+                    val bleBluetooth: BleBluetooth =
+                        multipleBluetoothController.buildConnectingBle(bleDevice)
+                    bleBluetooth.bluetoothGatt
+                } else {
+                    val bleBluetooth: BleBluetooth =
+                        multipleBluetoothController.buildConnectingBle(bleDevice)
+                    val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
+                    bleBluetooth.connect(context, autoConnect, bleGattCallback)
+                }
+            } else {
+                if (multipleBluetoothController.isConnecting(bleDevice)) {
+                    multipleBluetoothController.cancelConnecting(bleDevice)
+                }
+                val bleBluetooth: BleBluetooth =
+                    multipleBluetoothController.buildConnectingBle(bleDevice)
+                val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
+                bleBluetooth.connect(context, autoConnect, bleGattCallback)
+            }
+        }
+        return null
+    }
+
+    /**
+     * connect a device through its mac without scan,whether or not it has been connected
+     *
+     * @param mac
+     * @param bleGattCallback
+     * @return
+     */
+    @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
+    fun connect(
+        mac: String?,
+        bleGattCallback: BleGattCallback,
+        backpressure: Int = CONNECT_BACKPRESSURE_DROP
+    ): BluetoothGatt? {
+        bluetoothAdapter?.getRemoteDevice(mac)?.let {
+            val bleDevice = convertBleDevice(it)
+            return connect(bleDevice, bleGattCallback, backpressure)
         }
         return null
     }
@@ -428,7 +479,7 @@ object BleManager {
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun destroy() {
-        BleScanner.stopLeScan()
+        BleScanner.destroy()
         multipleBluetoothController.destroy()
     }
 
@@ -488,6 +539,18 @@ object BleManager {
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun disconnectAllDevice() {
         multipleBluetoothController.disconnectAllDevice()
+    }
+
+    fun cancelConnecting(bleDevice: BleDevice?) {
+        multipleBluetoothController.cancelConnecting(bleDevice)
+    }
+
+    fun cancelAllConnectingDevice() {
+        multipleBluetoothController.cancelAllConnectingDevice()
+    }
+
+    fun isConnecting(bleDevice: BleDevice?) {
+        multipleBluetoothController.isConnecting(bleDevice)
     }
 
     fun convertBleDevice(bluetoothDevice: BluetoothDevice): BleDevice {

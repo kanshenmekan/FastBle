@@ -338,12 +338,13 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-            })
+            }, backpressure = BleManager.CONNECT_BACKPRESSURE_LAST)
     }
 
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
+        BleManager.disconnectAllDevice()
         BleManager.destroy()
     }
 }

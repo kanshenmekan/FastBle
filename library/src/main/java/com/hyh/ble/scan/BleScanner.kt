@@ -106,4 +106,10 @@ internal object BleScanner : ScanCallback() {
             scanScope = null
         }
     }
+
+    fun destroy() {
+        bleScanCallback = null
+        map.clear()
+        stopLeScan()
+    }
 }

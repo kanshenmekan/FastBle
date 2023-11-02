@@ -5,7 +5,7 @@ import android.util.Log
 object BleLog {
     var isPrint = true
     @JvmStatic
-    private val defaultTag = "GTPowerBle"
+    private val defaultTag = "FastBle"
 
     fun d(msg: String?) {
         if (isPrint && msg != null) Log.d(defaultTag, msg)

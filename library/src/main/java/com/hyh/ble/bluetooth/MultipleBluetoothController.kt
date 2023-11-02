@@ -2,9 +2,11 @@ package com.hyh.ble.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.util.Log
 import com.hyh.ble.BleManager
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.utils.BleLruHashMap
+
 @SuppressLint("MissingPermission")
 class MultipleBluetoothController {
     //保存已经连接成功的设备
@@ -53,6 +55,21 @@ class MultipleBluetoothController {
         }
     }
 
+    fun isConnecting(bleDevice: BleDevice?): Boolean {
+        return bleDevice != null && bleTempHashMap.containsKey(bleDevice.key)
+    }
+    @Synchronized
+    fun cancelConnecting(bleDevice: BleDevice?) {
+        bleTempHashMap[bleDevice?.key]?.destroy()
+        bleTempHashMap.remove(bleDevice?.key)
+    }
+    fun cancelAllConnectingDevice(){
+        bleLruHashMap.clear()
+        for (entry: Map.Entry<String?, BleBluetooth> in bleTempHashMap) {
+            entry.value.destroy()
+        }
+        bleTempHashMap.clear()
+    }
     @Synchronized
     fun isContainDevice(bleDevice: BleDevice?): Boolean {
         return bleDevice != null && bleLruHashMap.containsKey(bleDevice.key)
