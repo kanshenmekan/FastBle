@@ -56,10 +56,7 @@ class BleScanRuleConfig private constructor() {
      */
     fun generateScanSettings(): ScanSettings {
         return if (scanSettings == null) {
-            val builder = ScanSettings.Builder()
-            builder.setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
-                .setScanMode(ScanSettings.SCAN_MODE_BALANCED)
-            builder.build()
+            ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_BALANCED).build()
         } else {
             scanSettings!!
         }
