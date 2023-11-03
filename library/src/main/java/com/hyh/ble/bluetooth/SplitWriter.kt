@@ -17,7 +17,7 @@ import java.util.LinkedList
 import java.util.Queue
 import kotlin.math.max
 
-class SplitWriter(private val writeOperator: BleOperator) {
+class SplitWriter(private var writeOperator: BleOperator) {
     private var mData: ByteArray? = null
     private var mCount = 0
     private var mSendNextWhenLastSuccess = false
@@ -121,6 +121,9 @@ class SplitWriter(private val writeOperator: BleOperator) {
                                     true
                                 )
                             }
+                            mDataQueue?.clear()
+                            mCallback = null
+                            mData = null
                         }
                     }
                     .collect {
@@ -151,6 +154,9 @@ class SplitWriter(private val writeOperator: BleOperator) {
                                     true
                                 )
                             }
+                            mDataQueue?.clear()
+                            mCallback = null
+                            mData = null
                         }
                     }
                     .collect {

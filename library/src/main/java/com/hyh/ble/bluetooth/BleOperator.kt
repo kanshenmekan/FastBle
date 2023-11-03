@@ -19,6 +19,7 @@ import com.hyh.ble.common.TimeoutTask
 import com.hyh.ble.exception.BleException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.UUID
 
@@ -37,8 +38,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     /**
      * 操作的数据
      */
-    private var data: ByteArray? = null
-
+    var data: ByteArray? = null
+        private set
     var operateCallback: BleOperateCallback? = null
         private set
     private val timeOutTask = TimeoutTask(
@@ -321,13 +322,14 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                     timeOutTask.start()
                 }
                 bleBluetooth.addWriteOperator(uuid_write, this)
-                if (!mBluetoothGatt!!.writeCharacteristic(mCharacteristic)) {
-                    removeTimeOut()
-                    bleWriteCallback?.onWriteFailure(
-                        BleException.OtherException("gatt writeCharacteristic fail"),
-                        justWrite = data
-                    )
-                }
+                mBluetoothGatt!!.writeCharacteristic(mCharacteristic)
+//                if (!mBluetoothGatt!!.writeCharacteristic(mCharacteristic)) {
+//                    removeTimeOut()
+//                    bleWriteCallback?.onWriteFailure(
+//                        BleException.OtherException("gatt writeCharacteristic fail"),
+//                        justWrite = data
+//                    )
+//                }
             } else {
                 bleWriteCallback?.onWriteFailure(
                     BleException.OtherException("Updates the locally stored value of this characteristic fail"),
@@ -396,5 +398,11 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 )
             }
         }
+    }
+
+    fun destroy() {
+        data = null
+        operateCallback = null
+        cancel()
     }
 }

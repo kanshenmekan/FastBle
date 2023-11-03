@@ -192,16 +192,31 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
 
     @Synchronized
     fun clearCharacterOperator() {
+        for (entry: Map.Entry<String?, BleOperator> in bleNotifyOperatorMap) {
+            entry.value.destroy()
+        }
         bleNotifyOperatorMap.clear()
+
+        for (entry: Map.Entry<String?, BleOperator> in bleIndicateOperatorMap) {
+            entry.value.destroy()
+        }
         bleIndicateOperatorMap.clear()
+
+        for (entry: Map.Entry<String?, BleOperator> in bleWriteOperatorMap) {
+            entry.value.destroy()
+        }
         bleWriteOperatorMap.clear()
+
+        for (entry: Map.Entry<String?, BleOperator> in bleReadOperatorMap) {
+            entry.value.destroy()
+        }
         bleReadOperatorMap.clear()
     }
 
     @Synchronized
     fun addNotifyOperator(uuid: String, operator: BleOperator) {
         if (bleNotifyOperatorMap[uuid] != operator) {
-            bleNotifyOperatorMap[uuid]?.cancel()
+            bleNotifyOperatorMap[uuid]?.destroy()
             bleNotifyOperatorMap[uuid] = operator
         }
     }
@@ -209,6 +224,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     @Synchronized
     fun removeNotifyOperator(uuid: String) {
         if (bleNotifyOperatorMap.containsKey(uuid)) {
+            bleNotifyOperatorMap[uuid]?.destroy()
             bleNotifyOperatorMap.remove(uuid)
         }
     }
@@ -216,59 +232,76 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     @Synchronized
     fun addIndicateOperator(uuid: String, operator: BleOperator) {
         if (bleIndicateOperatorMap[uuid] != operator) {
-            bleNotifyOperatorMap[uuid]?.cancel()
+            bleIndicateOperatorMap[uuid]?.destroy()
             bleIndicateOperatorMap[uuid] = operator
         }
     }
 
     @Synchronized
     fun removeIndicateOperator(uuid: String) {
-        bleIndicateOperatorMap.remove(uuid)
+        if (bleIndicateOperatorMap[uuid] != null) {
+            bleIndicateOperatorMap[uuid]?.destroy()
+            bleIndicateOperatorMap.remove(uuid)
+        }
     }
 
     @Synchronized
     fun addWriteOperator(uuid: String, operator: BleOperator) {
         if (bleWriteOperatorMap[uuid] != operator) {
-            bleWriteOperatorMap[uuid]?.cancel()
+            bleWriteOperatorMap[uuid]?.destroy()
             bleWriteOperatorMap[uuid] = operator
         }
     }
 
     @Synchronized
     fun removeWriteOperator(uuid: String?) {
-        if (bleWriteOperatorMap.containsKey(uuid)) bleWriteOperatorMap.remove(uuid)
+        if (bleWriteOperatorMap.containsKey(uuid)) {
+            bleWriteOperatorMap[uuid]?.destroy()
+            bleWriteOperatorMap.remove(uuid)
+        }
     }
 
     @Synchronized
     fun addReadOperator(uuid: String, operator: BleOperator) {
         if (bleReadOperatorMap[uuid] != operator) {
-            bleWriteOperatorMap[uuid]?.cancel()
+            bleReadOperatorMap[uuid]?.destroy()
             bleReadOperatorMap[uuid] = operator
         }
     }
 
     @Synchronized
     fun removeReadOperator(uuid: String?) {
-        if (bleReadOperatorMap.containsKey(uuid)) bleReadOperatorMap.remove(uuid)
+        if (bleReadOperatorMap.containsKey(uuid)) {
+            bleReadOperatorMap[uuid]?.destroy()
+            bleReadOperatorMap.remove(uuid)
+        }
     }
 
     @Synchronized
     fun setRssiOperator(operator: BleOperator) {
-        bleRssiOperator = operator
+        if (bleRssiOperator != operator) {
+            bleRssiOperator?.destroy()
+            bleRssiOperator = operator
+        }
     }
 
     @Synchronized
     fun removeRssiOperator() {
+        bleRssiOperator?.destroy()
         bleRssiOperator = null
     }
 
     @Synchronized
     fun setMtuOperator(operator: BleOperator) {
-        bleMtuOperator = operator
+        if (bleMtuOperator != operator) {
+            bleMtuOperator?.destroy()
+            bleMtuOperator = operator
+        }
     }
 
     @Synchronized
     fun removeMtuOperator() {
+        bleMtuOperator?.destroy()
         bleMtuOperator = null
     }
 
@@ -475,11 +508,11 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                         operator.removeTimeOut()
                         launch {
                             if (status == BluetoothGatt.GATT_SUCCESS) {
-                                (operator.operateCallback as BleWriteCallback).onWriteSuccess(
+                                (operator.operateCallback as? BleWriteCallback)?.onWriteSuccess(
                                     justWrite = characteristic?.value
                                 )
                             } else {
-                                (operator.operateCallback as BleWriteCallback).onWriteFailure(
+                                (operator.operateCallback as? BleWriteCallback)?.onWriteFailure(
                                     BleException.GattException(gatt, status),
                                     justWrite = characteristic?.value
                                 )

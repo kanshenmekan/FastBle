@@ -338,7 +338,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-            }, backpressure = BleManager.CONNECT_BACKPRESSURE_LAST)
+            })
     }
 
     @SuppressLint("MissingPermission")

@@ -53,6 +53,8 @@ object BleManager {
      */
     const val CONNECT_BACKPRESSURE_LAST: Int = 1
 
+    var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
+
     /**
      * the maximum number of connections
      */
@@ -164,7 +166,7 @@ object BleManager {
     fun connect(
         bleDevice: BleDevice,
         bleGattCallback: BleGattCallback,
-        backpressure: Int = CONNECT_BACKPRESSURE_DROP
+        backpressure: Int = connectBackpressureStrategy
     ): BluetoothGatt? {
         if (!isBleEnable(context)) {
             BleLog.e("Bluetooth not enable!")
