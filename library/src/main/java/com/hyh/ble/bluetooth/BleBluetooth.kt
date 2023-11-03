@@ -67,7 +67,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     ): BluetoothGatt? {
         bleGattCallback = callback
         currentConnectRetryCount = 0
-        if (BleManager.multipleBluetoothController.isContainDevice(bleDevice)) {
+        if (BleManager.multipleBluetoothController.isContainConnectedDevice(bleDevice)) {
             return bluetoothGatt
         }
         return connect(context, autoConnect, currentConnectRetryCount)
@@ -142,7 +142,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             lastState = LastState.CONNECT_CONNECTED
             isActiveDisconnect = false
             BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
-            BleManager.multipleBluetoothController.addBleBluetooth(this@BleBluetooth)
+            BleManager.multipleBluetoothController.addConnectedBleBluetooth(this@BleBluetooth)
             bleGattCallback?.onConnectSuccess(bleDevice, bluetoothGatt, status)
         }
     }
@@ -351,7 +351,6 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     }
                 } else if (lastState == LastState.CONNECT_CONNECTED) {
                     lastState = LastState.CONNECT_DISCONNECT
-                    BleManager.multipleBluetoothController.removeBleBluetooth(this@BleBluetooth)
                     launch {
                         bleGattCallback?.onDisConnected(
                             isActiveDisconnect,
@@ -359,8 +358,8 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                             bluetoothGatt,
                             status
                         )
+                        BleManager.multipleBluetoothController.removeConnectedBleBluetooth(this@BleBluetooth)
                     }
-                    destroy()
                 }
             }
         }
@@ -394,7 +393,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     if (operator.operateCallback is BleNotifyCallback) {
                         if (characteristic.uuid.toString().equals(uuid, true)) {
                             launch {
-                                (operator.operateCallback as BleNotifyCallback).onCharacteristicChanged(
+                                (operator.operateCallback as? BleNotifyCallback)?.onCharacteristicChanged(
                                     value
                                 )
                             }
@@ -406,7 +405,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     if (operator.operateCallback is BleIndicateCallback) {
                         if (characteristic.uuid.toString().equals(uuid, true)) {
                             launch {
-                                (operator.operateCallback as BleIndicateCallback).onCharacteristicChanged(
+                                (operator.operateCallback as? BleIndicateCallback)?.onCharacteristicChanged(
                                     value
                                 )
                             }
@@ -428,7 +427,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     if (operator.operateCallback is BleNotifyCallback) {
                         if (characteristic?.uuid.toString().equals(uuid, true)) {
                             launch {
-                                (operator.operateCallback as BleNotifyCallback).onCharacteristicChanged(
+                                (operator.operateCallback as? BleNotifyCallback)?.onCharacteristicChanged(
                                     characteristic?.value
                                 )
                             }
@@ -439,7 +438,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     if (operator.operateCallback is BleIndicateCallback) {
                         if (characteristic?.uuid.toString().equals(uuid, true)) {
                             launch {
-                                (operator.operateCallback as BleIndicateCallback).onCharacteristicChanged(
+                                (operator.operateCallback as? BleIndicateCallback)?.onCharacteristicChanged(
                                     characteristic?.value
                                 )
                             }
@@ -461,9 +460,9 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                         operator.removeTimeOut()
                         launch {
                             if (status == BluetoothGatt.GATT_SUCCESS) {
-                                (operator.operateCallback as BleNotifyCallback).onNotifySuccess()
+                                (operator.operateCallback as? BleNotifyCallback)?.onNotifySuccess()
                             } else {
-                                (operator.operateCallback as BleNotifyCallback).onNotifyFailure(
+                                (operator.operateCallback as? BleNotifyCallback)?.onNotifyFailure(
                                     BleException.GattException(gatt, status)
                                 )
                             }
@@ -478,9 +477,9 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                         operator.removeTimeOut()
                         launch {
                             if (status == BluetoothGatt.GATT_SUCCESS) {
-                                (operator.operateCallback as BleIndicateCallback).onIndicateSuccess()
+                                (operator.operateCallback as? BleIndicateCallback)?.onIndicateSuccess()
                             } else {
-                                (operator.operateCallback as BleIndicateCallback).onIndicateFailure(
+                                (operator.operateCallback as? BleIndicateCallback)?.onIndicateFailure(
                                     BleException.GattException(gatt, status)
                                 )
                             }
@@ -493,7 +492,6 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         @Suppress("DEPRECATION")
         /**
          * android13 Build.VERSION_CODES.TIRAMISU 这个方法characteristic?.value 一直为null
-         * 不用在这个方法，直接write之后就能知道结果
          * @see BleOperator.writeCharacteristic
          */
         override fun onCharacteristicWrite(
@@ -505,16 +503,21 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             for ((uuid, operator) in bleWriteOperatorMap) {
                 if (operator.operateCallback is BleWriteCallback) {
                     if (characteristic?.uuid.toString().equals(uuid, true)) {
+                        val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            operator.data
+                        } else {
+                            characteristic?.value
+                        }
                         operator.removeTimeOut()
                         launch {
                             if (status == BluetoothGatt.GATT_SUCCESS) {
                                 (operator.operateCallback as? BleWriteCallback)?.onWriteSuccess(
-                                    justWrite = characteristic?.value
+                                    justWrite = data
                                 )
                             } else {
                                 (operator.operateCallback as? BleWriteCallback)?.onWriteFailure(
                                     BleException.GattException(gatt, status),
-                                    justWrite = characteristic?.value
+                                    justWrite = data
                                 )
                             }
                         }
@@ -537,11 +540,11 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                             operator.removeTimeOut()
                             launch {
                                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                                    (operator.operateCallback as BleReadCallback).onReadSuccess(
+                                    (operator.operateCallback as? BleReadCallback)?.onReadSuccess(
                                         value
                                     )
                                 } else {
-                                    (operator.operateCallback as BleReadCallback).onReadFailure(
+                                    (operator.operateCallback as? BleReadCallback)?.onReadFailure(
                                         BleException.GattException(gatt, status)
                                     )
                                 }
@@ -567,11 +570,11 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                             operator.removeTimeOut()
                             launch {
                                 if (status == BluetoothGatt.GATT_SUCCESS) {
-                                    (operator.operateCallback as BleReadCallback).onReadSuccess(
+                                    (operator.operateCallback as? BleReadCallback)?.onReadSuccess(
                                         characteristic?.value
                                     )
                                 } else {
-                                    (operator.operateCallback as BleReadCallback).onReadFailure(
+                                    (operator.operateCallback as? BleReadCallback)?.onReadFailure(
                                         BleException.GattException(gatt, status)
                                     )
                                 }
@@ -589,9 +592,9 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     it.removeTimeOut()
                     if (it.operateCallback is BleRssiCallback) {
                         if (status == BluetoothGatt.GATT_SUCCESS) {
-                            (it.operateCallback as BleRssiCallback).onRssiSuccess(rssi)
+                            (it.operateCallback as? BleRssiCallback)?.onRssiSuccess(rssi)
                         } else {
-                            (it.operateCallback as BleRssiCallback).onRssiFailure(
+                            (it.operateCallback as? BleRssiCallback)?.onRssiFailure(
                                 BleException.GattException(
                                     gatt,
                                     status
@@ -609,9 +612,9 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 it.removeTimeOut()
                 if (it.operateCallback is BleMtuChangedCallback) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {
-                        (it.operateCallback as BleMtuChangedCallback).onMtuChanged(mtu)
+                        (it.operateCallback as? BleMtuChangedCallback)?.onMtuChanged(mtu)
                     } else {
-                        (it.operateCallback as BleMtuChangedCallback).onSetMTUFailure(
+                        (it.operateCallback as? BleMtuChangedCallback)?.onSetMTUFailure(
                             BleException.GattException(
                                 gatt,
                                 status

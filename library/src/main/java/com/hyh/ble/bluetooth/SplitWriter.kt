@@ -3,24 +3,21 @@ package com.hyh.ble.bluetooth
 import com.hyh.ble.BleManager
 import com.hyh.ble.callback.BleWriteCallback
 import com.hyh.ble.exception.BleException
+import com.hyh.ble.utils.DataUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.LinkedList
 import java.util.Queue
-import kotlin.math.max
 
-class SplitWriter(private var writeOperator: BleOperator) {
+class SplitWriter(private val writeOperator: BleOperator) {
     private var mData: ByteArray? = null
     private var mCount = 0
-    private var mSendNextWhenLastSuccess = false
     private var mIntervalBetweenTwoPackage: Long = 0
     private var mCallback: BleWriteCallback? = null
     private var mDataQueue: Queue<ByteArray>? = null
@@ -28,18 +25,12 @@ class SplitWriter(private var writeOperator: BleOperator) {
 
     fun splitWrite(
         data: ByteArray,
-        sendNextWhenLastSuccess: Boolean,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback,
         writeType: Int
     ) {
         mData = data
-        mSendNextWhenLastSuccess = sendNextWhenLastSuccess
-        mIntervalBetweenTwoPackage =
-            if (mSendNextWhenLastSuccess) intervalBetweenTwoPackage else max(
-                intervalBetweenTwoPackage,
-                10
-            )
+        mIntervalBetweenTwoPackage = intervalBetweenTwoPackage
         mCallback = callback
         mCount = BleManager.splitWriteNum
         splitWrite(writeType)
@@ -56,15 +47,15 @@ class SplitWriter(private var writeOperator: BleOperator) {
         ) {
             val position = mTotalNum - mDataQueue!!.size
             mCallback?.onWriteSuccess(position, mTotalNum, justWrite, mData)
-            if (mSendNextWhenLastSuccess)
-                if (mDataQueue!!.isEmpty()) {
-                    channel.close()
-                } else {
-                    writeOperator.launch {
-                        delay(mIntervalBetweenTwoPackage)
-                        channel.trySend(mDataQueue!!.poll())
-                    }
+            if (mDataQueue!!.isEmpty()) {
+                channel.close()
+            } else {
+                writeOperator.launch {
+                    ensureActive()//mIntervalBetweenTwoPackage可能为0
+                    delay(mIntervalBetweenTwoPackage)
+                    channel.trySend(mDataQueue!!.poll())
                 }
+            }
         }
 
         override fun onWriteFailure(
@@ -84,15 +75,15 @@ class SplitWriter(private var writeOperator: BleOperator) {
                 mData,
                 mDataQueue?.isEmpty() ?: true
             )
-            if (mSendNextWhenLastSuccess)
-                if (mDataQueue!!.isEmpty()) {
-                    channel.close()
-                } else {
-                    writeOperator.launch {
-                        delay(mIntervalBetweenTwoPackage)
-                        channel.trySend(mDataQueue!!.poll())
-                    }
+            if (mDataQueue!!.isEmpty()) {
+                channel.close()
+            } else {
+                writeOperator.launch {
+                    ensureActive() //mIntervalBetweenTwoPackage可能为0
+                    delay(mIntervalBetweenTwoPackage)
+                    channel.trySend(mDataQueue!!.poll())
                 }
+            }
         }
 
     }
@@ -102,109 +93,41 @@ class SplitWriter(private var writeOperator: BleOperator) {
         require(mCount >= 1) { "split count should higher than 0!" }
         writeOperator.launch {
             withContext(Dispatchers.IO) {
-                mDataQueue = splitPacketForByte(mData, mCount)
+                mDataQueue = DataUtil.splitPacketForByte(mData, mCount)
             }
             mTotalNum = mDataQueue!!.size
-            if (!mSendNextWhenLastSuccess) {
-                var currentData: ByteArray? = null
-                getDataFlow()
-                    .onCompletion {
-                        withContext(NonCancellable + Dispatchers.Main) {
-                            if (mDataQueue!!.isNotEmpty()) {
-                                val position = mTotalNum - mDataQueue!!.size
-                                mCallback?.onWriteFailure(
-                                    BleException.OtherException("CoroutineScope Cancelled when sending"),
-                                    position,
-                                    mTotalNum,
-                                    currentData,
-                                    mData,
-                                    true
-                                )
-                            }
-                            mDataQueue?.clear()
-                            mCallback = null
-                            mData = null
-                        }
-                    }
-                    .collect {
-                        currentData = it
-                        writeOperator.writeCharacteristic(
-                            it,
-                            callback,
-                            writeOperator.mCharacteristic!!.uuid.toString(),
-                            writeType
-                        )
-                    }
-            } else {
-                var currentData: ByteArray? = null
-                launch {
-                    channel.send(mDataQueue!!.poll())
-                }
-                channel.consumeAsFlow()
-                    .onCompletion {
-                        withContext(NonCancellable + Dispatchers.Main) {
-                            if (mDataQueue!!.isNotEmpty()) {
-                                val position = mTotalNum - mDataQueue!!.size
-                                mCallback?.onWriteFailure(
-                                    BleException.OtherException("CoroutineScope Cancelled when sending"),
-                                    position,
-                                    mTotalNum,
-                                    currentData,
-                                    mData,
-                                    true
-                                )
-                            }
-                            mDataQueue?.clear()
-                            mCallback = null
-                            mData = null
-                        }
-                    }
-                    .collect {
-                        currentData = it
-                        writeOperator.writeCharacteristic(
-                            it,
-                            callback,
-                            writeOperator.mCharacteristic!!.uuid.toString(),
-                            writeType
-                        )
-                    }
+            var currentData: ByteArray? = null
+            launch {
+                channel.send(mDataQueue!!.poll())
             }
-        }
-    }
-
-    private fun getDataFlow(): Flow<ByteArray> {
-        return flow {
-            repeat(mTotalNum) {
-                if (mDataQueue!!.peek() != null) {
-                    emit(mDataQueue!!.poll() as ByteArray)
-                    if (it < mTotalNum)
-                        delay(mIntervalBetweenTwoPackage)
+            channel.receiveAsFlow()
+                .onCompletion {
+                    withContext(NonCancellable + Dispatchers.Main) {
+                        if (mDataQueue!!.isNotEmpty()) {
+                            val position = mTotalNum - mDataQueue!!.size
+                            mCallback?.onWriteFailure(
+                                BleException.OtherException("CoroutineScope Cancelled when sending"),
+                                position,
+                                mTotalNum,
+                                currentData,
+                                mData,
+                                true
+                            )
+                        }
+                        mDataQueue?.clear()
+                        mCallback = null
+                        mData = null
+                    }
                 }
-            }
-        }
-    }
-
-
-    private fun splitPacketForByte(data: ByteArray?, length: Int): Queue<ByteArray> {
-        val dataInfoQueue: Queue<ByteArray> = LinkedList()
-        if (data != null) {
-            var index = 0
-            do {
-                val surplusData = ByteArray(data.size - index)
-                var currentData: ByteArray
-                System.arraycopy(data, index, surplusData, 0, data.size - index)
-                if (surplusData.size <= length) {
-                    currentData = ByteArray(surplusData.size)
-                    System.arraycopy(surplusData, 0, currentData, 0, surplusData.size)
-                    index += surplusData.size
-                } else {
-                    currentData = ByteArray(length)
-                    System.arraycopy(data, index, currentData, 0, length)
-                    index += length
+                .collect {
+                    currentData = it
+                    writeOperator.writeCharacteristic(
+                        it,
+                        callback,
+                        writeOperator.mCharacteristic!!.uuid.toString(),
+                        writeType
+                    )
                 }
-                dataInfoQueue.offer(currentData)
-            } while (index < data.size)
         }
-        return dataInfoQueue
     }
 }

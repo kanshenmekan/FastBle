@@ -304,17 +304,20 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         }
         mCharacteristic!!.writeType = finalWriteType
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val status = mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
-            if (status == BluetoothStatusCodes.SUCCESS) {
-                bleWriteCallback?.onWriteSuccess(justWrite = data)
-//                operateCallback = bleWriteCallback
-//                bleBluetooth.addWriteOperator(uuid_write, this)
-            } else {
-                bleWriteCallback?.onWriteFailure(
-                    BleException.OtherException("Updates the locally stored value of this characteristic fail"),
-                    justWrite = data
-                )
+            operateCallback = bleWriteCallback
+            launch {
+                timeOutTask.start()
             }
+            bleBluetooth.addWriteOperator(uuid_write, this)
+            mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
+//            val status = mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
+//            if (status != BluetoothStatusCodes.SUCCESS) {
+//                removeTimeOut()
+//                bleWriteCallback?.onWriteFailure(
+//                    BleException.OtherException("Updates the locally stored value of this characteristic fail"),
+//                    justWrite = data
+//                )
+//            }
         } else {
             if (mCharacteristic!!.setValue(data)) {
                 operateCallback = bleWriteCallback

@@ -68,6 +68,7 @@ class OperateFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        BleManager.clearCharacterCallback(bleDevice)
         _binding = null
     }
 
@@ -93,6 +94,7 @@ class OperateFragment : Fragment() {
                 }
             }
             HexUtil.hexStringToBytes(binding.etData.text.toString())?.let { data ->
+
                 write(data, writeType)
                 binding.etData.text = null
             } ?: binding.etData.setError("input error")

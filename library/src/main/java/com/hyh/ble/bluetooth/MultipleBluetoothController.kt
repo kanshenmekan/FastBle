@@ -2,7 +2,7 @@ package com.hyh.ble.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
-import android.util.Log
+import android.bluetooth.BluetoothProfile
 import com.hyh.ble.BleManager
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.utils.BleLruHashMap
@@ -36,7 +36,7 @@ class MultipleBluetoothController {
     }
 
     @Synchronized
-    fun addBleBluetooth(bleBluetooth: BleBluetooth?) {
+    fun addConnectedBleBluetooth(bleBluetooth: BleBluetooth?) {
         if (bleBluetooth == null) {
             return
         }
@@ -46,11 +46,12 @@ class MultipleBluetoothController {
     }
 
     @Synchronized
-    fun removeBleBluetooth(bleBluetooth: BleBluetooth?) {
+    fun removeConnectedBleBluetooth(bleBluetooth: BleBluetooth?) {
         if (bleBluetooth == null) {
             return
         }
         if (bleLruHashMap.containsKey(bleBluetooth.deviceKey)) {
+            bleLruHashMap[bleBluetooth.deviceKey]?.destroy()
             bleLruHashMap.remove(bleBluetooth.deviceKey)
         }
     }
@@ -58,30 +59,33 @@ class MultipleBluetoothController {
     fun isConnecting(bleDevice: BleDevice?): Boolean {
         return bleDevice != null && bleTempHashMap.containsKey(bleDevice.key)
     }
+
     @Synchronized
     fun cancelConnecting(bleDevice: BleDevice?) {
         bleTempHashMap[bleDevice?.key]?.destroy()
         bleTempHashMap.remove(bleDevice?.key)
     }
-    fun cancelAllConnectingDevice(){
+
+    fun cancelAllConnectingDevice() {
         bleLruHashMap.clear()
         for (entry: Map.Entry<String?, BleBluetooth> in bleTempHashMap) {
             entry.value.destroy()
         }
         bleTempHashMap.clear()
     }
+
     @Synchronized
-    fun isContainDevice(bleDevice: BleDevice?): Boolean {
+    fun isContainConnectedDevice(bleDevice: BleDevice?): Boolean {
         return bleDevice != null && bleLruHashMap.containsKey(bleDevice.key)
     }
 
     @Synchronized
-    fun isContainDevice(bluetoothDevice: BluetoothDevice?): Boolean {
+    fun isContainConnectedDevice(bluetoothDevice: BluetoothDevice?): Boolean {
         return bluetoothDevice != null && bleLruHashMap.containsKey(bluetoothDevice.name + bluetoothDevice.address)
     }
 
     @Synchronized
-    fun getBleBluetooth(bleDevice: BleDevice?): BleBluetooth? {
+    fun getConnectedBleBluetooth(bleDevice: BleDevice?): BleBluetooth? {
         if (bleDevice != null) {
             if (bleLruHashMap.containsKey(bleDevice.key)) {
                 return bleLruHashMap[bleDevice.key]
@@ -92,8 +96,8 @@ class MultipleBluetoothController {
 
     @Synchronized
     fun disconnect(bleDevice: BleDevice?) {
-        if (isContainDevice(bleDevice)) {
-            getBleBluetooth(bleDevice)?.disconnect()
+        if (isContainConnectedDevice(bleDevice)) {
+            getConnectedBleBluetooth(bleDevice)?.disconnect()
         }
     }
 
@@ -118,21 +122,21 @@ class MultipleBluetoothController {
     }
 
     @Synchronized
-    fun getBleBluetoothList(): List<BleBluetooth> {
+    fun getConnectedBleBluetoothList(): List<BleBluetooth> {
         return bleLruHashMap.values.toList()
     }
 
     @Synchronized
-    fun getDeviceList(): List<BleDevice> {
+    fun getConnectedDeviceList(): List<BleDevice> {
         refreshConnectedDevice()
-        return getBleBluetoothList().map { it.bleDevice }
+        return getConnectedBleBluetoothList().map { it.bleDevice }
     }
 
     private fun refreshConnectedDevice() {
-        val bluetoothList = getBleBluetoothList()
+        val bluetoothList = getConnectedBleBluetoothList()
         for (bleBluetooth in bluetoothList) {
-            if (!BleManager.isConnected(bleBluetooth.bleDevice)) {
-                removeBleBluetooth(bleBluetooth)
+            if (BleManager.getConnectState(bleBluetooth.bleDevice) != BluetoothProfile.STATE_CONNECTED) {
+                removeConnectedBleBluetooth(bleBluetooth)
             }
         }
     }
