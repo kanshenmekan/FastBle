@@ -19,17 +19,20 @@ class SplitWriter(private val writeOperator: BleOperator) {
     private var mData: ByteArray? = null
     private var mCount = 0
     private var mIntervalBetweenTwoPackage: Long = 0
+    private var mContinueWhenLastFail: Boolean = false
     private var mCallback: BleWriteCallback? = null
     private var mDataQueue: Queue<ByteArray>? = null
     private var mTotalNum = 0
 
     fun splitWrite(
         data: ByteArray,
+        continueWhenLastFail: Boolean,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback,
         writeType: Int
     ) {
         mData = data
+        mContinueWhenLastFail = continueWhenLastFail
         mIntervalBetweenTwoPackage = intervalBetweenTwoPackage
         mCallback = callback
         mCount = BleManager.splitWriteNum
@@ -67,22 +70,34 @@ class SplitWriter(private val writeOperator: BleOperator) {
             isTotalFail: Boolean
         ) {
             val position = mTotalNum - mDataQueue!!.size
-            mCallback?.onWriteFailure(
-                exception,
-                position,
-                mTotalNum,
-                data,
-                mData,
-                mDataQueue?.isEmpty() ?: true
-            )
-            if (mDataQueue!!.isEmpty()) {
-                channel.close()
-            } else {
-                writeOperator.launch {
-                    ensureActive() //mIntervalBetweenTwoPackage可能为0
-                    delay(mIntervalBetweenTwoPackage)
-                    channel.trySend(mDataQueue!!.poll())
+            if (mContinueWhenLastFail) {
+                mCallback?.onWriteFailure(
+                    exception,
+                    position,
+                    mTotalNum,
+                    data,
+                    mData,
+                    mDataQueue?.isEmpty() ?: true
+                )
+                if (mDataQueue!!.isEmpty()) {
+                    channel.close()
+                } else {
+                    writeOperator.launch {
+                        ensureActive() //mIntervalBetweenTwoPackage可能为0
+                        delay(mIntervalBetweenTwoPackage)
+                        channel.trySend(mDataQueue!!.poll())
+                    }
                 }
+            } else {
+                mCallback?.onWriteFailure(
+                    exception,
+                    position,
+                    mTotalNum,
+                    data,
+                    mData,
+                    true
+                )
+                channel.close()
             }
         }
 

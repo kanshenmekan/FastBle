@@ -338,6 +338,7 @@ object BleManager {
         uuid_write: String,
         data: ByteArray?,
         split: Boolean = true,
+        continueWhenLastFail:Boolean = false,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback,
         writeType: Int = BleOperator.WRITE_TYPE_DEFAULT
@@ -359,7 +360,7 @@ object BleManager {
         } else {
             if (split && data.size > splitWriteNum) {
                 SplitWriter(bleBluetooth.newOperator(uuid_service, uuid_write)).splitWrite(
-                    data, intervalBetweenTwoPackage, callback, writeType
+                    data,continueWhenLastFail, intervalBetweenTwoPackage, callback, writeType
                 )
             } else {
                 bleBluetooth.newOperator(uuid_service, uuid_write)
