@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGattCharacteristic
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView.RecycledViewPool
 import com.hyh.ble.BleManager
@@ -94,7 +96,6 @@ class OperateFragment : Fragment() {
                 }
             }
             HexUtil.hexStringToBytes(binding.etData.text.toString())?.let { data ->
-
                 write(data, writeType)
                 binding.etData.text = null
             } ?: binding.etData.setError("input error")
@@ -174,13 +175,21 @@ class OperateFragment : Fragment() {
         characteristic?.let {
             BleManager.read(bleDevice, it.service.uuid.toString(), it.uuid.toString(),
                 object : BleReadCallback() {
-                    override fun onReadSuccess(data: ByteArray?) {
+                    override fun onReadSuccess(
+                        bleDevice: BleDevice,
+                        characteristic: BluetoothGattCharacteristic,
+                        data: ByteArray?
+                    ) {
                         readData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
                         readAdapter.notifyItemInserted(readData.lastIndex)
                         binding.rvRead.scrollToPosition(readData.lastIndex)
                     }
 
-                    override fun onReadFailure(exception: BleException?) {
+                    override fun onReadFailure(
+                        bleDevice: BleDevice?,
+                        characteristic: BluetoothGattCharacteristic?,
+                        exception: BleException?
+                    ) {
 
                     }
 
@@ -199,6 +208,8 @@ class OperateFragment : Fragment() {
                 writeType = writeType,
                 callback = object : BleWriteCallback() {
                     override fun onWriteSuccess(
+                        bleDevice: BleDevice,
+                        characteristic: BluetoothGattCharacteristic,
                         current: Int,
                         total: Int,
                         justWrite: ByteArray?,
@@ -218,6 +229,8 @@ class OperateFragment : Fragment() {
                     }
 
                     override fun onWriteFailure(
+                        bleDevice: BleDevice?,
+                        characteristic: BluetoothGattCharacteristic?,
                         exception: BleException?,
                         current: Int,
                         total: Int,
@@ -236,59 +249,114 @@ class OperateFragment : Fragment() {
         }
     }
 
+    private val bleNotifyCallback = object : BleNotifyCallback() {
+        override fun onNotifySuccess(
+            bleDevice: BleDevice,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+            binding.swNotify.takeUnless { it.isChecked }?.isChecked = true
+        }
+
+        override fun onNotifyFailure(
+            bleDevice: BleDevice?,
+            characteristic: BluetoothGattCharacteristic?,
+            exception: BleException?
+        ) {
+            Toast.makeText(requireContext(), "onNotifyFailure ${exception?.description}",Toast.LENGTH_LONG).show()
+            binding.swNotify.takeIf { it.isChecked }?.isChecked = false
+        }
+
+        override fun onNotifyCancel(
+            bleDevice: BleDevice?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            binding.swNotify.takeIf { it.isChecked }?.isChecked = false
+        }
+
+        override fun onCharacteristicChanged(
+            bleDevice: BleDevice,
+            characteristic: BluetoothGattCharacteristic,
+            data: ByteArray?
+        ) {
+            notifyData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
+            notifyAdapter.notifyItemInserted(notifyData.lastIndex)
+            binding.rvNotify.scrollToPosition(notifyData.lastIndex)
+        }
+
+    }
+
     @SuppressLint("MissingPermission")
     private fun notify(enable: Boolean) {
         characteristic?.let {
             if (enable) {
-                BleManager.notify(bleDevice, it.service.uuid.toString(), it.uuid.toString(), false,
-                    object : BleNotifyCallback() {
-                        override fun onNotifySuccess() {
-                            binding.swNotify.isChecked = true
-                        }
-
-                        override fun onNotifyFailure(exception: BleException?) {
-                            binding.swNotify.isChecked = false
-                        }
-
-                        override fun onCharacteristicChanged(data: ByteArray?) {
-                            notifyData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
-                            notifyAdapter.notifyItemInserted(notifyData.lastIndex)
-                            binding.rvNotify.scrollToPosition(notifyData.lastIndex)
-                        }
-
-                    })
+                BleManager.notify(
+                    bleDevice,
+                    it.service.uuid.toString(),
+                    it.uuid.toString(),
+                    bleNotifyCallback
+                )
             } else {
-                BleManager.stopNotify(bleDevice, it.service.uuid.toString(), it.uuid.toString())
+                BleManager.stopNotify(
+                    bleDevice,
+                    it.service.uuid.toString(),
+                    it.uuid.toString(),
+                )
             }
         }
+    }
+
+    private val bleIndicateCallback = object : BleIndicateCallback() {
+        override fun onIndicateSuccess(
+            bleDevice: BleDevice,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+            binding.swIndicate.takeUnless { it.isChecked }?.isChecked = true
+        }
+
+        override fun onIndicateFailure(
+            bleDevice: BleDevice?,
+            characteristic: BluetoothGattCharacteristic?,
+            exception: BleException?
+        ) {
+            Toast.makeText(requireContext(), "onIndicateFailure ${exception?.description}",Toast.LENGTH_LONG).show()
+            binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
+        }
+
+        override fun onIndicateCancel(
+            bleDevice: BleDevice?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
+        }
+
+        override fun onCharacteristicChanged(
+            bleDevice: BleDevice,
+            characteristic: BluetoothGattCharacteristic,
+            data: ByteArray?
+        ) {
+            indicateData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
+            indicateAdapter.notifyItemInserted(indicateData.lastIndex)
+            binding.rvIndicate.scrollToPosition(indicateData.lastIndex)
+        }
+
     }
 
     @SuppressLint("MissingPermission")
     private fun indicate(enable: Boolean) {
         characteristic?.let {
             if (enable) {
-                BleManager.indicate(bleDevice,
+                BleManager.indicate(
+                    bleDevice,
                     it.service.uuid.toString(),
                     it.uuid.toString(),
-                    false,
-                    object : BleIndicateCallback() {
-                        override fun onIndicateSuccess() {
-                            binding.swIndicate.isChecked = true
-                        }
-
-                        override fun onIndicateFailure(exception: BleException?) {
-                            binding.swIndicate.isChecked = false
-                        }
-
-                        override fun onCharacteristicChanged(data: ByteArray?) {
-                            indicateData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
-                            indicateAdapter.notifyItemInserted(indicateData.lastIndex)
-                            binding.rvIndicate.scrollToPosition(indicateData.lastIndex)
-                        }
-
-                    })
+                    bleIndicateCallback
+                )
             } else {
-                BleManager.stopIndicate(bleDevice, it.service.uuid.toString(), it.uuid.toString())
+                BleManager.stopIndicate(
+                    bleDevice,
+                    it.service.uuid.toString(),
+                    it.uuid.toString(),
+                )
             }
         }
     }

@@ -1,7 +1,9 @@
 package com.hyh.ble.bluetooth
 
+import android.bluetooth.BluetoothGattCharacteristic
 import com.hyh.ble.BleManager
 import com.hyh.ble.callback.BleWriteCallback
+import com.hyh.ble.data.BleDevice
 import com.hyh.ble.exception.BleException
 import com.hyh.ble.utils.DataUtil
 import kotlinx.coroutines.Dispatchers
@@ -43,13 +45,22 @@ class SplitWriter(private val writeOperator: BleOperator) {
 
     private val callback = object : BleWriteCallback() {
         override fun onWriteSuccess(
+            bleDevice: BleDevice,
+            characteristic: BluetoothGattCharacteristic,
             current: Int,
             total: Int,
             justWrite: ByteArray?,
             data: ByteArray?
         ) {
             val position = mTotalNum - mDataQueue!!.size
-            mCallback?.onWriteSuccess(position, mTotalNum, justWrite, mData)
+            mCallback?.onWriteSuccess(
+                bleDevice,
+                characteristic,
+                position,
+                mTotalNum,
+                justWrite,
+                mData
+            )
             if (mDataQueue!!.isEmpty()) {
                 channel.close()
             } else {
@@ -62,6 +73,8 @@ class SplitWriter(private val writeOperator: BleOperator) {
         }
 
         override fun onWriteFailure(
+            bleDevice: BleDevice?,
+            characteristic: BluetoothGattCharacteristic?,
             exception: BleException?,
             current: Int,
             total: Int,
@@ -72,6 +85,8 @@ class SplitWriter(private val writeOperator: BleOperator) {
             val position = mTotalNum - mDataQueue!!.size
             if (mContinueWhenLastFail) {
                 mCallback?.onWriteFailure(
+                    bleDevice,
+                    characteristic,
                     exception,
                     position,
                     mTotalNum,
@@ -90,6 +105,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
                 }
             } else {
                 mCallback?.onWriteFailure(
+                    bleDevice, characteristic,
                     exception,
                     position,
                     mTotalNum,
@@ -121,6 +137,8 @@ class SplitWriter(private val writeOperator: BleOperator) {
                         if (mDataQueue!!.isNotEmpty()) {
                             val position = mTotalNum - mDataQueue!!.size
                             mCallback?.onWriteFailure(
+                                writeOperator.bleDevice,
+                                writeOperator.mCharacteristic,
                                 BleException.OtherException("CoroutineScope Cancelled when sending"),
                                 position,
                                 mTotalNum,
