@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -16,7 +15,6 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -35,8 +33,6 @@ import com.hyh.blesample.databinding.ActivityMainBinding
 import com.hyh.blesample.databinding.ScanFilterBinding
 import com.hyh.blesample.operate.OperateActivity
 import com.lxj.xpopup.XPopup
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.UUID
 
 
@@ -331,6 +327,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                     if (isActiveDisConnected) {
+
                         Toast.makeText(
                             this@MainActivity,
                             R.string.active_disconnected,
@@ -348,7 +345,6 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-        BleManager.disconnectAllDevice()
         BleManager.destroy()
     }
 }

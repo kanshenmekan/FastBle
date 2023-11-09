@@ -139,7 +139,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
                             mCallback?.onWriteFailure(
                                 writeOperator.bleDevice,
                                 writeOperator.mCharacteristic,
-                                BleException.OtherException("CoroutineScope Cancelled when sending"),
+                                BleException.OtherException(BleException.COROUTINESCOPE_CANCELLED,"CoroutineScope Cancelled when sending"),
                                 position,
                                 mTotalNum,
                                 currentData,

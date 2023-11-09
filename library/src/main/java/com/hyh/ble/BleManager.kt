@@ -168,11 +168,18 @@ object BleManager {
         bleGattCallback: BleGattCallback,
         backpressure: Int = connectBackpressureStrategy
     ): BluetoothGatt? {
+        if (!isSupportBle(context)){
+            bleGattCallback.onConnectFail(
+                bleDevice,
+                BleException.OtherException(BleException.NOT_SUPPORT_BLE,"Bluetooth not support!")
+            )
+            return null
+        }
         if (!isBleEnable(context)) {
             BleLog.e("Bluetooth not enable!")
             bleGattCallback.onConnectFail(
                 bleDevice,
-                BleException.OtherException("Bluetooth not enable!")
+                BleException.OtherException(BleException.BLUETOOTH_NOT_ENABLED,"Bluetooth not enable!")
             )
             return null
         }
@@ -182,7 +189,7 @@ object BleManager {
         if (bleDevice.device == null) {
             bleGattCallback.onConnectFail(
                 bleDevice,
-                BleException.OtherException("Not Found Device Exception Occurred!")
+                BleException.OtherException(BleException.DEVICE_NULL,"Not Found Device Exception Occurred!")
             )
         } else {
             if (backpressure == CONNECT_BACKPRESSURE_DROP) {
@@ -249,7 +256,7 @@ object BleManager {
             callback.onNotifyFailure(
                 bleDevice,
                 null,
-                BleException.OtherException("This device not connect!")
+                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device not connect!")
             )
         } else {
             bleBluetooth.newOperator(uuid_service, uuid_notify)
@@ -273,7 +280,7 @@ object BleManager {
             callback.onIndicateFailure(
                 bleDevice,
                 null,
-                BleException.OtherException("This device not connect!")
+                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device not connect!")
             )
         } else {
             bleBluetooth.newOperator(uuid_service, uuid_indicate)
@@ -341,7 +348,7 @@ object BleManager {
             callback.onWriteFailure(
                 bleDevice,
                 null,
-                BleException.OtherException("data is Null!"),
+                BleException.OtherException(BleException.DATA_NULL,"data is Null!"),
                 justWrite = null
             )
             return
@@ -353,7 +360,7 @@ object BleManager {
         if (bleBluetooth == null) {
             callback.onWriteFailure(
                 bleDevice, null,
-                BleException.OtherException("This device not connect!"),
+                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connect!"),
                 justWrite = data
             )
         } else {
@@ -390,7 +397,7 @@ object BleManager {
             ?: callback.onReadFailure(
                 bleDevice,
                 null,
-                BleException.OtherException("This device is not connected!")
+                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connected!")
             )
     }
 
@@ -411,7 +418,7 @@ object BleManager {
         bleBluetooth?.newOperator()?.readRemoteRssi(callback)
             ?: callback.onRssiFailure(
                 bleDevice,
-                BleException.OtherException("This device is not connected!")
+                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connected!")
             )
     }
 
@@ -433,7 +440,7 @@ object BleManager {
             BleLog.e("requiredMtu should lower than 512 !")
             callback.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException("requiredMtu should lower than 512 !")
+                BleException.OtherException(description = "requiredMtu should lower than 512 !")
             )
             return
         }
@@ -441,7 +448,7 @@ object BleManager {
             BleLog.e("requiredMtu should higher than 23 !")
             callback.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException("requiredMtu should higher than 23 !")
+                BleException.OtherException(description = "requiredMtu should higher than 23 !")
             )
             return
         }
@@ -449,7 +456,7 @@ object BleManager {
         bleBluetooth?.newOperator()?.setMtu(mtu, callback)
             ?: callback.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException("This device is not connected!")
+                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connected!")
             )
     }
 
@@ -536,7 +543,7 @@ object BleManager {
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun isConnected(bleDevice: BleDevice?): Boolean {
-        return multipleBluetoothController.isContainConnectedDevice(bleDevice)
+        return multipleBluetoothController.isConnectedDevice(bleDevice)
     }
 
     fun getAllConnectedDevice(): List<BleDevice> {
@@ -563,7 +570,12 @@ object BleManager {
     fun disconnectAllDevice() {
         multipleBluetoothController.disconnectAllDevice()
     }
-
+    fun scannerDestroy(){
+        BleScanner.destroy()
+    }
+    fun removeScanCallback(){
+        BleScanner.bleScanCallback = null
+    }
     fun cancelConnecting(bleDevice: BleDevice?) {
         multipleBluetoothController.cancelConnecting(bleDevice)
     }
@@ -583,7 +595,12 @@ object BleManager {
     fun convertBleDevice(scanResult: ScanResult): BleDevice {
         return BleDevice(scanResult)
     }
-
+    fun convertBleDevice(mac: String): BleDevice? {
+        bluetoothAdapter?.getRemoteDevice(mac)?.let {
+            return convertBleDevice(it)
+        }
+        return null
+    }
     fun getBluetoothGatt(bleDevice: BleDevice?): BluetoothGatt? {
         return multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bluetoothGatt
     }
@@ -610,7 +627,6 @@ object BleManager {
     fun removeConnectGattCallback(bleDevice: BleDevice?) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bleGattCallback = null
     }
-
     fun removeRssiCallback(bleDevice: BleDevice?) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.removeRssiOperator()
     }

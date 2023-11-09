@@ -12,7 +12,7 @@ import com.hyh.ble.utils.HexUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -20,7 +20,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 @SuppressLint("MissingPermission")
-internal object BleScanner : ScanCallback() {
+internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
     var mBleScanState = BleScanState.STATE_IDLE
         private set
     private val bleScanRuleConfig
@@ -33,7 +33,6 @@ internal object BleScanner : ScanCallback() {
         bleScanCallback?.onScanStarted(false)
     }
 
-    private var scanScope: CoroutineScope? = null
     override fun onScanResult(callbackType: Int, result: ScanResult?) {
         super.onScanResult(callbackType, result)
         if (result == null) return
@@ -45,7 +44,7 @@ internal object BleScanner : ScanCallback() {
 
     private val mutex = Mutex()
     private fun correctDeviceAndNextStep(bleDevice: BleDevice) {
-        scanScope?.launch(Dispatchers.IO) {
+        launch(Dispatchers.IO) {
             mutex.withLock {
                 if (!map.contains(bleDevice.key)) {
                     BleLog.i(
@@ -79,11 +78,10 @@ internal object BleScanner : ScanCallback() {
             bleScanCallback?.onScanStarted(false)
             return
         }
-        scanScope = MainScope()
         map.clear()
         bleScanCallback?.onScanStarted(true)
         mBleScanState = BleScanState.STATE_SCANNING
-        scanScope?.launch {
+        launch {
             BleManager.bluetoothAdapter?.bluetoothLeScanner?.startScan(
                 bleScanRuleConfig.generateScanFilter(),
                 bleScanRuleConfig.generateScanSettings(), this@BleScanner
@@ -102,8 +100,7 @@ internal object BleScanner : ScanCallback() {
             BleManager.bluetoothAdapter?.bluetoothLeScanner?.stopScan(this@BleScanner)
             mBleScanState = BleScanState.STATE_IDLE
             bleScanCallback?.onScanFinished(map.values.toList())
-            scanScope?.cancel()
-            scanScope = null
+            coroutineContext.cancelChildren()
         }
     }
 

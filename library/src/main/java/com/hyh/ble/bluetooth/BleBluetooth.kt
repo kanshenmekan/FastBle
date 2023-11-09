@@ -67,7 +67,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     ): BluetoothGatt? {
         bleGattCallback = callback
         currentConnectRetryCount = 0
-        if (BleManager.multipleBluetoothController.isContainConnectedDevice(bleDevice)) {
+        if (BleManager.multipleBluetoothController.isConnectedDevice(bleDevice)) {
             return bluetoothGatt
         }
         return connect(context, autoConnect, currentConnectRetryCount)
@@ -89,6 +89,9 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 connectCount:${connectRetryCount + 1}
                 """.trimIndent()
         )
+        launch(Dispatchers.Main.immediate) {
+            connectTimeOutTask.start()
+        }
         lastState = LastState.CONNECT_CONNECTING
         bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             bleDevice.device?.connectGatt(
@@ -102,17 +105,15 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             if (connectRetryCount == 0) {
                 bleGattCallback?.onStartConnect(bleDevice)
             }
-            launch(Dispatchers.Main.immediate) {
-                connectTimeOutTask.start()
-            }
         } else {
-            connectedFail(BleException.OtherException("GATT connect exception occurred!"))
+            connectTimeOutTask.success()
+            connectedFail(BleException.OtherException(BleException.GATT_NULL, "GATT is null!"))
         }
         return bluetoothGatt
     }
 
     private fun connectedFail(exception: BleException) {
-        launch {
+        launch(Dispatchers.Main.immediate) {
             disconnectGatt()
             refreshDeviceCache()
             closeBluetoothGatt()
@@ -138,7 +139,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     }
 
     private fun connectAndDiscoverSuccess(status: Int) {
-        launch {
+        launch(Dispatchers.Main.immediate) {
             lastState = LastState.CONNECT_CONNECTED
             isActiveDisconnect = false
             BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
@@ -180,14 +181,14 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     @Synchronized
     fun destroy() {
         lastState = LastState.CONNECT_IDLE
-        disconnectGatt()
+        disconnect()
         refreshDeviceCache()
         closeBluetoothGatt()
         bleGattCallback = null
         removeRssiOperator()
         removeMtuOperator()
         clearCharacterOperator()
-        connectTimeOutTask.cancel()
+        connectTimeOutTask.onTimeoutResultCallBack = null
         cancel()
     }
 

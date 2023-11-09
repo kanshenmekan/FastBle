@@ -66,8 +66,8 @@ class MultipleBluetoothController {
         bleTempHashMap.remove(bleDevice?.key)
     }
 
+    @Synchronized
     fun cancelAllConnectingDevice() {
-        bleLruHashMap.clear()
         for (entry: Map.Entry<String?, BleBluetooth> in bleTempHashMap) {
             entry.value.destroy()
         }
@@ -75,13 +75,17 @@ class MultipleBluetoothController {
     }
 
     @Synchronized
-    fun isContainConnectedDevice(bleDevice: BleDevice?): Boolean {
+    fun isConnectedDevice(bleDevice: BleDevice?): Boolean {
         return bleDevice != null && bleLruHashMap.containsKey(bleDevice.key)
     }
 
     @Synchronized
-    fun isContainConnectedDevice(bluetoothDevice: BluetoothDevice?): Boolean {
-        return bluetoothDevice != null && bleLruHashMap.containsKey(bluetoothDevice.name + bluetoothDevice.address)
+    fun isConnectedDevice(bluetoothDevice: BluetoothDevice?): Boolean {
+        return bluetoothDevice != null && isConnectedDevice(
+            BleManager.convertBleDevice(
+                bluetoothDevice
+            )
+        )
     }
 
     @Synchronized
@@ -96,7 +100,7 @@ class MultipleBluetoothController {
 
     @Synchronized
     fun disconnect(bleDevice: BleDevice?) {
-        if (isContainConnectedDevice(bleDevice)) {
+        if (isConnectedDevice(bleDevice)) {
             getConnectedBleBluetooth(bleDevice)?.disconnect()
         }
     }
@@ -106,7 +110,6 @@ class MultipleBluetoothController {
         for (stringBleBluetoothEntry: Map.Entry<String?, BleBluetooth> in bleLruHashMap) {
             stringBleBluetoothEntry.value.disconnect()
         }
-        bleLruHashMap.clear()
     }
 
     @Synchronized

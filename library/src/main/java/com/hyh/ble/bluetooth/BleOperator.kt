@@ -107,7 +107,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 bleNotifyCallback?.onNotifyFailure(
                     bleDevice,
                     mCharacteristic,
-                    BleException.OtherException("this characteristic not support notify!")
+                    BleException.OtherException(
+                        BleException.CHARACTERISTIC_NOT_SUPPORT,
+                        "this characteristic not support notify!"
+                    )
                 )
             }
         }
@@ -141,7 +144,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleNotifyCallback?.onNotifyFailure(
                 bleDevice,
                 characteristic,
-                BleException.OtherException("gatt or characteristic equal null")
+                BleException.OtherException(
+                    BleException.GATT_NULL,
+                    "gatt or characteristic equal null"
+                )
             )
             return false
         }
@@ -151,7 +157,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleNotifyCallback?.onNotifyFailure(
                 bleDevice,
                 characteristic,
-                BleException.OtherException("gatt setCharacteristicNotification fail")
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_ERROR,
+                    "gatt setCharacteristicNotification fail"
+                )
             )
             return false
         }
@@ -162,7 +171,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleNotifyCallback?.onNotifyFailure(
                 bleDevice,
                 characteristic,
-                BleException.OtherException("descriptor equals null")
+                BleException.OtherException(BleException.DESCRIPTOR_NULL, "descriptor equals null")
             )
             false
         } else {
@@ -180,7 +189,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                     bleNotifyCallback?.onNotifyFailure(
                         bleDevice,
                         characteristic,
-                        BleException.OtherException("gatt writeDescriptor fail")
+                        BleException.OtherException(
+                            BleException.DESCRIPTOR_ERROR,
+                            "gatt writeDescriptor fail"
+                        )
                     )
                 }
                 success2
@@ -192,7 +204,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                     bleNotifyCallback?.onNotifyFailure(
                         bleDevice,
                         characteristic,
-                        BleException.OtherException("gatt writeDescriptor fail")
+                        BleException.OtherException(
+                            BleException.DESCRIPTOR_ERROR,
+                            "gatt writeDescriptor fail"
+                        )
                     )
                 }
                 success2
@@ -219,7 +234,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
                 mCharacteristic,
-                BleException.OtherException("this characteristic not support indicate!")
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_NOT_SUPPORT,
+                    "this characteristic not support indicate!"
+                )
             )
         }
     }
@@ -256,7 +274,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
                 mCharacteristic,
-                BleException.OtherException("gatt or characteristic equal null")
+                BleException.OtherException(
+                    BleException.GATT_NULL,
+                    "gatt or characteristic equal null"
+                )
             )
             return false
         }
@@ -266,7 +287,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
                 mCharacteristic,
-                BleException.OtherException("gatt setCharacteristicNotification fail")
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_ERROR,
+                    "gatt setCharacteristicNotification fail"
+                )
             )
             return false
         }
@@ -277,7 +301,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
                 mCharacteristic,
-                BleException.OtherException("descriptor equals null")
+                BleException.OtherException(BleException.DESCRIPTOR_NULL, "descriptor equals null")
             )
             false
         } else {
@@ -294,7 +318,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                     bleIndicateCallback?.onIndicateFailure(
                         bleDevice,
                         mCharacteristic,
-                        BleException.OtherException("gatt writeDescriptor fail")
+                        BleException.OtherException(
+                            BleException.DESCRIPTOR_ERROR,
+                            "gatt writeDescriptor fail"
+                        )
                     )
                 }
                 success2
@@ -306,7 +333,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                     bleIndicateCallback?.onIndicateFailure(
                         bleDevice,
                         mCharacteristic,
-                        BleException.OtherException("gatt writeDescriptor fail")
+                        BleException.OtherException(
+                            BleException.DESCRIPTOR_ERROR,
+                            "gatt writeDescriptor fail"
+                        )
                     )
                 }
                 success2
@@ -325,7 +355,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         if (data == null || data.isEmpty()) {
             bleWriteCallback?.onWriteFailure(
                 bleDevice, mCharacteristic,
-                BleException.OtherException("the data to be written is empty"),
+                BleException.OtherException(
+                    BleException.DATA_NULL,
+                    "the data to be written is empty"
+                ),
                 justWrite = data
             )
             return
@@ -335,7 +368,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         ) {
             bleWriteCallback?.onWriteFailure(
                 bleDevice, mCharacteristic,
-                BleException.OtherException("this characteristic not support write!"),
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_NOT_SUPPORT,
+                    "this characteristic not support write!"
+                ),
                 justWrite = data
             )
             return
@@ -385,7 +421,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             } else {
                 bleWriteCallback?.onWriteFailure(
                     bleDevice, mCharacteristic,
-                    BleException.OtherException("Updates the locally stored value of this characteristic fail"),
+                    BleException.OtherException(
+                        BleException.CHARACTERISTIC_ERROR,
+                        "Updates the locally stored value of this characteristic fail"
+                    ),
                     justWrite = data
                 )
             }
@@ -409,14 +448,20 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 bleReadCallback?.onReadFailure(
                     bleDevice,
                     mCharacteristic,
-                    BleException.OtherException("gatt readCharacteristic fail")
+                    BleException.OtherException(
+                        BleException.CHARACTERISTIC_ERROR,
+                        "gatt readCharacteristic fail"
+                    )
                 )
             }
         } else {
             bleReadCallback?.onReadFailure(
                 bleDevice,
                 mCharacteristic,
-                BleException.OtherException("this characteristic not support read!")
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_NOT_SUPPORT,
+                    "this characteristic not support read!"
+                )
             )
         }
     }
@@ -428,7 +473,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         if (mBluetoothGatt == null) {
             bleRssiCallback?.onRssiFailure(
                 bleDevice,
-                BleException.OtherException("gatt readRemoteRssi fail")
+                BleException.OtherException(BleException.GATT_NULL, "gatt is null")
             )
         } else {
             launch {
@@ -440,7 +485,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 removeTimeOut()
                 bleRssiCallback?.onRssiFailure(
                     bleDevice,
-                    BleException.OtherException("gatt readRemoteRssi fail")
+                    BleException.OtherException(description = "gatt readRemoteRssi fail")
                 )
             }
         }
@@ -453,7 +498,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         if (mBluetoothGatt == null) {
             bleMtuChangedCallback?.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException("gatt requestMtu fail")
+                BleException.OtherException(description = "gatt requestMtu fail")
             )
         } else {
             launch {
@@ -465,7 +510,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 removeTimeOut()
                 bleMtuChangedCallback?.onSetMTUFailure(
                     bleDevice,
-                    BleException.OtherException("gatt requestMtu fail")
+                    BleException.OtherException(description = "gatt requestMtu fail")
                 )
             }
         }
@@ -474,7 +519,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     fun destroy() {
         data = null
         operateCallback = null
-        timeOutTask.cancel()
+        timeOutTask.onTimeoutResultCallBack = null
         cancel()
     }
 }
