@@ -24,6 +24,7 @@ import com.hjq.permissions.XXPermissions
 import com.hyh.ble.BleManager
 import com.hyh.ble.callback.BleGattCallback
 import com.hyh.ble.callback.BleScanCallback
+import com.hyh.ble.common.BluetoothChangedObserver
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.exception.BleException
 import com.hyh.ble.scan.BleScanRuleConfig
@@ -88,6 +89,24 @@ class MainActivity : AppCompatActivity() {
             activityResultCallback
         )
         requestPermissions()
+        BleManager.setBleStateCallback(object : BluetoothChangedObserver.BleStatusCallback {
+            override fun onStateOn() {
+
+            }
+
+            override fun onStateTurningOn() {
+
+            }
+
+            override fun onStateOff() {
+
+            }
+
+            override fun onStateTurningOff() {
+
+            }
+
+        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -291,7 +310,8 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun connect(bleDevice: BleDevice) {
-        BleManager.connect(bleDevice,
+        BleManager.connect(
+            bleDevice,
             object : BleGattCallback() {
                 override fun onStartConnect(bleDevice: BleDevice) {
                     progressLoading.show()

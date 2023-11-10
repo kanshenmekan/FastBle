@@ -114,9 +114,6 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
 
     private fun connectedFail(exception: BleException) {
         launch(Dispatchers.Main.immediate) {
-            disconnectGatt()
-            refreshDeviceCache()
-            closeBluetoothGatt()
             lastState = LastState.CONNECT_FAILURE
             BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
             bleGattCallback?.onConnectFail(
@@ -335,10 +332,10 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 if (lastState == LastState.CONNECT_CONNECTING) {
-                    disconnectGatt()
-                    refreshDeviceCache()
-                    closeBluetoothGatt()
                     if (currentConnectRetryCount < BleManager.reConnectCount) {
+                        disconnectGatt()
+                        refreshDeviceCache()
+                        closeBluetoothGatt()
                         BleLog.e(
                             "Connect fail, try reconnect " + BleManager.reConnectInterval + " millisecond later"
                         )

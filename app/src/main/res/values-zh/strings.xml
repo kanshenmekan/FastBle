@@ -1,0 +1,48 @@
+<resources>
+    <string name="app_name">FastBle</string>
+    <string name="scan">搜索</string>
+    <string name="stop">停止</string>
+
+    <string name="notifyTitle">提示</string>
+    <string name="gpsNotifyMsg">当前手机需要打开定位服务才能搜索蓝牙</string>
+    <string name="setting">去设置</string>
+    <string name="cancel">取消</string>
+
+    <string name="expand_search_settings">展开搜索设置</string>
+    <string name="retrieve_search_settings">收起搜索设置</string>
+    <string name="connect_fail">连接失败</string>
+    <string name="active_disconnected">连接断开</string>
+    <string name="disconnected">连接中断</string>
+    <string name="please_open_blue">请先打开蓝牙</string>
+    <string name="select_operation_type">选择操作</string>
+    <string name="characteristic">Characteristic</string>
+    <string name="data_changed">数据:</string>
+    <string name="read">Read</string>
+    <string name="write">Write</string>
+    <string name="write_no_response">Write No Response</string>
+    <string name="write_signed">Write Signed</string>
+    <string name="indicate">indicate</string>
+    <string name="notification">notification</string>
+    <string name="open_notification">打开通知</string>
+    <string name="close_notification">关闭通知</string>
+    <string name="service_list">Service列表</string>
+    <string name="characteristic_list">Characteristic列表</string>
+    <string name="console">控制</string>
+    <string name="name">设置广播名：</string>
+    <string name="mac">MAC:</string>
+    <string name="service">Service</string>
+    <string name="primary_service">Service type (Primary service)</string>
+    <string name="secondary_service">Secondary type (Secondary service)</string>
+    <string name="type">Service type (main service)</string>
+    <string name="scan_setting">在下面设置过滤条件, 可以为空,多个数据用英文逗号隔开</string>
+    <string name="setting_name">输入广播名</string>
+    <string name="setting_mac">输入设备MAC</string>
+    <string name="setting_uuid">输入设备UUID,16位或者128位</string>
+    <string name="input_hex">输入16进制格式的数据</string>
+    <string name="connect">连接</string>
+    <string name="connected">已连接</string>
+    <string name="disconnect">断开</string>
+    <string name="enter">Enter</string>
+    <string name="detail">操作</string>
+    <string name="permission_onDenied">蓝牙权限被禁止</string>
+</resources>
