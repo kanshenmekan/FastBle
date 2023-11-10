@@ -25,12 +25,14 @@ import com.hyh.ble.callback.BleReadCallback
 import com.hyh.ble.callback.BleRssiCallback
 import com.hyh.ble.callback.BleScanCallback
 import com.hyh.ble.callback.BleWriteCallback
+import com.hyh.ble.common.BluetoothChangedObserver
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.data.BleScanState
 import com.hyh.ble.exception.BleException
 import com.hyh.ble.scan.BleScanRuleConfig
 import com.hyh.ble.scan.BleScanner
 import com.hyh.ble.utils.BleLog
+
 
 object BleManager {
     const val DEFAULT_SCAN_TIME: Long = 10000
@@ -42,6 +44,8 @@ object BleManager {
     private const val DEFAULT_MAX_MTU = 512
     private const val DEFAULT_WRITE_DATA_SPLIT_COUNT = 20
     private const val DEFAULT_CONNECT_OVER_TIME: Long = 10000
+
+    private var bleObserver: BluetoothChangedObserver? = null
 
     /**
      * 当存在mac相同的设备已经在连接的时候，忽略掉后面发起的连接，直至这次连接失败或者成功,已经存在连接成功，不会发起连接
@@ -212,7 +216,7 @@ object BleManager {
                 }
             } else {
                 if (multipleBluetoothController.isConnecting(bleDevice)) {
-                    multipleBluetoothController.cancelConnecting(bleDevice,true)
+                    multipleBluetoothController.cancelConnecting(bleDevice, true)
                 }
                 val bleBluetooth: BleBluetooth =
                     multipleBluetoothController.buildConnectingBle(bleDevice)
@@ -537,6 +541,7 @@ object BleManager {
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun destroy() {
+        releaseBleObserver()
         BleScanner.destroy()
         multipleBluetoothController.destroy()
     }
@@ -608,7 +613,7 @@ object BleManager {
     }
 
     fun cancelConnecting(bleDevice: BleDevice?) {
-        multipleBluetoothController.cancelConnecting(bleDevice,false)
+        multipleBluetoothController.cancelConnecting(bleDevice, false)
     }
 
     fun cancelAllConnectingDevice() {
@@ -691,5 +696,25 @@ object BleManager {
 
     fun clearCharacterCallback(bleDevice: BleDevice?) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.clearCharacterOperator()
+    }
+
+    private fun initBleObserver() {
+        if (bleObserver == null) {
+            bleObserver = BluetoothChangedObserver()
+            bleObserver!!.registerReceiver(context)
+        }
+    }
+
+    @Synchronized
+    fun setBleStateCallback(bleStatusCallback: BluetoothChangedObserver.BleStatusCallback) {
+        initBleObserver()
+        bleObserver?.bleStatusCallback = bleStatusCallback
+    }
+
+    private fun releaseBleObserver() {
+        if (bleObserver != null) {
+            bleObserver!!.unregisterReceiver(context)
+            bleObserver = null
+        }
     }
 }

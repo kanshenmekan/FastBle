@@ -20,13 +20,15 @@ import com.hyh.ble.data.BleDevice
 import com.hyh.ble.exception.BleException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
 class BleOperator(private val bleBluetooth: BleBluetooth) :
-    CoroutineScope by CoroutineScope(bleBluetooth.launch { } + Dispatchers.Main.immediate) {
+    CoroutineScope by CoroutineScope(SupervisorJob(bleBluetooth.coroutineContext.job) + Dispatchers.Main.immediate) {
     companion object {
         @JvmStatic
         val UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR =

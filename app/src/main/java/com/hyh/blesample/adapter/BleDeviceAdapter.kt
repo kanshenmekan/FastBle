@@ -25,28 +25,30 @@ class BleDeviceAdapter(
                 LayoutInflater.from(parent.context),
                 parent,
                 false,
-            ),onItemButtonClickListener
+            ), onItemButtonClickListener
         )
 
     }
+
     @SuppressLint("MissingPermission")
     override fun onBindViewHolder(holder: ViewHolder, position: Int, payloads: MutableList<Any>) {
-        if (payloads.isNotEmpty()){
+        if (payloads.isNotEmpty()) {
             val map = payloads[0] as Map<*, *>
             val rssi = map["rssi"]
             holder.binding.tvRssi.text = rssi.toString()
-        }else{
+        } else {
             super.onBindViewHolder(holder, position, payloads)
         }
 
     }
+
     @SuppressLint("MissingPermission")
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = values[position]
         holder.binding.tvName.text = item.name
         holder.binding.tvMac.text = item.mac
         holder.binding.tvRssi.text = item.rssi.toString()
-        if (BleManager.isConnected(item)){
+        if (BleManager.isConnected(item)) {
             holder.binding.btnConnection.apply {
                 text = context.getString(R.string.disconnect)
                 setTextColor(context.getColor(R.color.colorPrimary))
@@ -54,7 +56,7 @@ class BleDeviceAdapter(
             holder.binding.btnDetail.visibility = View.VISIBLE
             holder.binding.tvRssi.visibility = View.GONE
             holder.binding.imgRssi.visibility = View.GONE
-        }else{
+        } else {
             holder.binding.btnConnection.apply {
                 text = context.getString(R.string.connect)
                 setTextColor(context.getColor(R.color.black))
@@ -68,19 +70,23 @@ class BleDeviceAdapter(
     override fun getItemCount(): Int = values.size
 
 
-    class ViewHolder(val binding: ItemBleDeviceBinding, private val onItemButtonClickListener: OnItemButtonClickListener? = null) :
+    class ViewHolder(
+        val binding: ItemBleDeviceBinding,
+        private val onItemButtonClickListener: OnItemButtonClickListener? = null
+    ) :
         RecyclerView.ViewHolder(binding.root) {
 
         init {
             binding.btnConnection.setOnClickListener {
-                onItemButtonClickListener?.onBtnConnectionClick(bindingAdapterPosition,)
+                onItemButtonClickListener?.onBtnConnectionClick(bindingAdapterPosition)
             }
             binding.btnDetail.setOnClickListener {
                 onItemButtonClickListener?.onBtnDetailClick(bindingAdapterPosition)
             }
         }
     }
-    interface OnItemButtonClickListener{
+
+    interface OnItemButtonClickListener {
         fun onBtnConnectionClick(position: Int)
         fun onBtnDetailClick(position: Int)
     }

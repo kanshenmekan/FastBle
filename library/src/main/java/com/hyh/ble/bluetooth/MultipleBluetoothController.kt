@@ -2,9 +2,11 @@ package com.hyh.ble.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothProfile
 import com.hyh.ble.BleManager
 import com.hyh.ble.data.BleDevice
+import com.hyh.ble.exception.BleException
 import com.hyh.ble.utils.BleLruHashMap
 
 @SuppressLint("MissingPermission")
@@ -138,6 +140,14 @@ class MultipleBluetoothController {
         return getConnectedBleBluetoothList().map { it.bleDevice }
     }
 
+    private fun getConnectingBleBluetoothList(): List<BleBluetooth> {
+        return bleTempHashMap.values.toList()
+    }
+
+    fun getConnectingDeviceList(): List<BleDevice> {
+        return bleTempHashMap.values.toList().map { it.bleDevice }
+    }
+
     private fun refreshConnectedDevice() {
         val bluetoothList = getConnectedBleBluetoothList()
         for (bleBluetooth in bluetoothList) {
@@ -145,5 +155,29 @@ class MultipleBluetoothController {
                 removeConnectedBleBluetooth(bleBluetooth)
             }
         }
+    }
+
+    fun onBleOff() {
+        getConnectedBleBluetoothList().forEach {
+            it.bleGattCallback?.onDisConnected(
+                true,
+                it.bleDevice,
+                it.bluetoothGatt,
+                BluetoothGatt.GATT_SUCCESS
+            )
+            it.destroy()
+        }
+        bleLruHashMap.clear()
+        getConnectingBleBluetoothList().forEach {
+            it.bleGattCallback?.onConnectFail(
+                it.bleDevice,
+                BleException.OtherException(
+                    BleException.BLUETOOTH_NOT_ENABLED,
+                    "Bluetooth is not enabled"
+                )
+            )
+            it.destroy()
+        }
+        bleTempHashMap.clear()
     }
 }
