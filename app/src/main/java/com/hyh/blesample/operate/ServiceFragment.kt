@@ -48,10 +48,21 @@ class ServiceFragment : Fragment() {
             binding.lv.setOnChildClickListener { _, _, groupPosition, childPosition, _ ->
                 val bundle = Bundle().apply {
                     putParcelable("device", bleDevice)
-                    putParcelable(
-                        "characteristic",
-                        it[groupPosition].characteristics[childPosition]
-                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        putParcelable(
+                            "characteristic",
+                            it[groupPosition].characteristics[childPosition]
+                        )
+                    } else {
+                        putString(
+                            "serviceUUID",
+                            it[groupPosition].uuid.toString()
+                        )
+                        putString(
+                            "characteristicUUID",
+                            it[groupPosition].characteristics[childPosition].uuid.toString()
+                        )
+                    }
                 }
                 findNavController().navigate(R.id.action_serviceFragment_to_operateFragment, bundle)
                 true

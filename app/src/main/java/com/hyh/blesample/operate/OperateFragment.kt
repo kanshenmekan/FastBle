@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGattCharacteristic
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
@@ -25,6 +24,7 @@ import com.hyh.blesample.databinding.FragmentOperateBinding
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 class OperateFragment : Fragment() {
     private val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
@@ -57,6 +57,11 @@ class OperateFragment : Fragment() {
         } else {
             @Suppress("DEPRECATION")
             arguments?.getParcelable("characteristic")
+        }
+        if (characteristic == null){
+            val characteristicUUID = arguments?.getString("characteristicUUID").run { UUID.fromString(this) }
+            val serviceUUID = arguments?.getString("serviceUUID").run { UUID.fromString(this) }
+            characteristic = BleManager.getBluetoothGatt(bleDevice)?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
         }
     }
 

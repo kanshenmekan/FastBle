@@ -124,6 +124,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 exception
             )
         }
+        destroy()
     }
 
     fun newOperator(uuid_service: String, uuid_characteristic: String): BleOperator {

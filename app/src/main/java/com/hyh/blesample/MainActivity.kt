@@ -303,6 +303,12 @@ class MainActivity : AppCompatActivity() {
                         .show()
                 }
 
+                override fun onConnectCancel(bleDevice: BleDevice?, skip: Boolean) {
+                    if (!skip) {
+                        progressLoading.dismiss()
+                    }
+                }
+
                 override fun onConnectSuccess(
                     bleDevice: BleDevice?,
                     gatt: BluetoothGatt?,
@@ -339,7 +345,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-            })
+            }, BleManager.CONNECT_BACKPRESSURE_LAST
+        )
     }
 
     @SuppressLint("MissingPermission")

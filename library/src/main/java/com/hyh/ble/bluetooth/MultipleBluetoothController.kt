@@ -18,11 +18,13 @@ class MultipleBluetoothController {
 
     @Synchronized
     fun buildConnectingBle(bleDevice: BleDevice): BleBluetooth {
-        val bleBluetooth = BleBluetooth(bleDevice)
-        if (!bleTempHashMap.containsKey(bleBluetooth.deviceKey)) {
+        return if (bleTempHashMap.containsKey(bleDevice.key)) {
+            bleTempHashMap[bleDevice.key]!!
+        } else {
+            val bleBluetooth = BleBluetooth(bleDevice)
             bleTempHashMap[bleBluetooth.deviceKey] = bleBluetooth
+            bleBluetooth
         }
-        return bleBluetooth
     }
 
     @Synchronized
@@ -61,7 +63,8 @@ class MultipleBluetoothController {
     }
 
     @Synchronized
-    fun cancelConnecting(bleDevice: BleDevice?) {
+    fun cancelConnecting(bleDevice: BleDevice?, skip: Boolean) {
+        bleTempHashMap[bleDevice?.key]?.bleGattCallback?.onConnectCancel(bleDevice, skip)
         bleTempHashMap[bleDevice?.key]?.destroy()
         bleTempHashMap.remove(bleDevice?.key)
     }
@@ -69,7 +72,7 @@ class MultipleBluetoothController {
     @Synchronized
     fun cancelAllConnectingDevice() {
         for (entry: Map.Entry<String?, BleBluetooth> in bleTempHashMap) {
-            entry.value.destroy()
+            cancelConnecting(entry.value.bleDevice, false)
         }
         bleTempHashMap.clear()
     }

@@ -10,7 +10,7 @@ abstract class BleGattCallback : BluetoothGattCallback() {
     abstract fun onStartConnect(bleDevice: BleDevice)
 
     abstract fun onConnectFail(bleDevice: BleDevice?, exception: BleException?)
-
+    abstract fun onConnectCancel(bleDevice: BleDevice?,skip:Boolean)
     abstract fun onConnectSuccess(bleDevice: BleDevice?, gatt: BluetoothGatt?, status: Int)
 
     abstract fun onDisConnected(

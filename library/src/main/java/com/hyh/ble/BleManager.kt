@@ -168,10 +168,10 @@ object BleManager {
         bleGattCallback: BleGattCallback,
         backpressure: Int = connectBackpressureStrategy
     ): BluetoothGatt? {
-        if (!isSupportBle(context)){
+        if (!isSupportBle(context)) {
             bleGattCallback.onConnectFail(
                 bleDevice,
-                BleException.OtherException(BleException.NOT_SUPPORT_BLE,"Bluetooth not support!")
+                BleException.OtherException(BleException.NOT_SUPPORT_BLE, "Bluetooth not support!")
             )
             return null
         }
@@ -179,7 +179,10 @@ object BleManager {
             BleLog.e("Bluetooth not enable!")
             bleGattCallback.onConnectFail(
                 bleDevice,
-                BleException.OtherException(BleException.BLUETOOTH_NOT_ENABLED,"Bluetooth not enable!")
+                BleException.OtherException(
+                    BleException.BLUETOOTH_NOT_ENABLED,
+                    "Bluetooth not enable!"
+                )
             )
             return null
         }
@@ -189,13 +192,17 @@ object BleManager {
         if (bleDevice.device == null) {
             bleGattCallback.onConnectFail(
                 bleDevice,
-                BleException.OtherException(BleException.DEVICE_NULL,"Not Found Device Exception Occurred!")
+                BleException.OtherException(
+                    BleException.DEVICE_NULL,
+                    "Not Found Device Exception Occurred!"
+                )
             )
         } else {
             if (backpressure == CONNECT_BACKPRESSURE_DROP) {
                 return if (multipleBluetoothController.isConnecting(bleDevice)) {
                     val bleBluetooth: BleBluetooth =
                         multipleBluetoothController.buildConnectingBle(bleDevice)
+                    bleBluetooth.bleGattCallback = bleGattCallback
                     bleBluetooth.bluetoothGatt
                 } else {
                     val bleBluetooth: BleBluetooth =
@@ -205,12 +212,12 @@ object BleManager {
                 }
             } else {
                 if (multipleBluetoothController.isConnecting(bleDevice)) {
-                    multipleBluetoothController.cancelConnecting(bleDevice)
+                    multipleBluetoothController.cancelConnecting(bleDevice,true)
                 }
                 val bleBluetooth: BleBluetooth =
                     multipleBluetoothController.buildConnectingBle(bleDevice)
                 val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
-                bleBluetooth.connect(context, autoConnect, bleGattCallback)
+                return bleBluetooth.connect(context, autoConnect, bleGattCallback)
             }
         }
         return null
@@ -232,7 +239,10 @@ object BleManager {
         bluetoothAdapter?.getRemoteDevice(mac)?.let {
             val bleDevice = convertBleDevice(it)
             return connect(bleDevice, bleGattCallback, backpressure)
-        }
+        } ?: bleGattCallback.onConnectFail(
+            null,
+            BleException.OtherException(BleException.DEVICE_NULL, "Device is null")
+        )
         return null
     }
 
@@ -256,7 +266,10 @@ object BleManager {
             callback.onNotifyFailure(
                 bleDevice,
                 null,
-                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device not connect!")
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device not connect!"
+                )
             )
         } else {
             bleBluetooth.newOperator(uuid_service, uuid_notify)
@@ -280,7 +293,10 @@ object BleManager {
             callback.onIndicateFailure(
                 bleDevice,
                 null,
-                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device not connect!")
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device not connect!"
+                )
             )
         } else {
             bleBluetooth.newOperator(uuid_service, uuid_indicate)
@@ -348,7 +364,7 @@ object BleManager {
             callback.onWriteFailure(
                 bleDevice,
                 null,
-                BleException.OtherException(BleException.DATA_NULL,"data is Null!"),
+                BleException.OtherException(BleException.DATA_NULL, "data is Null!"),
                 justWrite = null
             )
             return
@@ -360,7 +376,10 @@ object BleManager {
         if (bleBluetooth == null) {
             callback.onWriteFailure(
                 bleDevice, null,
-                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connect!"),
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device is not connect!"
+                ),
                 justWrite = data
             )
         } else {
@@ -397,7 +416,10 @@ object BleManager {
             ?: callback.onReadFailure(
                 bleDevice,
                 null,
-                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connected!")
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device is not connected!"
+                )
             )
     }
 
@@ -418,7 +440,10 @@ object BleManager {
         bleBluetooth?.newOperator()?.readRemoteRssi(callback)
             ?: callback.onRssiFailure(
                 bleDevice,
-                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connected!")
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device is not connected!"
+                )
             )
     }
 
@@ -456,7 +481,10 @@ object BleManager {
         bleBluetooth?.newOperator()?.setMtu(mtu, callback)
             ?: callback.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException(BleException.DEVICE_NOT_CONNECT,"This device is not connected!")
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device is not connected!"
+                )
             )
     }
 
@@ -570,14 +598,17 @@ object BleManager {
     fun disconnectAllDevice() {
         multipleBluetoothController.disconnectAllDevice()
     }
-    fun scannerDestroy(){
+
+    fun scannerDestroy() {
         BleScanner.destroy()
     }
-    fun removeScanCallback(){
+
+    fun removeScanCallback() {
         BleScanner.bleScanCallback = null
     }
+
     fun cancelConnecting(bleDevice: BleDevice?) {
-        multipleBluetoothController.cancelConnecting(bleDevice)
+        multipleBluetoothController.cancelConnecting(bleDevice,false)
     }
 
     fun cancelAllConnectingDevice() {
@@ -595,12 +626,14 @@ object BleManager {
     fun convertBleDevice(scanResult: ScanResult): BleDevice {
         return BleDevice(scanResult)
     }
+
     fun convertBleDevice(mac: String): BleDevice? {
         bluetoothAdapter?.getRemoteDevice(mac)?.let {
             return convertBleDevice(it)
         }
         return null
     }
+
     fun getBluetoothGatt(bleDevice: BleDevice?): BluetoothGatt? {
         return multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bluetoothGatt
     }
@@ -627,6 +660,7 @@ object BleManager {
     fun removeConnectGattCallback(bleDevice: BleDevice?) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bleGattCallback = null
     }
+
     fun removeRssiCallback(bleDevice: BleDevice?) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.removeRssiOperator()
     }
