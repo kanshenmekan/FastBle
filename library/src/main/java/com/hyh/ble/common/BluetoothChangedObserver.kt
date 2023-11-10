@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.util.Log
 import com.hyh.ble.BleManager
 import com.hyh.ble.scan.BleScanner
 import java.lang.ref.WeakReference
