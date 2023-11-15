@@ -360,19 +360,19 @@ class MainActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
-                        Toast.makeText(this@MainActivity, R.string.disconnected, Toast.LENGTH_LONG)
+                        Toast.makeText(this@MainActivity, R.string.connection_broken, Toast.LENGTH_LONG)
                             .show()
                     }
                 }
 
-            }, BleManager.CONNECT_BACKPRESSURE_LAST
-        )
+            })
     }
 
     @SuppressLint("MissingPermission")
     override fun onDestroy() {
         super.onDestroy()
-        BleManager.destroy()
+//        BleManager.destroy()
+        BleManager.release()
     }
 }
 

@@ -12,7 +12,7 @@
     <string name="retrieve_search_settings">收起搜索设置</string>
     <string name="connect_fail">连接失败</string>
     <string name="active_disconnected">连接断开</string>
-    <string name="disconnected">连接中断</string>
+    <string name="connection_broken">连接中断</string>
     <string name="please_open_blue">请先打开蓝牙</string>
     <string name="select_operation_type">选择操作</string>
     <string name="characteristic">Characteristic</string>

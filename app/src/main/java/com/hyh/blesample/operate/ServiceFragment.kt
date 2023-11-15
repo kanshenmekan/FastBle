@@ -67,7 +67,7 @@ class ServiceFragment : Fragment() {
                 findNavController().navigate(R.id.action_serviceFragment_to_operateFragment, bundle)
                 true
             }
-        } ?: Toast.makeText(requireContext(), R.string.disconnected, Toast.LENGTH_SHORT).show()
+        } ?: Toast.makeText(requireContext(), R.string.connection_broken, Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {

@@ -55,7 +55,6 @@ class MultipleBluetoothController {
             return
         }
         if (bleLruHashMap.containsKey(bleBluetooth.deviceKey)) {
-            bleLruHashMap[bleBluetooth.deviceKey]?.destroy()
             bleLruHashMap.remove(bleBluetooth.deviceKey)
         }
     }
@@ -66,9 +65,10 @@ class MultipleBluetoothController {
 
     @Synchronized
     fun cancelConnecting(bleDevice: BleDevice?, skip: Boolean) {
-        bleTempHashMap[bleDevice?.key]?.bleGattCallback?.onConnectCancel(bleDevice, skip)
-        bleTempHashMap[bleDevice?.key]?.destroy()
-        bleTempHashMap.remove(bleDevice?.key)
+        bleTempHashMap.remove(bleDevice?.key)?.let {
+            it.bleGattCallback?.onConnectCancel(bleDevice, skip)
+            it.destroy()
+        }
     }
 
     @Synchronized
@@ -153,12 +153,14 @@ class MultipleBluetoothController {
         for (bleBluetooth in bluetoothList) {
             if (BleManager.getConnectState(bleBluetooth.bleDevice) != BluetoothProfile.STATE_CONNECTED) {
                 removeConnectedBleBluetooth(bleBluetooth)
+                bleBluetooth.destroy()
             }
         }
     }
 
     fun onBleOff() {
         getConnectedBleBluetoothList().forEach {
+            removeConnectedBleBluetooth(it)
             it.bleGattCallback?.onDisConnected(
                 true,
                 it.bleDevice,
@@ -169,6 +171,7 @@ class MultipleBluetoothController {
         }
         bleLruHashMap.clear()
         getConnectingBleBluetoothList().forEach {
+            removeConnectingBle(it)
             it.bleGattCallback?.onConnectFail(
                 it.bleDevice,
                 BleException.OtherException(

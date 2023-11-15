@@ -30,7 +30,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
         data: ByteArray,
         continueWhenLastFail: Boolean,
         intervalBetweenTwoPackage: Long = 0,
-        callback: BleWriteCallback,
+        callback: BleWriteCallback?,
         writeType: Int
     ) {
         mData = data
