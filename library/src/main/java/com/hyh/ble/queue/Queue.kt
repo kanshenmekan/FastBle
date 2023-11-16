@@ -22,6 +22,9 @@ abstract class Queue<T : Task> : CoroutineScope {
         PriorityBlockingQueue(10, taskComparator)
     private var job: Job? = null
 
+    val remainSize
+        get() = priorityQueue.size
+
     fun offer(task: T): Boolean {
         return priorityQueue.offer(task)
     }
@@ -44,7 +47,7 @@ abstract class Queue<T : Task> : CoroutineScope {
         job?.cancel()
     }
 
-    private fun resume() {
+    fun resume() {
         if (job?.isActive == true) {
             return
         }

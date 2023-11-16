@@ -18,6 +18,7 @@ import com.hyh.ble.callback.BleReadCallback
 import com.hyh.ble.callback.BleWriteCallback
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.exception.BleException
+import com.hyh.ble.queue.operate.SequenceWriteOperator
 import com.hyh.ble.utils.HexUtil
 import com.hyh.blesample.adapter.SharedOperateAdapter
 import com.hyh.blesample.databinding.FragmentOperateBinding
@@ -58,10 +59,12 @@ class OperateFragment : Fragment() {
             @Suppress("DEPRECATION")
             arguments?.getParcelable("characteristic")
         }
-        if (characteristic == null){
-            val characteristicUUID = arguments?.getString("characteristicUUID").run { UUID.fromString(this) }
+        if (characteristic == null) {
+            val characteristicUUID =
+                arguments?.getString("characteristicUUID").run { UUID.fromString(this) }
             val serviceUUID = arguments?.getString("serviceUUID").run { UUID.fromString(this) }
-            characteristic = BleManager.getBluetoothGatt(bleDevice)?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
+            characteristic = BleManager.getBluetoothGatt(bleDevice)?.getService(serviceUUID)
+                ?.getCharacteristic(characteristicUUID)
         }
     }
 
@@ -76,6 +79,7 @@ class OperateFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         BleManager.clearCharacterCallback(bleDevice)
+        BleManager.clearAllQueue(bleDevice)
         _binding = null
     }
 
@@ -101,7 +105,8 @@ class OperateFragment : Fragment() {
                 }
             }
             HexUtil.hexStringToBytes(binding.etData.text.toString())?.let { data ->
-                write(data, writeType)
+//                write(data, writeType)
+                writeByQueue(data, writeType)
                 binding.etData.text = null
             } ?: binding.etData.setError("input error")
         }
@@ -202,6 +207,58 @@ class OperateFragment : Fragment() {
         }
     }
 
+    private val bleWriteCallback = object : BleWriteCallback() {
+        override fun onWriteSuccess(
+            bleDevice: BleDevice,
+            characteristic: BluetoothGattCharacteristic,
+            current: Int,
+            total: Int,
+            justWrite: ByteArray?,
+            data: ByteArray?
+        ) {
+            if (current == total) {
+                writeData.add(
+                    "${sdf.format(Date())}: success ${
+                        HexUtil.encodeHexStr(
+                            data
+                        )
+                    }"
+                )
+                writeAdapter.notifyItemInserted(writeData.lastIndex)
+                binding.rvWrite.scrollToPosition(writeData.lastIndex)
+            }
+        }
+
+        override fun onWriteFailure(
+            bleDevice: BleDevice?,
+            characteristic: BluetoothGattCharacteristic?,
+            exception: BleException?,
+            current: Int,
+            total: Int,
+            justWrite: ByteArray?,
+            data: ByteArray?,
+            isTotalFail: Boolean
+        ) {
+            if (isTotalFail) {
+                writeData.add("${sdf.format(Date())}: fail ${HexUtil.encodeHexStr(data)}")
+                writeAdapter.notifyItemInserted(writeData.lastIndex)
+                binding.rvWrite.scrollToPosition(writeData.lastIndex)
+            }
+        }
+
+    }
+
+    private fun writeByQueue(data: ByteArray, writeType: Int) {
+        characteristic?.let {
+            val sequenceWriteOperator =
+                SequenceWriteOperator.Builder().serviceUUID(it.service.uuid.toString())
+                    .characteristicUUID(it.uuid.toString()).data(data).writeType(writeType)
+                    .bleWriteCallback(bleWriteCallback)
+                    .build()
+            BleManager.addOperatorToQueue(bleDevice, sequenceBleOperator = sequenceWriteOperator)
+        }
+    }
+
     @SuppressLint("MissingPermission")
     private fun write(data: ByteArray, writeType: Int) {
         characteristic?.let {
@@ -211,46 +268,8 @@ class OperateFragment : Fragment() {
                 it.uuid.toString(),
                 data,
                 writeType = writeType,
-                callback = object : BleWriteCallback() {
-                    override fun onWriteSuccess(
-                        bleDevice: BleDevice,
-                        characteristic: BluetoothGattCharacteristic,
-                        current: Int,
-                        total: Int,
-                        justWrite: ByteArray?,
-                        data: ByteArray?
-                    ) {
-                        if (current == total) {
-                            writeData.add(
-                                "${sdf.format(Date())}: success ${
-                                    HexUtil.encodeHexStr(
-                                        data
-                                    )
-                                }"
-                            )
-                            writeAdapter.notifyItemInserted(writeData.lastIndex)
-                            binding.rvWrite.scrollToPosition(writeData.lastIndex)
-                        }
-                    }
-
-                    override fun onWriteFailure(
-                        bleDevice: BleDevice?,
-                        characteristic: BluetoothGattCharacteristic?,
-                        exception: BleException?,
-                        current: Int,
-                        total: Int,
-                        justWrite: ByteArray?,
-                        data: ByteArray?,
-                        isTotalFail: Boolean
-                    ) {
-                        if (isTotalFail) {
-                            writeData.add("${sdf.format(Date())}: fail ${HexUtil.encodeHexStr(data)}")
-                            writeAdapter.notifyItemInserted(writeData.lastIndex)
-                            binding.rvWrite.scrollToPosition(writeData.lastIndex)
-                        }
-                    }
-
-                })
+                callback = bleWriteCallback
+            )
         }
     }
 
@@ -267,7 +286,11 @@ class OperateFragment : Fragment() {
             characteristic: BluetoothGattCharacteristic?,
             exception: BleException?
         ) {
-            Toast.makeText(requireContext(), "onNotifyFailure ${exception?.description}",Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "onNotifyFailure ${exception?.description}",
+                Toast.LENGTH_LONG
+            ).show()
             binding.swNotify.takeIf { it.isChecked }?.isChecked = false
         }
 
@@ -323,7 +346,11 @@ class OperateFragment : Fragment() {
             characteristic: BluetoothGattCharacteristic?,
             exception: BleException?
         ) {
-            Toast.makeText(requireContext(), "onIndicateFailure ${exception?.description}",Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                requireContext(),
+                "onIndicateFailure ${exception?.description}",
+                Toast.LENGTH_LONG
+            ).show()
             binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
         }
 

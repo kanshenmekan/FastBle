@@ -30,6 +30,7 @@ import com.hyh.ble.common.BluetoothChangedObserver
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.data.BleScanState
 import com.hyh.ble.exception.BleException
+import com.hyh.ble.queue.operate.SequenceBleOperator
 import com.hyh.ble.scan.BleScanRuleConfig
 import com.hyh.ble.scan.BleScanner
 import com.hyh.ble.utils.BleLog
@@ -695,5 +696,66 @@ object BleManager {
             bleObserver!!.unregisterReceiver(context)
             bleObserver = null
         }
+    }
+
+    /**队列相关*****************************************************************/
+
+    fun removeOperateQueue(
+        bleDevice: BleDevice?,
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER
+    ) {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        bleBluetooth?.removeOperateQueue(identifier)
+    }
+
+    fun removeOperatorFromQueue(
+        bleDevice: BleDevice?,
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
+        sequenceBleOperator: SequenceBleOperator
+    ): Boolean {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        return bleBluetooth?.removeOperatorFromQueue(identifier, sequenceBleOperator) ?: false
+    }
+
+    fun addOperatorToQueue(
+        bleDevice: BleDevice?,
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
+        sequenceBleOperator: SequenceBleOperator
+    ): Boolean {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        return bleBluetooth?.addOperatorToQueue(identifier, sequenceBleOperator) ?: false
+    }
+
+    fun clearQueue(
+        bleDevice: BleDevice?,
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER
+    ) {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        bleBluetooth?.clearQueue(identifier)
+    }
+
+    fun clearAllQueue(bleDevice: BleDevice?) {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        bleBluetooth?.clearOperatorQueue()
+    }
+
+    fun pauseQueue(
+        bleDevice: BleDevice?,
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER
+    ) {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        bleBluetooth?.pauseQueue(identifier)
+    }
+
+    fun resume(bleDevice: BleDevice?, identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER) {
+        val bleBluetooth: BleBluetooth? =
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        bleBluetooth?.resume(identifier)
     }
 }

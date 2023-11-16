@@ -23,6 +23,8 @@ import com.hyh.ble.common.BleConnectStrategy
 import com.hyh.ble.common.TimeoutTask
 import com.hyh.ble.data.BleDevice
 import com.hyh.ble.exception.BleException
+import com.hyh.ble.queue.operate.BleOperatorQueue
+import com.hyh.ble.queue.operate.SequenceBleOperator
 import com.hyh.ble.utils.BleLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +36,10 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
+    companion object {
+        const val DEFAULT_QUEUE_IDENTIFIER = "com.hyh.ble.bluetooth.BleBluetooth"
+    }
+
     private val connectTimeOutTask by lazy {
         TimeoutTask(
             bleConnectStrategy.connectOverTime, object : TimeoutTask.OnResultCallBack {
@@ -52,6 +58,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     private val bleIndicateOperatorMap: HashMap<String, BleOperator> = HashMap()
     private val bleWriteOperatorMap: HashMap<String, BleOperator> = HashMap()
     private val bleReadOperatorMap: HashMap<String, BleOperator> = HashMap()
+    private val bleOperatorQueueMap: HashMap<String, BleOperatorQueue> = HashMap()
     private var bleRssiOperator: BleOperator? = null
     private var bleMtuOperator: BleOperator? = null
     private var lastState: LastState? = null
@@ -140,6 +147,50 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     fun newOperator(): BleOperator {
         return BleOperator(this)
     }
+    @Synchronized
+    private fun createOperateQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER): Boolean {
+        return if (bleOperatorQueueMap.containsKey(identifier)) {
+            bleOperatorQueueMap[identifier]?.startProcessingTasks()
+            false
+        } else {
+            val bleOperatorQueue = BleOperatorQueue(this)
+            bleOperatorQueueMap[identifier] = bleOperatorQueue
+            bleOperatorQueue.startProcessingTasks()
+            true
+        }
+    }
+    @Synchronized
+    fun removeOperateQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
+        bleOperatorQueueMap[identifier]?.destroy()
+        bleOperatorQueueMap.remove(identifier)
+    }
+    @Synchronized
+    fun removeOperatorFromQueue(
+        identifier: String = DEFAULT_QUEUE_IDENTIFIER,
+        sequenceBleOperator: SequenceBleOperator
+    ): Boolean {
+        return bleOperatorQueueMap[identifier]?.remove(sequenceBleOperator) ?: true
+    }
+    @Synchronized
+    fun addOperatorToQueue(
+        identifier: String = DEFAULT_QUEUE_IDENTIFIER,
+        sequenceBleOperator: SequenceBleOperator
+    ): Boolean {
+        createOperateQueue(identifier)
+        return bleOperatorQueueMap[identifier]?.offer(sequenceBleOperator) ?: false
+    }
+    @Synchronized
+    fun clearQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
+        bleOperatorQueueMap[identifier]?.clear()
+    }
+    @Synchronized
+    fun pauseQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
+        bleOperatorQueueMap[identifier]?.pause()
+    }
+    @Synchronized
+    fun resume(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
+        bleOperatorQueueMap[identifier]?.resume()
+    }
 
     private fun discoverFail() {
         connectedFail(BleException.DiscoverException())
@@ -195,9 +246,19 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         removeRssiOperator()
         removeMtuOperator()
         clearCharacterOperator()
+        clearOperatorQueue()
         connectTimeOutTask.onTimeoutResultCallBack = null
         cancel()
     }
+
+    @Synchronized
+    fun clearOperatorQueue() {
+        for (entry: Map.Entry<String?, BleOperatorQueue> in bleOperatorQueueMap) {
+            entry.value.destroy()
+        }
+        bleOperatorQueueMap.clear()
+    }
+
 
     @Synchronized
     fun clearCharacterOperator() {
