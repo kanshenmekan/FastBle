@@ -4,13 +4,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.concurrent.PriorityBlockingQueue
 
 abstract class Queue<T : Task> : CoroutineScope {
+    private val channel = Channel<TaskResult>()
     private val taskComparator = Comparator<T> { task1, task2 ->
         if (task2.priority != task1.priority) {
             task2.priority.compareTo(task1.priority) // 逆序排列，优先级高的排在前面
@@ -33,8 +36,8 @@ abstract class Queue<T : Task> : CoroutineScope {
         resume()
     }
 
-    abstract fun execute(task: T)
-
+    //    abstract fun execute(task: T)
+    abstract fun execute(task: T, channel: Channel<TaskResult>)
     fun clear() {
         priorityQueue.clear()
     }
@@ -55,7 +58,21 @@ abstract class Queue<T : Task> : CoroutineScope {
             while (isActive) {
                 val task = priorityQueue.take()
                 withContext(Dispatchers.Main) {
-                    execute(task)
+                    execute(task, channel)
+                }
+                if (task.continuous) {
+                    if (task.timeout > 0) {
+                        withTimeoutOrNull(task.timeout) {
+                            do {
+                                val result = channel.receive()
+                            } while (result.task != task)
+                            return@withTimeoutOrNull
+                        }
+                    } else {
+                        do {
+                            val result = channel.receive()
+                        } while (result.task != task)
+                    }
                 }
                 delay(task.delay)
             }
@@ -63,6 +80,7 @@ abstract class Queue<T : Task> : CoroutineScope {
     }
 
     fun destroy() {
+        channel.close()
         clear()
         cancel()
     }
