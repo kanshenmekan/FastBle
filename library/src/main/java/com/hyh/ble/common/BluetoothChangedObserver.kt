@@ -12,7 +12,8 @@ import java.lang.ref.WeakReference
 
 class BluetoothChangedObserver {
     private var mBleReceiver: BleReceiver? = null
-    var bleStatusCallback:BleStatusCallback? = null
+    var bleStatusCallback: BleStatusCallback? = null
+
     interface BleStatusCallback {
         fun onStateOn()
         fun onStateTurningOn()
@@ -26,8 +27,9 @@ class BluetoothChangedObserver {
         filter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
         context.registerReceiver(mBleReceiver, filter)
     }
+
     fun unregisterReceiver(context: Context) {
-        if (mBleReceiver != null){
+        if (mBleReceiver != null) {
             try {
                 context.unregisterReceiver(mBleReceiver)
                 bleStatusCallback = null
@@ -36,6 +38,7 @@ class BluetoothChangedObserver {
             }
         }
     }
+
     class BleReceiver(bluetoothChangedObserver: BluetoothChangedObserver) : BroadcastReceiver() {
         private var mObserverWeakReference: WeakReference<BluetoothChangedObserver>
 
@@ -44,7 +47,7 @@ class BluetoothChangedObserver {
         }
 
         override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED){
+            if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
                 val observer = mObserverWeakReference.get()
                 when (intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {
                     BluetoothAdapter.STATE_OFF -> {
@@ -52,7 +55,8 @@ class BluetoothChangedObserver {
                         BleScanner.stopLeScan()
                         BleManager.multipleBluetoothController.onBleOff()
                     }
-                    BluetoothAdapter.STATE_TURNING_OFF ->{
+
+                    BluetoothAdapter.STATE_TURNING_OFF -> {
                         observer?.bleStatusCallback?.onStateTurningOff()
                     }
 

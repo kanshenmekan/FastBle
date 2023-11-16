@@ -105,7 +105,6 @@ class OperateFragment : Fragment() {
                 }
             }
             HexUtil.hexStringToBytes(binding.etData.text.toString())?.let { data ->
-//                write(data, writeType)
                 writeByQueue(data, writeType)
                 binding.etData.text = null
             } ?: binding.etData.setError("input error")
@@ -206,7 +205,6 @@ class OperateFragment : Fragment() {
                 })
         }
     }
-
     private val bleWriteCallback = object : BleWriteCallback() {
         override fun onWriteSuccess(
             bleDevice: BleDevice,
@@ -240,7 +238,13 @@ class OperateFragment : Fragment() {
             isTotalFail: Boolean
         ) {
             if (isTotalFail) {
-                writeData.add("${sdf.format(Date())}: fail ${HexUtil.encodeHexStr(data)}")
+                writeData.add(
+                    "${sdf.format(Date())}: fail ${exception?.description} ${
+                        HexUtil.encodeHexStr(
+                            data
+                        )
+                    }"
+                )
                 writeAdapter.notifyItemInserted(writeData.lastIndex)
                 binding.rvWrite.scrollToPosition(writeData.lastIndex)
             }
@@ -248,12 +252,15 @@ class OperateFragment : Fragment() {
 
     }
 
-    private fun writeByQueue(data: ByteArray, writeType: Int) {
+    private fun writeByQueue(data: ByteArray, writeType: Int, continuous: Boolean = false) {
         characteristic?.let {
             val sequenceWriteOperator =
                 SequenceWriteOperator.Builder().serviceUUID(it.service.uuid.toString())
                     .characteristicUUID(it.uuid.toString()).data(data).writeType(writeType)
                     .bleWriteCallback(bleWriteCallback)
+                    .continuous(continuous)
+                    .delay(if (continuous) 10 else 100)
+                    .timeout(1000)
                     .build()
             BleManager.addOperatorToQueue(bleDevice, sequenceBleOperator = sequenceWriteOperator)
         }

@@ -50,7 +50,7 @@ class BleConnectStrategy {
         return this
     }
 
-    fun applyStrategy(strategy: BleConnectStrategy) :BleConnectStrategy{
+    fun applyStrategy(strategy: BleConnectStrategy): BleConnectStrategy {
         this.connectBackpressureStrategy = strategy.connectBackpressureStrategy
         this.reConnectCount = strategy.reConnectCount
         this.reConnectInterval = strategy.reConnectInterval

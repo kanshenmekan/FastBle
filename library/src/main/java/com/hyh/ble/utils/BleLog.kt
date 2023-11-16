@@ -4,6 +4,7 @@ import android.util.Log
 
 object BleLog {
     var isPrint = true
+
     @JvmStatic
     private val defaultTag = "FastBle"
 

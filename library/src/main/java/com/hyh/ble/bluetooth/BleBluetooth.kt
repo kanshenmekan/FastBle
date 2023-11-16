@@ -147,6 +147,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     fun newOperator(): BleOperator {
         return BleOperator(this)
     }
+
     @Synchronized
     private fun createOperateQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER): Boolean {
         return if (bleOperatorQueueMap.containsKey(identifier)) {
@@ -159,11 +160,13 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             true
         }
     }
+
     @Synchronized
     fun removeOperateQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
         bleOperatorQueueMap[identifier]?.destroy()
         bleOperatorQueueMap.remove(identifier)
     }
+
     @Synchronized
     fun removeOperatorFromQueue(
         identifier: String = DEFAULT_QUEUE_IDENTIFIER,
@@ -171,6 +174,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     ): Boolean {
         return bleOperatorQueueMap[identifier]?.remove(sequenceBleOperator) ?: true
     }
+
     @Synchronized
     fun addOperatorToQueue(
         identifier: String = DEFAULT_QUEUE_IDENTIFIER,
@@ -179,14 +183,17 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         createOperateQueue(identifier)
         return bleOperatorQueueMap[identifier]?.offer(sequenceBleOperator) ?: false
     }
+
     @Synchronized
     fun clearQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
         bleOperatorQueueMap[identifier]?.clear()
     }
+
     @Synchronized
     fun pauseQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
         bleOperatorQueueMap[identifier]?.pause()
     }
+
     @Synchronized
     fun resume(identifier: String = DEFAULT_QUEUE_IDENTIFIER) {
         bleOperatorQueueMap[identifier]?.resume()

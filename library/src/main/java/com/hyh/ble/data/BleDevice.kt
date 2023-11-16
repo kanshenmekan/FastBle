@@ -40,7 +40,7 @@ data class BleDevice(
      * DEVICE_TYPE_DUAL = 3
      */
     val deviceType
-        get() = device?.type?:BluetoothDevice.DEVICE_TYPE_UNKNOWN
+        get() = device?.type ?: BluetoothDevice.DEVICE_TYPE_UNKNOWN
 
     /**
      * 自定义属性值
@@ -48,6 +48,7 @@ data class BleDevice(
     private val propertyMap: HashMap<String, Any> by lazy {
         hashMapOf()
     }
+
     @Suppress("DEPRECATION")
     constructor(parcel: Parcel) : this(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -68,16 +69,18 @@ data class BleDevice(
         }
     ) {
         bleAlias = parcel.readString()
-        parcel.readMap(propertyMap,HashMap::class.java.classLoader)
+        parcel.readMap(propertyMap, HashMap::class.java.classLoader)
 
     }
 
     fun put(key: String, value: Any) {
         propertyMap[key] = value
     }
+
     operator fun get(key: String?): Any? {
         return propertyMap[key]
     }
+
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeParcelable(scanResult, flags)
         parcel.writeParcelable(device, flags)
