@@ -1,4 +1,4 @@
-import com.android.build.gradle.internal.api.LibraryVariantOutputImpl
+
 
 plugins {
     id("com.android.library")
@@ -27,11 +27,11 @@ android {
         // 剔除这个包下的所有文件（不会移除签名信息）
         resources.excludes.add("META-INF/*******")
     }
-    libraryVariants.configureEach {
-        this.outputs.filterIsInstance<LibraryVariantOutputImpl>().forEach {
-            it.outputFileName = "${project.rootProject.name}-$VERSION_NAME.aar"
-        }
-    }
+//    libraryVariants.configureEach {
+//        this.outputs.filterIsInstance<LibraryVariantOutputImpl>().forEach {
+//            it.outputFileName = "${project.rootProject.name}-$VERSION_NAME.aar"
+//        }
+//    }
 
 }
 
