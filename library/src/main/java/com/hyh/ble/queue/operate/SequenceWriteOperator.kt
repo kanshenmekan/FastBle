@@ -123,19 +123,19 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         private var continuous: Boolean = false
         private var timeout: Long = 0
 
-        constructor(builder: Builder) : this() {
-            this.priority = builder.priority
-            this.delay = builder.delay
-            this.serviceUUID = builder.serviceUUID
-            this.characteristicUUID = builder.characteristicUUID
-            this.data = builder.data
-            this.bleWriteCallback = builder.bleWriteCallback
-            this.split = builder.split
-            this.continueWhenLastFail = builder.continueWhenLastFail
-            this.intervalBetweenTwoPackage = builder.intervalBetweenTwoPackage
-            this.writeType = builder.writeType
-            this.continuous = builder.continuous
-            this.timeout = builder.timeout
+        constructor(writeOperator: SequenceWriteOperator) : this() {
+            this.priority = writeOperator.priority
+            this.delay = writeOperator.delay
+            this.serviceUUID = writeOperator.serviceUUID
+            this.characteristicUUID = writeOperator.characteristicUUID
+            this.data = writeOperator.data
+            this.bleWriteCallback = writeOperator.bleWriteCallback
+            this.split = writeOperator.split
+            this.continueWhenLastFail = writeOperator.continueWhenLastFail
+            this.intervalBetweenTwoPackage = writeOperator.intervalBetweenTwoPackage
+            this.writeType = writeOperator.writeType
+            this.continuous = writeOperator.continuous
+            this.timeout = writeOperator.timeout
         }
 
         fun priority(priority: Int): Builder {
@@ -198,18 +198,22 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             return this
         }
 
+        fun applySequenceWriteOperator(writeOperator: SequenceWriteOperator) {
+            writeOperator.serviceUUID = this.serviceUUID
+            writeOperator.characteristicUUID = this.characteristicUUID
+            writeOperator.data = this.data
+            writeOperator.bleWriteCallback = this.bleWriteCallback
+            writeOperator.split = this.split
+            writeOperator.continueWhenLastFail = this.continueWhenLastFail
+            writeOperator.intervalBetweenTwoPackage = this.intervalBetweenTwoPackage
+            writeOperator.writeType = this.writeType
+            writeOperator.continuous = this.continuous
+            writeOperator.timeout = this.timeout
+        }
+
         fun build(): SequenceWriteOperator {
             return SequenceWriteOperator(priority, delay).apply {
-                this.serviceUUID = this@Builder.serviceUUID
-                this.characteristicUUID = this@Builder.characteristicUUID
-                this.data = this@Builder.data
-                this.bleWriteCallback = this@Builder.bleWriteCallback
-                this.split = this@Builder.split
-                this.continueWhenLastFail = this@Builder.continueWhenLastFail
-                this.intervalBetweenTwoPackage = this@Builder.intervalBetweenTwoPackage
-                this.writeType = this@Builder.writeType
-                this.continuous = this@Builder.continuous
-                this.timeout = this@Builder.timeout
+                applySequenceWriteOperator(this)
             }
         }
     }

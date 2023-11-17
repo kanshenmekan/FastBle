@@ -19,6 +19,9 @@ class BleScanRuleConfig private constructor() {
         private set
     var mScanTimeOut = BleManager.DEFAULT_SCAN_TIME
         private set
+    var mFuzzyName:Boolean = false
+        private set
+
     private var scanSettings: ScanSettings? = null
 
     fun generateScanFilter(): List<ScanFilter> {
@@ -27,9 +30,11 @@ class BleScanRuleConfig private constructor() {
             val build = ScanFilter.Builder().setServiceUuid(ParcelUuid(it))
             scanFilters.add(build.build())
         }
-        mDeviceNames?.forEach {
-            val build = ScanFilter.Builder().setDeviceName(it)
-            scanFilters.add(build.build())
+        if (!mFuzzyName){
+            mDeviceNames?.forEach {
+                val build = ScanFilter.Builder().setDeviceName(it)
+                scanFilters.add(build.build())
+            }
         }
         mDeviceMacs?.forEach {
             val build = ScanFilter.Builder().setDeviceAddress(it)
@@ -69,18 +74,19 @@ class BleScanRuleConfig private constructor() {
         private var mAutoConnect = false
         private var mTimeOut = BleManager.DEFAULT_SCAN_TIME
         private var scanSettings: ScanSettings? = null
+        private var mFuzzyName:Boolean = false
         fun setServiceUuids(uuids: List<UUID>?): Builder {
             mServiceUuids = uuids
             return this
         }
 
-        fun setDeviceName(vararg names: String): Builder {
-            mDeviceNames = names.toList()
-            return this
+        fun setDeviceName(vararg names: String,isFuzzy:Boolean = false): Builder {
+            return setDeviceName(names.toList(),isFuzzy)
         }
 
-        fun setDeviceName(names: List<String>?): Builder {
+        fun setDeviceName(names: List<String>?,isFuzzy:Boolean = false): Builder {
             mDeviceNames = names
+            mFuzzyName = isFuzzy
             return this
         }
 
@@ -110,6 +116,7 @@ class BleScanRuleConfig private constructor() {
             config.mAutoConnect = mAutoConnect
             config.mScanTimeOut = mTimeOut
             config.scanSettings = scanSettings
+            config.mFuzzyName = mFuzzyName
         }
 
         fun build(): BleScanRuleConfig {

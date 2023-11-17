@@ -228,7 +228,7 @@ class MainActivity : AppCompatActivity() {
 
         val scanRuleConfig = BleScanRuleConfig.Builder()
             .setServiceUuids(serviceUUID) // 只扫描指定的服务的设备，可选
-            .setDeviceName(names) // 只扫描指定广播名的设备，可选
+            .setDeviceName(names, true) // 只扫描指定广播名的设备，可选
             .setAutoConnect(autoConnect) // 连接时的autoConnect参数，可选，默认false
             .setScanTimeOut(10000) // 扫描超时时间，可选，默认10秒
             .build()
@@ -360,7 +360,11 @@ class MainActivity : AppCompatActivity() {
                             Toast.LENGTH_LONG
                         ).show()
                     } else {
-                        Toast.makeText(this@MainActivity, R.string.connection_broken, Toast.LENGTH_LONG)
+                        Toast.makeText(
+                            this@MainActivity,
+                            R.string.connection_broken,
+                            Toast.LENGTH_LONG
+                        )
                             .show()
                     }
                 }
