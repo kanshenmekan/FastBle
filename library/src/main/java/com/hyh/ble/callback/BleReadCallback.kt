@@ -23,6 +23,6 @@ abstract class BleReadCallback : BleOperateCallback() {
     abstract fun onReadFailure(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
-        exception: BleException?
+        exception: BleException
     )
 }

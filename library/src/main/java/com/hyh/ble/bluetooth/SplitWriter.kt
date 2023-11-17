@@ -49,8 +49,8 @@ class SplitWriter(private val writeOperator: BleOperator) {
             characteristic: BluetoothGattCharacteristic,
             current: Int,
             total: Int,
-            justWrite: ByteArray?,
-            data: ByteArray?
+            justWrite: ByteArray,
+            data: ByteArray
         ) {
             val position = mTotalNum - mDataQueue!!.size
             mCallback?.onWriteSuccess(
@@ -59,7 +59,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
                 position,
                 mTotalNum,
                 justWrite,
-                mData
+                mData!!
             )
             if (mDataQueue!!.isEmpty()) {
                 channel.close()

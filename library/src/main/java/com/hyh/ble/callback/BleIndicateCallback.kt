@@ -13,12 +13,12 @@ abstract class BleIndicateCallback : BleOperateCallback() {
     abstract fun onIndicateFailure(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
-        exception: BleException?
+        exception: BleException
     )
 
     abstract fun onIndicateCancel(
         bleDevice: BleDevice,
-        characteristic: BluetoothGattCharacteristic?
+        characteristic: BluetoothGattCharacteristic
     )
 
     abstract fun onCharacteristicChanged(

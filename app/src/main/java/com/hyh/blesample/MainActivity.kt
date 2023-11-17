@@ -315,7 +315,7 @@ class MainActivity : AppCompatActivity() {
                     progressLoading.show()
                 }
 
-                override fun onConnectFail(bleDevice: BleDevice?, exception: BleException?) {
+                override fun onConnectFail(bleDevice: BleDevice?, exception: BleException) {
                     progressLoading.dismiss()
                     Toast.makeText(this@MainActivity, R.string.connect_fail, Toast.LENGTH_LONG)
                         .show()

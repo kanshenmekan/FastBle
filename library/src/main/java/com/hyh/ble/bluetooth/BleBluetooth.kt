@@ -650,7 +650,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                         if (status == BluetoothGatt.GATT_SUCCESS) {
                             (operator.operateCallback as? BleWriteCallback)?.onWriteSuccess(
                                 bleDevice = bleDevice, characteristic = characteristic!!,
-                                justWrite = data
+                                justWrite = data!!
                             )
                         } else {
                             (operator.operateCallback as? BleWriteCallback)?.onWriteFailure(

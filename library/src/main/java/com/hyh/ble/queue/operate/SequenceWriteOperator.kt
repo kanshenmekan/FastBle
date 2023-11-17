@@ -34,8 +34,8 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 characteristic: BluetoothGattCharacteristic,
                 current: Int,
                 total: Int,
-                justWrite: ByteArray?,
-                data: ByteArray?
+                justWrite: ByteArray,
+                data: ByteArray
             ) {
                 bleWriteCallback?.onWriteSuccess(
                     bleDevice,

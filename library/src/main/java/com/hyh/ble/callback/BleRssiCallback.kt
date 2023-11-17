@@ -14,7 +14,7 @@ abstract class BleRssiCallback : BleOperateCallback() {
         onRssiFailure(bleDevice, exception)
     }
 
-    abstract fun onRssiFailure(bleDevice: BleDevice, exception: BleException?)
+    abstract fun onRssiFailure(bleDevice: BleDevice, exception: BleException)
 
     abstract fun onRssiSuccess(bleDevice: BleDevice, rssi: Int)
 }

@@ -197,7 +197,7 @@ class OperateFragment : Fragment() {
                     override fun onReadFailure(
                         bleDevice: BleDevice,
                         characteristic: BluetoothGattCharacteristic?,
-                        exception: BleException?
+                        exception: BleException
                     ) {
 
                     }
@@ -211,8 +211,8 @@ class OperateFragment : Fragment() {
             characteristic: BluetoothGattCharacteristic,
             current: Int,
             total: Int,
-            justWrite: ByteArray?,
-            data: ByteArray?
+            justWrite: ByteArray,
+            data: ByteArray
         ) {
             if (current == total) {
                 writeData.add(
@@ -291,11 +291,11 @@ class OperateFragment : Fragment() {
         override fun onNotifyFailure(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
-            exception: BleException?
+            exception: BleException
         ) {
             Toast.makeText(
                 requireContext(),
-                "onNotifyFailure ${exception?.description}",
+                "onNotifyFailure ${exception.description}",
                 Toast.LENGTH_LONG
             ).show()
             binding.swNotify.takeIf { it.isChecked }?.isChecked = false
@@ -303,7 +303,7 @@ class OperateFragment : Fragment() {
 
         override fun onNotifyCancel(
             bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic?
+            characteristic: BluetoothGattCharacteristic
         ) {
             binding.swNotify.takeIf { it.isChecked }?.isChecked = false
         }
@@ -351,11 +351,11 @@ class OperateFragment : Fragment() {
         override fun onIndicateFailure(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
-            exception: BleException?
+            exception: BleException
         ) {
             Toast.makeText(
                 requireContext(),
-                "onIndicateFailure ${exception?.description}",
+                "onIndicateFailure ${exception.description}",
                 Toast.LENGTH_LONG
             ).show()
             binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
@@ -363,7 +363,7 @@ class OperateFragment : Fragment() {
 
         override fun onIndicateCancel(
             bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic?
+            characteristic: BluetoothGattCharacteristic
         ) {
             binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
         }
