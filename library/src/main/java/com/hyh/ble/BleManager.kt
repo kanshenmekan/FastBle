@@ -8,7 +8,6 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
-import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Looper
@@ -131,7 +130,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun connect(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         bleGattCallback: BleGattCallback?,
         strategy: BleConnectStrategy = bleConnectStrategy
     ): BluetoothGatt? {
@@ -156,54 +155,38 @@ object BleManager {
         if (Looper.myLooper() == null || Looper.myLooper() != Looper.getMainLooper()) {
             BleLog.w("Be careful: currentThread is not MainThread!")
         }
-        if (bleDevice == null) {
-            bleGattCallback?.onConnectFail(
-                null,
-                BleException.OtherException(BleException.DEVICE_NULL, "Device is null")
-            )
+
+        if (multipleBluetoothController.isConnectedDevice(bleDevice)) {
+            bleGattCallback?.onConnectCancel(bleDevice, true)
+            return getBluetoothGatt(bleDevice)
         }
-        if (bleDevice!!.device == null) {
-            bleGattCallback?.onConnectFail(
-                bleDevice,
-                BleException.OtherException(
-                    BleException.DEVICE_NULL,
-                    "Not Found Device Exception Occurred!"
-                )
-            )
-        } else {
-            if (multipleBluetoothController.isConnectedDevice(bleDevice)) {
+        if (strategy.connectBackpressureStrategy == BleConnectStrategy.CONNECT_BACKPRESSURE_DROP) {
+            return if (multipleBluetoothController.isConnecting(bleDevice)) {
+                val bleBluetooth: BleBluetooth =
+                    multipleBluetoothController.buildConnectingBle(bleDevice)
+                bleBluetooth.bleGattCallback = bleGattCallback
                 bleGattCallback?.onConnectCancel(bleDevice, true)
-                return getBluetoothGatt(bleDevice)
-            }
-            if (strategy.connectBackpressureStrategy == BleConnectStrategy.CONNECT_BACKPRESSURE_DROP) {
-                return if (multipleBluetoothController.isConnecting(bleDevice)) {
-                    val bleBluetooth: BleBluetooth =
-                        multipleBluetoothController.buildConnectingBle(bleDevice)
-                    bleBluetooth.bleGattCallback = bleGattCallback
-                    bleGattCallback?.onConnectCancel(bleDevice, true)
-                    bleBluetooth.bluetoothGatt
-                } else {
-                    val bleBluetooth: BleBluetooth =
-                        multipleBluetoothController.buildConnectingBle(bleDevice)
-                    val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
-                    bleBluetooth.connect(context, autoConnect, bleConnectStrategy, bleGattCallback)
-                }
+                bleBluetooth.bluetoothGatt
             } else {
-                if (multipleBluetoothController.isConnecting(bleDevice)) {
-                    multipleBluetoothController.cancelConnecting(bleDevice, true)
-                }
                 val bleBluetooth: BleBluetooth =
                     multipleBluetoothController.buildConnectingBle(bleDevice)
                 val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
-                return bleBluetooth.connect(
-                    context,
-                    autoConnect,
-                    bleConnectStrategy,
-                    bleGattCallback
-                )
+                bleBluetooth.connect(context, autoConnect, bleConnectStrategy, bleGattCallback)
             }
+        } else {
+            if (multipleBluetoothController.isConnecting(bleDevice)) {
+                multipleBluetoothController.cancelConnecting(bleDevice, true)
+            }
+            val bleBluetooth: BleBluetooth =
+                multipleBluetoothController.buildConnectingBle(bleDevice)
+            val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
+            return bleBluetooth.connect(
+                context,
+                autoConnect,
+                bleConnectStrategy,
+                bleGattCallback
+            )
         }
-        return null
     }
 
     /**
@@ -215,11 +198,24 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun connect(
-        mac: String?,
+        mac: String,
         bleGattCallback: BleGattCallback?,
         strategy: BleConnectStrategy = bleConnectStrategy
     ): BluetoothGatt? {
-        return connect(convertBleDevice(bluetoothAdapter?.getRemoteDevice(mac)), bleGattCallback)
+        val bleDevice = convertBleDevice(bluetoothAdapter?.getRemoteDevice(mac))
+        return if (bleDevice == null) {
+            bleGattCallback?.onConnectFail(
+                null,
+                BleException.OtherException(BleException.DEVICE_NULL, "Device is null")
+            )
+            null
+        } else {
+            connect(
+                bleDevice,
+                bleGattCallback,
+                strategy
+            )
+        }
     }
 
     /**
@@ -232,7 +228,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun notify(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         uuid_service: String,
         uuid_notify: String,
         callback: BleNotifyCallback?
@@ -259,7 +255,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun indicate(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         uuid_service: String,
         uuid_indicate: String,
         callback: BleIndicateCallback?
@@ -290,7 +286,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun stopNotify(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         uuid_service: String,
         uuid_notify: String,
     ): Boolean {
@@ -310,7 +306,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun stopIndicate(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         uuid_service: String,
         uuid_indicate: String,
     ): Boolean {
@@ -325,7 +321,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun write(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         uuid_service: String,
         uuid_write: String,
         data: ByteArray?,
@@ -380,7 +376,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun read(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         uuid_service: String,
         uuid_read: String,
         callback: BleReadCallback?
@@ -407,7 +403,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun readRssi(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         callback: BleRssiCallback?
     ) {
         val bleBluetooth: BleBluetooth? =
@@ -431,7 +427,7 @@ object BleManager {
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun setMtu(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         mtu: Int,
         callback: BleMtuChangedCallback?
     ) {
@@ -473,7 +469,7 @@ object BleManager {
      * specified range.
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
-    fun requestConnectionPriority(bleDevice: BleDevice?, connectionPriority: Int): Boolean {
+    fun requestConnectionPriority(bleDevice: BleDevice, connectionPriority: Int): Boolean {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         return bleBluetooth?.bluetoothGatt?.requestConnectionPriority(connectionPriority)
             ?: false
@@ -540,13 +536,9 @@ object BleManager {
      * [BluetoothProfile.STATE_DISCONNECTING]
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
-    fun getConnectState(bleDevice: BleDevice?): Int {
-        return if (bleDevice != null) {
-            bluetoothManager?.getConnectionState(bleDevice.device, BluetoothProfile.GATT)
-                ?: BluetoothProfile.STATE_DISCONNECTED
-        } else {
-            BluetoothProfile.STATE_DISCONNECTED
-        }
+    fun getConnectState(bleDevice: BleDevice): Int {
+        return bluetoothManager?.getConnectionState(bleDevice.device, BluetoothProfile.GATT)
+            ?: BluetoothProfile.STATE_DISCONNECTED
     }
 
     fun isScanning(): Boolean {
@@ -566,7 +558,7 @@ object BleManager {
     fun isConnected(mac: String?): Boolean {
         val list: List<BleDevice> = getAllConnectedDevice()
         for (bleDevice in list) {
-            if (bleDevice.mac.equals(mac)) {
+            if (bleDevice.mac == mac) {
                 return true
             }
         }
@@ -605,18 +597,13 @@ object BleManager {
 
     fun convertBleDevice(bluetoothDevice: BluetoothDevice?): BleDevice? {
         if (bluetoothDevice == null) return null
-        return BleDevice(null, device = bluetoothDevice)
-    }
-
-    fun convertBleDevice(scanResult: ScanResult): BleDevice {
-        return BleDevice(scanResult)
+        return BleDevice(bluetoothDevice)
     }
 
     fun convertBleDevice(mac: String): BleDevice? {
-        bluetoothAdapter?.getRemoteDevice(mac)?.let {
+        bluetoothAdapter?.getRemoteDevice(mac).let {
             return convertBleDevice(it)
         }
-        return null
     }
 
     fun getBluetoothGatt(bleDevice: BleDevice?): BluetoothGatt? {

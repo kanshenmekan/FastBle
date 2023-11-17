@@ -42,9 +42,6 @@
             android:name=".operate.OperateActivity"
             android:exported="false" />
         <activity
-            android:name=".OperationActivity"
-            android:exported="false" />
-        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.FastBle">

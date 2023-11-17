@@ -16,9 +16,6 @@ import com.hjq.permissions.XXPermissions
 
 
 object AppUtils {
-    const val CHANNEL_ID = "COMMON"
-
-
     @SuppressLint("MissingPermission")
     fun enableBluetooth(
         activity: ComponentActivity,

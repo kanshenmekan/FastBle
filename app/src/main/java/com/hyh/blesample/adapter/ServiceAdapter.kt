@@ -6,11 +6,8 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewGroup.MarginLayoutParams
-import android.widget.AbsListView
 import android.widget.BaseExpandableListAdapter
 import androidx.core.content.ContextCompat
-import androidx.core.view.updateLayoutParams
 import com.hyh.blesample.R
 import com.hyh.blesample.databinding.ItemServiceBinding
 

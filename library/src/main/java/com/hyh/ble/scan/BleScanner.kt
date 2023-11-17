@@ -37,15 +37,15 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
         super.onScanResult(callbackType, result)
         if (result == null) return
         val bleDevice = BleDevice(result)
-        if (bleScanRuleConfig.mFuzzyName && !bleScanRuleConfig.mDeviceNames.isNullOrEmpty()){
-            if (bleDevice.name == null)return
+        if (bleScanRuleConfig.mFuzzyName && !bleScanRuleConfig.mDeviceNames.isNullOrEmpty()) {
+            if (bleDevice.name == null) return
             var hasFound = false
             bleScanRuleConfig.mDeviceNames?.forEach {
-                if (bleDevice.name!!.contains(it,true)){
+                if (bleDevice.name!!.contains(it, true)) {
                     hasFound = true
                 }
             }
-            if (!hasFound)return
+            if (!hasFound) return
         }
         if (bleScanCallback?.onFilter(bleDevice) != false) {
             correctDeviceAndNextStep(bleDevice)
@@ -74,7 +74,7 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
                     val oldDevice = map[bleDevice.key]
                     map[bleDevice.key] = bleDevice
                     withContext(Dispatchers.Main) {
-                        bleScanCallback?.onLeScan(oldDevice, bleDevice, true)
+                        bleScanCallback?.onLeScan(oldDevice!!, bleDevice, true)
                     }
                 }
             }

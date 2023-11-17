@@ -182,12 +182,12 @@ class OperateFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun read() {
         characteristic?.let {
-            BleManager.read(bleDevice, it.service.uuid.toString(), it.uuid.toString(),
+            BleManager.read(bleDevice!!, it.service.uuid.toString(), it.uuid.toString(),
                 object : BleReadCallback() {
                     override fun onReadSuccess(
                         bleDevice: BleDevice,
                         characteristic: BluetoothGattCharacteristic,
-                        data: ByteArray?
+                        data: ByteArray
                     ) {
                         readData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
                         readAdapter.notifyItemInserted(readData.lastIndex)
@@ -195,7 +195,7 @@ class OperateFragment : Fragment() {
                     }
 
                     override fun onReadFailure(
-                        bleDevice: BleDevice?,
+                        bleDevice: BleDevice,
                         characteristic: BluetoothGattCharacteristic?,
                         exception: BleException?
                     ) {
@@ -228,7 +228,7 @@ class OperateFragment : Fragment() {
         }
 
         override fun onWriteFailure(
-            bleDevice: BleDevice?,
+            bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
             exception: BleException?,
             current: Int,
@@ -270,7 +270,7 @@ class OperateFragment : Fragment() {
     private fun write(data: ByteArray, writeType: Int) {
         characteristic?.let {
             BleManager.write(
-                bleDevice,
+                bleDevice!!,
                 it.service.uuid.toString(),
                 it.uuid.toString(),
                 data,
@@ -289,7 +289,7 @@ class OperateFragment : Fragment() {
         }
 
         override fun onNotifyFailure(
-            bleDevice: BleDevice?,
+            bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
             exception: BleException?
         ) {
@@ -302,7 +302,7 @@ class OperateFragment : Fragment() {
         }
 
         override fun onNotifyCancel(
-            bleDevice: BleDevice?,
+            bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?
         ) {
             binding.swNotify.takeIf { it.isChecked }?.isChecked = false
@@ -311,7 +311,7 @@ class OperateFragment : Fragment() {
         override fun onCharacteristicChanged(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic,
-            data: ByteArray?
+            data: ByteArray
         ) {
             notifyData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
             notifyAdapter.notifyItemInserted(notifyData.lastIndex)
@@ -325,14 +325,14 @@ class OperateFragment : Fragment() {
         characteristic?.let {
             if (enable) {
                 BleManager.notify(
-                    bleDevice,
+                    bleDevice!!,
                     it.service.uuid.toString(),
                     it.uuid.toString(),
                     bleNotifyCallback
                 )
             } else {
                 BleManager.stopNotify(
-                    bleDevice,
+                    bleDevice!!,
                     it.service.uuid.toString(),
                     it.uuid.toString(),
                 )
@@ -349,7 +349,7 @@ class OperateFragment : Fragment() {
         }
 
         override fun onIndicateFailure(
-            bleDevice: BleDevice?,
+            bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
             exception: BleException?
         ) {
@@ -362,7 +362,7 @@ class OperateFragment : Fragment() {
         }
 
         override fun onIndicateCancel(
-            bleDevice: BleDevice?,
+            bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?
         ) {
             binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
@@ -385,14 +385,14 @@ class OperateFragment : Fragment() {
         characteristic?.let {
             if (enable) {
                 BleManager.indicate(
-                    bleDevice,
+                    bleDevice!!,
                     it.service.uuid.toString(),
                     it.uuid.toString(),
                     bleIndicateCallback
                 )
             } else {
                 BleManager.stopIndicate(
-                    bleDevice,
+                    bleDevice!!,
                     it.service.uuid.toString(),
                     it.uuid.toString(),
                 )

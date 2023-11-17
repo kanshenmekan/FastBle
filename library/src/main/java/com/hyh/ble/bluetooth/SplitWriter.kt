@@ -73,7 +73,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
         }
 
         override fun onWriteFailure(
-            bleDevice: BleDevice?,
+            bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
             exception: BleException?,
             current: Int,

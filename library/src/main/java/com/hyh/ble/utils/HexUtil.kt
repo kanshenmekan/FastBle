@@ -1,8 +1,6 @@
 package com.hyh.ble.utils
 
-import java.util.LinkedList
 import java.util.Locale
-import java.util.Queue
 
 object HexUtil {
     private val DIGITS_LOWER = charArrayOf(

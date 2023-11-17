@@ -11,13 +11,13 @@ abstract class BleIndicateCallback : BleOperateCallback() {
     )
 
     abstract fun onIndicateFailure(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
         exception: BleException?
     )
 
     abstract fun onIndicateCancel(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?
     )
 
@@ -28,9 +28,9 @@ abstract class BleIndicateCallback : BleOperateCallback() {
     )
 
     final override fun onTimeOutFailure(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
-        exception: BleException?,
+        exception: BleException,
         data: ByteArray?
     ) {
         onIndicateFailure(bleDevice, characteristic, exception)

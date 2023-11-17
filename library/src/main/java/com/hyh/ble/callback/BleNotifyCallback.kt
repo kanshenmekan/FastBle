@@ -8,22 +8,22 @@ abstract class BleNotifyCallback : BleOperateCallback() {
     abstract fun onNotifySuccess(bleDevice: BleDevice, characteristic: BluetoothGattCharacteristic)
 
     abstract fun onNotifyFailure(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
         exception: BleException?
     )
 
-    abstract fun onNotifyCancel(bleDevice: BleDevice?, characteristic: BluetoothGattCharacteristic?)
+    abstract fun onNotifyCancel(bleDevice: BleDevice, characteristic: BluetoothGattCharacteristic?)
     abstract fun onCharacteristicChanged(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic,
-        data: ByteArray?
+        data: ByteArray
     )
 
     final override fun onTimeOutFailure(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
-        exception: BleException?,
+        exception: BleException,
         data: ByteArray?
     ) {
         onNotifyFailure(bleDevice, characteristic, exception)

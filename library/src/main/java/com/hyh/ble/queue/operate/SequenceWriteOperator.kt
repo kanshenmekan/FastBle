@@ -49,7 +49,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             }
 
             override fun onWriteFailure(
-                bleDevice: BleDevice?,
+                bleDevice: BleDevice,
                 characteristic: BluetoothGattCharacteristic?,
                 exception: BleException?,
                 current: Int,

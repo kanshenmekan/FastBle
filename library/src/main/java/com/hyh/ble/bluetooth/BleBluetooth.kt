@@ -110,12 +110,12 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         }
         lastState = LastState.CONNECT_CONNECTING
         bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            bleDevice.device?.connectGatt(
+            bleDevice.device.connectGatt(
                 context, autoConnect, coreGattCallback,
                 BluetoothDevice.TRANSPORT_LE
             )
         } else {
-            bleDevice.device?.connectGatt(context, autoConnect, coreGattCallback)
+            bleDevice.device.connectGatt(context, autoConnect, coreGattCallback)
         }
         if (bluetoothGatt != null) {
             if (connectRetryCount == 0) {

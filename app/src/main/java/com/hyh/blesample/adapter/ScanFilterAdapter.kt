@@ -9,7 +9,7 @@ class ScanFilterAdapter : RecyclerView.Adapter<ScanFilterAdapter.ScanViewHolder>
     var scanFilterBinding: ScanFilterBinding? = null
         private set
 
-    class ScanViewHolder(private val binding: ScanFilterBinding) :
+    class ScanViewHolder(binding: ScanFilterBinding) :
         RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ScanViewHolder {
