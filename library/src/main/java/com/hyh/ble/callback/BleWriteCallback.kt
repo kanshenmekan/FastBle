@@ -19,7 +19,7 @@ abstract class BleWriteCallback : BleOperateCallback() {
     abstract fun onWriteFailure(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
-        exception: BleException?,
+        exception: BleException,
         current: Int = BleWriteState.DATA_WRITE_SINGLE,
         total: Int = BleWriteState.DATA_WRITE_SINGLE,
         justWrite: ByteArray?,

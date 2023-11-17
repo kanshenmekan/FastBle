@@ -51,7 +51,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             override fun onWriteFailure(
                 bleDevice: BleDevice,
                 characteristic: BluetoothGattCharacteristic?,
-                exception: BleException?,
+                exception: BleException,
                 current: Int,
                 total: Int,
                 justWrite: ByteArray?,

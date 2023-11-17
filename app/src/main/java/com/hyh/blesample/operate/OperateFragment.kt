@@ -230,7 +230,7 @@ class OperateFragment : Fragment() {
         override fun onWriteFailure(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
-            exception: BleException?,
+            exception: BleException,
             current: Int,
             total: Int,
             justWrite: ByteArray?,
@@ -239,7 +239,7 @@ class OperateFragment : Fragment() {
         ) {
             if (isTotalFail) {
                 writeData.add(
-                    "${sdf.format(Date())}: fail ${exception?.description} ${
+                    "${sdf.format(Date())}: fail ${exception.description} ${
                         HexUtil.encodeHexStr(
                             data
                         )
