@@ -6,9 +6,9 @@ import com.hyh.ble.exception.BleException
 
 abstract class BleReadCallback : BleOperateCallback() {
     final override fun onTimeOutFailure(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
-        exception: BleException?,
+        exception: BleException,
         data: ByteArray?
     ) {
         onReadFailure(bleDevice, characteristic, exception)
@@ -17,11 +17,11 @@ abstract class BleReadCallback : BleOperateCallback() {
     abstract fun onReadSuccess(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic,
-        data: ByteArray?
+        data: ByteArray
     )
 
     abstract fun onReadFailure(
-        bleDevice: BleDevice?,
+        bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic?,
         exception: BleException?
     )

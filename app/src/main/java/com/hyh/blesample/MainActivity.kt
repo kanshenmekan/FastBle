@@ -258,25 +258,23 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onLeScan(
-                    oldDevice: BleDevice?,
-                    newDevice: BleDevice?,
+                    oldDevice: BleDevice,
+                    newDevice: BleDevice,
                     scannedBefore: Boolean
                 ) {
                     BleManager.getAllConnectedDevice().forEach {
-                        if (it.mac == oldDevice?.mac)
+                        if (it.mac == oldDevice.mac)
                             return
                     }
                     if (!scannedBefore) {
-                        oldDevice?.let {
-                            bleDevices.add(it)
-                            bleDeviceAdapter.notifyItemInserted(bleDevices.lastIndex)
-                        }
+                        bleDevices.add(oldDevice)
+                        bleDeviceAdapter.notifyItemInserted(bleDevices.lastIndex)
                     } else {
                         bleDevices.forEachIndexed { index, bleDevice ->
-                            if (bleDevice.mac == newDevice?.mac) {
+                            if (bleDevice.mac == newDevice.mac) {
                                 bleDevices[index] = bleDevice
                                 val payloads = mutableMapOf<String, String>().apply {
-                                    put("rssi", "${newDevice?.rssi}")
+                                    put("rssi", "${newDevice.rssi}")
                                 }
                                 bleDeviceAdapter.notifyItemChanged(index, payloads)
                                 return@forEachIndexed
@@ -323,14 +321,14 @@ class MainActivity : AppCompatActivity() {
                         .show()
                 }
 
-                override fun onConnectCancel(bleDevice: BleDevice?, skip: Boolean) {
+                override fun onConnectCancel(bleDevice: BleDevice, skip: Boolean) {
                     if (!skip) {
                         progressLoading.dismiss()
                     }
                 }
 
                 override fun onConnectSuccess(
-                    bleDevice: BleDevice?,
+                    bleDevice: BleDevice,
                     gatt: BluetoothGatt?,
                     status: Int
                 ) {
@@ -343,12 +341,12 @@ class MainActivity : AppCompatActivity() {
 
                 override fun onDisConnected(
                     isActiveDisConnected: Boolean,
-                    device: BleDevice?,
+                    device: BleDevice,
                     gatt: BluetoothGatt?,
                     status: Int
                 ) {
                     bleDevices.forEachIndexed { index, bleDevice ->
-                        if (bleDevice.mac == device?.mac) {
+                        if (bleDevice.mac == device.mac) {
                             bleDeviceAdapter.notifyItemChanged(index)
                         }
                     }

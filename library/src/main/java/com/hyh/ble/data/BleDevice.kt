@@ -8,19 +8,22 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.hyh.ble.BleManager
 
-
 @SuppressLint("MissingPermission")
 data class BleDevice(
     var scanResult: ScanResult?,
-    var device: BluetoothDevice? = scanResult?.device
+    var device: BluetoothDevice
 ) : Parcelable {
-    val name
-        get() = device?.name
-    val mac
-        get() = device?.address
+
+    constructor(scanResult: ScanResult) : this(scanResult, scanResult.device)
+    constructor(device: BluetoothDevice) : this(null, device)
+
+    val name: String?
+        get() = device.name
+    val mac: String
+        get() = device.address
 
     val key
-        get() = if (device != null) "$name$mac" else ""
+        get() = "$name$mac"
 
     val scanRecord
         get() = scanResult?.scanRecord?.bytes
@@ -40,7 +43,7 @@ data class BleDevice(
      * DEVICE_TYPE_DUAL = 3
      */
     val deviceType
-        get() = device?.type ?: BluetoothDevice.DEVICE_TYPE_UNKNOWN
+        get() = device.type
 
     /**
      * 自定义属性值
@@ -63,9 +66,9 @@ data class BleDevice(
             parcel.readParcelable(
                 BluetoothDevice::class.java.classLoader,
                 BluetoothDevice::class.java
-            )
+            )!!
         } else {
-            parcel.readParcelable(BluetoothDevice::class.java.classLoader)
+            parcel.readParcelable(BluetoothDevice::class.java.classLoader)!!
         }
     ) {
         bleAlias = parcel.readString()
