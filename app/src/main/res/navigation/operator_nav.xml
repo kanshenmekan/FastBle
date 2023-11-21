@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/serviceFragment"
-        android:name="com.hyh.blesample.operate.ServiceFragment"
+        android:name="com.huyuhui.blesample.operate.ServiceFragment"
         android:label="Service"
         tools:layout="@layout/fragment_service" >
         <action
@@ -23,7 +23,7 @@
     </fragment>
     <fragment
         android:id="@+id/operateFragment"
-        android:name="com.hyh.blesample.operate.OperateFragment"
+        android:name="com.huyuhui.blesample.operate.OperateFragment"
         android:label="Operate"
         tools:layout="@layout/fragment_operate" />
 </navigation>

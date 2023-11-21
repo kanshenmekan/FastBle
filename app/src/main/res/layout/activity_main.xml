@@ -25,7 +25,7 @@
             app:indicatorColor="@color/white"
             app:indicatorSize="30dp" />
     </androidx.appcompat.widget.Toolbar>
-    <com.hyh.blesample.ScanRecyclerView
+    <com.huyuhui.blesample.ScanRecyclerView
         android:id="@+id/rv"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
