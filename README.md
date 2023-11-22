@@ -127,6 +127,13 @@ BleManager.scan(object : BleScanCallback {
 })
 ```
 
+### 停止扫描
+```
+BleManager.cancelScan()
+Tips:
+- 调用该方法后，如果当前还处在扫描状态，会立即结束，并回调`onScanFinished`方法。
+```
+
 ### 通过设备对象连接
 ```
 BleManager.connect(bleDevice,
