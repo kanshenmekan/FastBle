@@ -76,7 +76,29 @@ BleManager.splitWriteNum
 ```
 BleManager.operateTimeout
 ```
+## 监听蓝牙的打开和关闭
+```
+BleManager.setBleStateCallback(object : BluetoothChangedObserver.BleStatusCallback {
+    override fun onStateOn() {
 
+    }
+
+    override fun onStateTurningOn() {
+
+    }
+
+    override fun onStateOff() {
+
+    }
+
+    override fun onStateTurningOff() {
+
+    }
+
+})
+Tips:
+ - 不管有没有这个需求，都去设置一个蓝牙状态回调，库里面可以解决，直接关闭蓝牙，系统不走蓝牙断开的回调的问题
+```
 
 ## 扫描及连接
 ### 配置扫描规则
@@ -93,7 +115,7 @@ BleManager.bleScanRuleConfig = scanRuleConfig
 
 
 Tips:
-可以通过设置ScanSettings，设置搜索模式，或者回调模式，默认是SCAN_MODE_BALANCED搜索模式，回调是CALLBACK_TYPE_ALL_MATCHE，还要匹配模式等等，具体看库代码
+可以通过设置ScanSettings，设置搜索模式，或者回调模式，默认是SCAN_MODE_BALANCED搜索模式，回调是CALLBACK_TYPE_ALL_MATCHE，还有匹配模式等等，具体看库代码
 默认serviceUuid和macs只要满足list，其中一个就会被认定符合条件（serviceUuid中包含，或者macs包含），当names的模糊模式关闭的时候，和macs效果一样，
 当names的模糊关闭的时候，会在所有通过serviceUuid和macs的设备，之后再判断是否包含names中的一个
 
@@ -278,3 +300,203 @@ fun stopNotify(
         uuid_notify: String,
     ): Boolean
 ```
+### 读
+```
+fun read(
+    bleDevice: BleDevice,
+    uuid_service: String,
+    uuid_read: String,
+    callback: BleReadCallback?)
+BleReadCallback() {
+    override fun onReadSuccess(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic,
+        data: ByteArray) {
+            // 读特征值数据成功       
+    }
+
+    override fun onReadFailure(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic?,
+        exception: BleException) {
+            // 读特征值数据失败
+     }
+}
+```
+
+### 写
+```
+fun write(
+    bleDevice: BleDevice,
+    uuid_service: String,
+    uuid_write: String,
+    data: ByteArray?,
+    split: Boolean = true,
+    continueWhenLastFail: Boolean = false,
+    intervalBetweenTwoPackage: Long = 0,
+    callback: BleWriteCallback?,
+    writeType: Int = BleOperator.WRITE_TYPE_DEFAULT)
+
+BleWriteCallback() {
+    override fun onWriteSuccess(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic,
+        current: Int,
+        total: Int,
+        justWrite: ByteArray,
+        data: ByteArray
+    ) {
+            // 发送数据到设备成功
+            // `current`表示当前发送第几包数据，`total`表示本次总共多少包数据，`justWrite`表示刚刚发送成功的数据包。
+            //data 表示整个数据
+
+    }
+
+    override fun onWriteFailure(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic?,
+        exception: BleException,
+        current: Int,
+        total: Int,
+        justWrite: ByteArray?,
+        data: ByteArray?,
+        isTotalFail: Boolean
+    ) {
+            // 发送数据到设备失败 exception错误信息
+            // `current`表示当前发送第几包数据，`total`表示本次总共多少包数据，`justWrite`表示刚刚发送失败的数据包
+            //data 表示整个数据
+            // isTotalFail 是否整个过程都失败了
+    }
+
+}
+Tips:
+- 在没有扩大MTU及扩大MTU无效的情况下，当遇到超过20字节的长数据需要发送的时候，需要进行分包。参数`boolean split`表示是否使用分包发送；无`boolean split`参数的`write`方法默认对超过20字节的数据进行分包发送。
+- 对于分包发送的策略，可以选择发送上一包数据发送失败之后，后面的数据还需不需要发送，continueWhenLastFail，默认为false。
+- 参数`intervalBetweenTwoPackage`表示延时多长时间发送下一包，单位ms，默认0。
+- 参数writeType，表示使用哪种发送模式BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE，WRITE_TYPE_DEFAULT，WRITE_TYPE_SIGNED，默认是判断characteristic具备那种发送模式
+  优先WRITE_TYPE_NO_RESPONSE，WRITE_TYPE_DEFAULT，最后是WRITE_TYPE_SIGNED
+```
+
+### 使用队列写入数据
+```
+fun addOperatorToQueue(
+    bleDevice: BleDevice?,
+    identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
+    sequenceBleOperator: SequenceBleOperator,
+): Boolean
+
+val sequenceWriteOperator =
+    SequenceWriteOperator.Builder().serviceUUID(service_uuid)
+        .priority(PRIORITY_WRITE_DEFAULT)
+        .characteristicUUID(characteristic_uuid).data(data).writeType(writeType)
+        .bleWriteCallback(bleWriteCallback)
+        .continuous(continuous)
+        .delay(if (continuous) 10 else 100)
+        .timeout(1000)
+        .build()
+BleManager.addOperatorToQueue(bleDevice, sequenceBleOperator = sequenceWriteOperator)
+Tips:
+- 当一个characteristic连续发送数据，两次间隔太短的话，容易造成失败，这个时候可以使用队列发送
+- 可以为每个可写的characteristic创造一个队列，传入不同的identifier，也可以共用一个队列，每个设备有个默认队列
+
+- priority 优先级越高，在队列的越前面
+- writeType 和正常写入相同
+- delay 任务之后等待多久
+- 当continuous 为true的时候，等待任务完成之后（触发回调或者超时),才会进行delay任务，之后获取下一个任务
+  当continuous 为false的时候，会直接进行delay任务，之后获取下一个任务
+- timeout 当continuous为true之后，这个设置才有效果，如果任务在时间内没有回调，直接忽略掉，进行delay任务，之后获取下一个任务
+  建议给一个适当的时长，以便任务有足够时间触发回调
+  如果timeout为0，则会一直等待，直到任务回调触发
+
+```
+### 队列的一些其他操作
+```
+//移除队列中某个任务
+fun removeOperatorFromQueue(
+    bleDevice: BleDevice?,
+    identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
+    sequenceBleOperator: SequenceBleOperator,
+): Boolean
+
+//清空某个队列全部任务
+fun clearQueue(
+    bleDevice: BleDevice?,
+    identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER)
+
+//清除所有队列任务
+fun clearAllQueue(bleDevice: BleDevice?)
+
+//暂停某个队列
+fun pauseQueue(
+    bleDevice: BleDevice?,
+    identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
+)
+//恢复某个队列
+fun resume(bleDevice: BleDevice?, identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER)
+```
+
+### 获取设备的信号强度Rssi
+```
+BleManager.readRssi(bleDevice,
+    object : BleRssiCallback() {
+        override fun onRssiFailure(bleDevice: BleDevice, exception: BleException) {
+                // 读取设备的信号强度失败    
+        }
+
+        override fun onRssiSuccess(bleDevice: BleDevice, rssi: Int) {
+             // 读取设备的信号强度成功       
+        }
+})
+Tips：
+获取设备的信号强度，需要在设备连接之后进行。
+某些设备可能无法读取Rssi，不会回调onRssiSuccess(),而会因为超时而回调onRssiFailure()。
+```
+### 设置最大传输单元MTU
+```
+BleManager.setMtu(bleDevice,mtu,object : BleMtuChangedCallback() {
+    override fun onSetMTUFailure(bleDevice: BleDevice, exception: BleException) {
+                // 设置MTU失败
+    }
+
+    override fun onMtuChanged(bleDevice: BleDevice, mtu: Int) {
+                // 设置MTU成功，并获得当前设备传输支持的MTU值
+    }
+
+})
+Tips：
+设置MTU，需要在设备连接之后进行操作。
+默认每一个BLE设备都必须支持的MTU为23。
+MTU为23，表示最多可以发送20个字节的数据。
+在Android 低版本(API-17 到 API-20)上，没有这个限制。所以只有在API21以上的设备，才会有拓展MTU这个需求。
+该方法的参数mtu，最小设置为23，最大设置为512。
+并不是每台设备都支持拓展MTU，需要通讯双方都支持才行，也就是说，需要设备硬件也支持拓展MTU该方法才会起效果。调用该方法后，可以通过onMtuChanged(int mtu)查看最终设置完后，设备的最大传输单元被拓展到多少。如果设备不支持，可能无论设置多少，最终的mtu还是23。
+```
+### requestConnectionPriority
+```
+fun requestConnectionPriority(bleDevice: BleDevice, connectionPriority: Int): Boolean
+
+Tips:
+设置连接的优先级，一般用于高速传输大量数据的时候可以进行设置。 Must be one of{@link BluetoothGatt#CONNECTION_PRIORITY_BALANCED}, {@link BluetoothGatt#CONNECTION_PRIORITY_HIGH} or {@link BluetoothGatt#CONNECTION_PRIORITY_LOW_POWER}.
+```
+
+## 断开设备
+
+### 断开某个设备
+```
+fun disconnect(bleDevice: BleDevice?)
+```
+
+### 断开所有设备
+```
+fun disconnectAllDevice()
+```
+
+### 退出使用，清理资源
+```
+//退出，无回调 
+fun destroy()
+
+//退出，有scan和connect的回调
+fun release()
+```
+## [更多方法参考BleManager类](https://github.com/kanshenmekan/FastBle/blob/master/library/src/main/java/com/huyuhui/fastble/BleManager.kt)
