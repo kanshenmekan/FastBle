@@ -73,7 +73,7 @@ object BleManager {
         }
 
 
-    lateinit var context: Application
+    var context: Application? = null
         private set
     var bleScanRuleConfig: BleScanRuleConfig = BleScanRuleConfig.Builder().build()
     var bleConnectStrategy: BleConnectStrategy = BleConnectStrategy()
@@ -82,8 +82,8 @@ object BleManager {
 
 
     //多设备连接管理
-    internal lateinit var multipleBluetoothController: MultipleBluetoothController
-        private set
+    internal val multipleBluetoothController: MultipleBluetoothController =
+        MultipleBluetoothController()
 
     var bluetoothManager: BluetoothManager? = null
         private set
@@ -92,14 +92,17 @@ object BleManager {
         context = app
         if (isSupportBle(app)) {
             bluetoothManager =
-                context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+                context!!.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         }
-        multipleBluetoothController = MultipleBluetoothController()
     }
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_SCAN")
     fun scan(bleScanCallback: BleScanCallback?) {
-        if (!isBleEnable(context)) {
+        if (context == null){
+            BleLog.e("BleManager may not be initialized")
+            return
+        }
+        if (!isBleEnable(context!!)) {
             bleScanCallback?.onScanStarted(false)
             return
         }
@@ -132,8 +135,12 @@ object BleManager {
     fun connect(
         bleDevice: BleDevice,
         bleGattCallback: BleGattCallback?,
-        strategy: BleConnectStrategy = bleConnectStrategy
+        strategy: BleConnectStrategy = bleConnectStrategy,
     ): BluetoothGatt? {
+        if (context == null){
+            BleLog.e("BleManager may not be initialized")
+            return null
+        }
         if (!isSupportBle(context)) {
             bleGattCallback?.onConnectFail(
                 bleDevice,
@@ -141,7 +148,7 @@ object BleManager {
             )
             return null
         }
-        if (!isBleEnable(context)) {
+        if (!isBleEnable(context!!)) {
             BleLog.e("Bluetooth not enable!")
             bleGattCallback?.onConnectFail(
                 bleDevice,
@@ -171,7 +178,7 @@ object BleManager {
                 val bleBluetooth: BleBluetooth =
                     multipleBluetoothController.buildConnectingBle(bleDevice)
                 val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
-                bleBluetooth.connect(context, autoConnect, bleConnectStrategy, bleGattCallback)
+                bleBluetooth.connect(context!!, autoConnect, bleConnectStrategy, bleGattCallback)
             }
         } else {
             if (multipleBluetoothController.isConnecting(bleDevice)) {
@@ -181,7 +188,7 @@ object BleManager {
                 multipleBluetoothController.buildConnectingBle(bleDevice)
             val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
             return bleBluetooth.connect(
-                context,
+                context!!,
                 autoConnect,
                 bleConnectStrategy,
                 bleGattCallback
@@ -200,7 +207,7 @@ object BleManager {
     fun connect(
         mac: String,
         bleGattCallback: BleGattCallback?,
-        strategy: BleConnectStrategy = bleConnectStrategy
+        strategy: BleConnectStrategy = bleConnectStrategy,
     ): BluetoothGatt? {
         val bleDevice = convertBleDevice(bluetoothAdapter?.getRemoteDevice(mac))
         return if (bleDevice == null) {
@@ -231,7 +238,7 @@ object BleManager {
         bleDevice: BleDevice,
         uuid_service: String,
         uuid_notify: String,
-        callback: BleNotifyCallback?
+        callback: BleNotifyCallback?,
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         if (bleBluetooth == null) {
@@ -258,7 +265,7 @@ object BleManager {
         bleDevice: BleDevice,
         uuid_service: String,
         uuid_indicate: String,
-        callback: BleIndicateCallback?
+        callback: BleIndicateCallback?,
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         if (bleBluetooth == null) {
@@ -329,7 +336,7 @@ object BleManager {
         continueWhenLastFail: Boolean = false,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback?,
-        writeType: Int = BleOperator.WRITE_TYPE_DEFAULT
+        writeType: Int = BleOperator.WRITE_TYPE_DEFAULT,
     ) {
         if (data == null) {
             BleLog.e("data is Null!")
@@ -379,7 +386,7 @@ object BleManager {
         bleDevice: BleDevice,
         uuid_service: String,
         uuid_read: String,
-        callback: BleReadCallback?
+        callback: BleReadCallback?,
     ) {
         requireNotNull(callback) { "BleReadCallback can not be Null!" }
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -404,7 +411,7 @@ object BleManager {
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun readRssi(
         bleDevice: BleDevice,
-        callback: BleRssiCallback?
+        callback: BleRssiCallback?,
     ) {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -429,7 +436,7 @@ object BleManager {
     fun setMtu(
         bleDevice: BleDevice,
         mtu: Int,
-        callback: BleMtuChangedCallback?
+        callback: BleMtuChangedCallback?,
     ) {
         if (mtu > DEFAULT_MAX_MTU) {
             BleLog.e("requiredMtu should lower than 512 !")
@@ -545,7 +552,6 @@ object BleManager {
         return BleScanner.mBleScanState == BleScanState.STATE_SCANNING
     }
 
-    @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun isConnected(bleDevice: BleDevice?): Boolean {
         return multipleBluetoothController.isConnectedDevice(bleDevice)
     }
@@ -666,9 +672,13 @@ object BleManager {
     }
 
     private fun initBleObserver() {
+        if (context == null){
+            BleLog.e("BleManager may not be initialized")
+            return
+        }
         if (bleObserver == null) {
             bleObserver = BluetoothChangedObserver()
-            bleObserver!!.registerReceiver(context)
+            bleObserver!!.registerReceiver(context!!)
         }
     }
 
@@ -679,8 +689,12 @@ object BleManager {
     }
 
     private fun releaseBleObserver() {
+        if (context == null){
+            BleLog.e("BleManager may not be initialized")
+            return
+        }
         if (bleObserver != null) {
-            bleObserver!!.unregisterReceiver(context)
+            bleObserver!!.unregisterReceiver(context!!)
             bleObserver = null
         }
     }
@@ -689,7 +703,7 @@ object BleManager {
 
     fun removeOperateQueue(
         bleDevice: BleDevice?,
-        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
     ) {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -699,7 +713,7 @@ object BleManager {
     fun removeOperatorFromQueue(
         bleDevice: BleDevice?,
         identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
-        sequenceBleOperator: SequenceBleOperator
+        sequenceBleOperator: SequenceBleOperator,
     ): Boolean {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -709,7 +723,7 @@ object BleManager {
     fun addOperatorToQueue(
         bleDevice: BleDevice?,
         identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
-        sequenceBleOperator: SequenceBleOperator
+        sequenceBleOperator: SequenceBleOperator,
     ): Boolean {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -718,7 +732,7 @@ object BleManager {
 
     fun clearQueue(
         bleDevice: BleDevice?,
-        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
     ) {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -733,7 +747,7 @@ object BleManager {
 
     fun pauseQueue(
         bleDevice: BleDevice?,
-        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER
+        identifier: String = BleBluetooth.DEFAULT_QUEUE_IDENTIFIER,
     ) {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
