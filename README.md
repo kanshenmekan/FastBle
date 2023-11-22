@@ -182,3 +182,99 @@ fun connect(
     strategy: BleConnectStrategy = bleConnectStrategy,
 ): BluetoothGatt?
 ```
+
+## 蓝牙操作
+
+### 订阅通知notify
+```
+fun notify(
+    bleDevice: BleDevice,
+    uuid_service: String,
+    uuid_notify: String,
+    callback: BleNotifyCallback?,
+)
+
+BleNotifyCallback() {
+    override fun onNotifySuccess(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic) {
+            // 打开通知操作成功
+    }
+    override fun onNotifyFailure(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic?,
+        exception: BleException) {
+           // 打开通知操作失败
+    }
+
+    override fun onNotifyCancel(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic) {
+            // 打开之后，再取消
+    }
+
+    override fun onCharacteristicChanged(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic,
+        data: ByteArray) {
+          // 打开通知后，设备发过来的数据将在这里出现
+    }
+}
+```
+
+### 取消订阅通知notify，并移除数据接收的回调监听
+```
+fun stopNotify(
+    bleDevice: BleDevice,
+    uuid_service: String,
+    uuid_notify: String,
+): Boolean
+```
+
+### 订阅通知indicate
+```
+fun indicate(
+    bleDevice: BleDevice,
+    uuid_service: String,
+    uuid_indicate: String,
+    callback: BleIndicateCallback?)
+
+BleIndicateCallback() {
+    override fun onIndicateSuccess(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic) {
+          // 打开通知操作成功
+    }
+
+    override fun onIndicateFailure(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic?,
+        exception: BleException) {
+           // 打开通知操作失败
+    }
+
+    override fun onIndicateCancel(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic) {
+           // 打开通知后，取消的时候
+    }
+
+    override fun onCharacteristicChanged(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic,
+        data: ByteArray?) {
+           // 打开通知后，设备发过来的数据将在这里出现
+    }
+
+}
+
+```
+
+### 取消订阅通知indicate，并移除数据接收的回调监听
+```
+fun stopNotify(
+        bleDevice: BleDevice,
+        uuid_service: String,
+        uuid_notify: String,
+    ): Boolean
+```
