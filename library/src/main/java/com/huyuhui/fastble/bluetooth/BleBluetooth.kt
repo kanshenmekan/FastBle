@@ -419,7 +419,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                         currentConnectRetryCount++
                         launch {
                             delay(bleConnectStrategy.reConnectInterval)
-                            connect(BleManager.context, false, currentConnectRetryCount)
+                            connect(BleManager.context!!, false, currentConnectRetryCount)
                         }
                     } else {
                         launch {

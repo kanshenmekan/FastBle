@@ -7,7 +7,7 @@ val VERSION_NAME = latestGitTag().ifEmpty { "1.0.2" }
 val GROUP_ID = "com.github.kanshenmekan"
 val ARTIFACT_ID = "FastBle"
 android {
-    namespace = "com.hyh.fastble"
+    namespace = "com.huyuhui.fastble"
     compileSdk = 33
 
     defaultConfig {
