@@ -20,6 +20,7 @@ import com.huyuhui.fastble.callback.BleReadCallback
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
+import com.huyuhui.fastble.queue.operate.PRIORITY_WRITE_DEFAULT
 import com.huyuhui.fastble.queue.operate.SequenceWriteOperator
 import com.huyuhui.fastble.utils.HexUtil
 import java.text.SimpleDateFormat
@@ -256,6 +257,7 @@ class OperateFragment : Fragment() {
         characteristic?.let {
             val sequenceWriteOperator =
                 SequenceWriteOperator.Builder().serviceUUID(it.service.uuid.toString())
+                    .priority(PRIORITY_WRITE_DEFAULT)
                     .characteristicUUID(it.uuid.toString()).data(data).writeType(writeType)
                     .bleWriteCallback(bleWriteCallback)
                     .continuous(continuous)

@@ -15,7 +15,7 @@ abstract class Task(val priority: Int, var delay: Long) {
     }
 
     /**
-     * 当continuous 为true的时候，等待任务完成之后（触发回调或者超时,才会进行delay任务，之后获取下一个任务
+     * 当continuous 为true的时候，等待任务完成之后（触发回调或者超时）,才会进行delay任务，之后获取下一个任务
      * 为false的时候，会直接进行delay任务，之后获取下一个任务
      * @see timeout
      */

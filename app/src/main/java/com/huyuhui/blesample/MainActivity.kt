@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
             strUuid.split(",".toRegex()).toList()
         }
         val serviceUUID = uuids?.takeUnless { it.isEmpty() }?.map { it.trimEnd() }?.filter {
-            UuidUtils.is16UUID(it)|| UuidUtils.isUUID(it)
+            UuidUtils.is16UUID(it) || UuidUtils.isUUID(it)
         }?.mapNotNull {
             val s = if (it.length == 4) {
                 UuidUtils.uuid16To128(it)
@@ -220,6 +220,8 @@ class MainActivity : AppCompatActivity() {
             .setDeviceName(names, true) // 只扫描指定广播名的设备，可选
             .setAutoConnect(autoConnect) // 连接时的autoConnect参数，可选，默认false
             .setScanTimeOut(10000) // 扫描超时时间，可选，默认10秒
+            .setDeviceMac()
+//            .setScanSettings(scanSettings: ScanSettings)
             .build()
         BleManager.bleScanRuleConfig = scanRuleConfig
     }
