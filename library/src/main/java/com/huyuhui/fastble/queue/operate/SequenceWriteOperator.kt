@@ -55,7 +55,9 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                     justWrite,
                     data
                 )
-                channelWeakReference?.get()?.trySend(TaskResult(this@SequenceWriteOperator, true))
+                if (current == total){
+                    channelWeakReference?.get()?.trySend(TaskResult(this@SequenceWriteOperator, true))
+                }
             }
 
             override fun onWriteFailure(
@@ -78,7 +80,9 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                     data,
                     isTotalFail
                 )
-                channelWeakReference?.get()?.trySend(TaskResult(this@SequenceWriteOperator, false))
+                if (isTotalFail){
+                    channelWeakReference?.get()?.trySend(TaskResult(this@SequenceWriteOperator, false))
+                }
             }
 
         }
