@@ -76,7 +76,7 @@ object BleManager {
     var context: Application? = null
         private set
     var bleScanRuleConfig: BleScanRuleConfig = BleScanRuleConfig.Builder().build()
-    var bleConnectStrategy: BleConnectStrategy = BleConnectStrategy()
+    var bleConnectStrategy: BleConnectStrategy = BleConnectStrategy.Builder().build()
     val bluetoothAdapter: BluetoothAdapter?
         get() = bluetoothManager?.adapter
 
@@ -178,7 +178,7 @@ object BleManager {
                 val bleBluetooth: BleBluetooth =
                     multipleBluetoothController.buildConnectingBle(bleDevice)
                 val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
-                bleBluetooth.connect(context!!, autoConnect, bleConnectStrategy, bleGattCallback)
+                bleBluetooth.connect(context!!, autoConnect, strategy, bleGattCallback)
             }
         } else {
             if (multipleBluetoothController.isConnecting(bleDevice)) {
@@ -190,7 +190,7 @@ object BleManager {
             return bleBluetooth.connect(
                 context!!,
                 autoConnect,
-                bleConnectStrategy,
+                strategy,
                 bleGattCallback
             )
         }

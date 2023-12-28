@@ -1,7 +1,9 @@
 package com.huyuhui.fastble.common
 
+import kotlin.math.max
 
-class BleConnectStrategy {
+
+class BleConnectStrategy private constructor() {
     companion object {
         /**
          * 当存在mac相同的设备已经在连接的时候，忽略掉后面发起的连接，直至这次连接失败或者成功,已经存在连接成功，不会发起连接
@@ -18,7 +20,7 @@ class BleConnectStrategy {
     }
 
     var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
-
+        private set
     /**
      * connect retry count
      */
@@ -35,26 +37,43 @@ class BleConnectStrategy {
      * Get operate connect Over Time
      *
      */
-    var connectOverTime = DEFAULT_CONNECT_OVER_TIME
-        set(value) {
-            field = if (value <= 0) {
-                100
-            } else {
-                value
-            }
+    var connectOverTime: Long = DEFAULT_CONNECT_OVER_TIME
+        private set
+
+
+    class Builder {
+        private var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
+        private var reConnectCount = DEFAULT_CONNECT_RETRY_COUNT
+        private var reConnectInterval = DEFAULT_CONNECT_RETRY_INTERVAL
+        private var connectOverTime = DEFAULT_CONNECT_OVER_TIME
+
+        fun setConnectBackpressureStrategy(backpressureStrategy: Int): Builder {
+            this.connectBackpressureStrategy = backpressureStrategy
+            return this
         }
 
-    fun setReConnectCount(count: Int, interval: Long): BleConnectStrategy {
-        reConnectCount = if (count > 10) 10 else count
-        reConnectInterval = if (interval < 0) 0 else interval
-        return this
-    }
+        fun setReConnectCount(count: Int): Builder {
+            reConnectCount = max(0, count)
+            return this
+        }
 
-    fun applyStrategy(strategy: BleConnectStrategy): BleConnectStrategy {
-        this.connectBackpressureStrategy = strategy.connectBackpressureStrategy
-        this.reConnectCount = strategy.reConnectCount
-        this.reConnectInterval = strategy.reConnectInterval
-        this.connectOverTime = strategy.connectOverTime
-        return this
+        fun setReConnectInterval(interval: Long): Builder {
+            reConnectInterval = interval
+            return this
+        }
+
+        fun setConnectOverTime(time: Long): Builder {
+            connectOverTime = time
+            return this
+        }
+
+        fun build(): BleConnectStrategy {
+            val strategy = BleConnectStrategy()
+            strategy.reConnectCount = this.reConnectCount
+            strategy.reConnectInterval = this.reConnectInterval
+            strategy.connectOverTime = this.connectOverTime
+            strategy.connectBackpressureStrategy = strategy.connectBackpressureStrategy
+            return strategy
+        }
     }
 }

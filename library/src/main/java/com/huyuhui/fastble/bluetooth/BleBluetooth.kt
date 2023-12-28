@@ -105,8 +105,10 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 connectCount:${connectRetryCount + 1}
                 """.trimIndent()
         )
-        launch(Dispatchers.Main.immediate) {
-            connectTimeOutTask.start()
+        if (bleConnectStrategy.connectOverTime > 0){
+            launch(Dispatchers.Main.immediate) {
+                connectTimeOutTask.start()
+            }
         }
         lastState = LastState.CONNECT_CONNECTING
         bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
