@@ -66,9 +66,14 @@ class MultipleBluetoothController {
     @Synchronized
     fun cancelConnecting(bleDevice: BleDevice?, skip: Boolean) {
         bleTempHashMap.remove(bleDevice?.key)?.let {
-            it.bleGattCallback?.onConnectCancel(bleDevice!!, skip)
+            it.bleGattCallback?.onConnectCancel(it.bleDevice, skip)
             it.destroy()
         }
+    }
+
+    fun cancelOrDisconnect(bleDevice: BleDevice?) {
+        cancelConnecting(bleDevice, false)
+        disconnect(bleDevice)
     }
 
     @Synchronized

@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
 }
-val VERSION_NAME = latestGitTag().ifEmpty { "1.0.2" }
+val VERSION_NAME = latestGitTag().ifEmpty { "1.0.0" }
 val GROUP_ID = "com.github.kanshenmekan"
 val ARTIFACT_ID = "FastBle"
 android {

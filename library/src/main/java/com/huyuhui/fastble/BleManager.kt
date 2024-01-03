@@ -584,7 +584,9 @@ object BleManager {
     fun scannerDestroy() {
         BleScanner.destroy()
     }
-
+    fun cancelOrDisconnect(bleDevice: BleDevice?){
+        multipleBluetoothController.cancelOrDisconnect(bleDevice)
+    }
     fun removeScanCallback() {
         BleScanner.bleScanCallback = null
     }
@@ -597,8 +599,8 @@ object BleManager {
         multipleBluetoothController.cancelAllConnectingDevice()
     }
 
-    fun isConnecting(bleDevice: BleDevice?) {
-        multipleBluetoothController.isConnecting(bleDevice)
+    fun isConnecting(bleDevice: BleDevice?):Boolean {
+        return multipleBluetoothController.isConnecting(bleDevice)
     }
 
     fun convertBleDevice(bluetoothDevice: BluetoothDevice?): BleDevice? {
