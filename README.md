@@ -52,7 +52,7 @@ BleConnectStrategy connectOverTime
 
 设置连接时重连次数和重连间隔（毫秒），默认为0次不重连<br>
 ```
-BleConnectStrategy setReConnectCount(count: Int, interval: Long)
+BleConnectStrategy setReConnectCount(count: Int) setReConnectInterval(interval: Long)
 ```
 
 设置连接背压策略<br>
