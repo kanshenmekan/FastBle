@@ -34,10 +34,9 @@ BleManager.apply {
     maxConnectCount = 5
     operateTimeout = 2000
     splitWriteNum = 20
-    bleConnectStrategy = BleConnectStrategy().apply {
-        connectOverTime = 10000
-        connectBackpressureStrategy = BleConnectStrategy.CONNECT_BACKPRESSURE_DROP
-        setReConnectCount(1,2000)
+    bleConnectStrategy = BleConnectStrategy.Builder().setConnectOverTime(10000)
+                .setConnectBackpressureStrategy(BleConnectStrategy.CONNECT_BACKPRESSURE_DROP)
+                .setReConnectCount(1).setReConnectInterval(2000).build()
     }
 }.init(this)
 ```
