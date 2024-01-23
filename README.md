@@ -34,10 +34,9 @@ BleManager.apply {
     maxConnectCount = 5
     operateTimeout = 2000
     splitWriteNum = 20
-    bleConnectStrategy = BleConnectStrategy().apply {
-        connectOverTime = 10000
-        connectBackpressureStrategy = BleConnectStrategy.CONNECT_BACKPRESSURE_DROP
-        setReConnectCount(1,2000)
+    bleConnectStrategy = BleConnectStrategy.Builder().setConnectOverTime(10000)
+                .setConnectBackpressureStrategy(BleConnectStrategy.CONNECT_BACKPRESSURE_DROP)
+                .setReConnectCount(1).setReConnectInterval(2000).build()
     }
 }.init(this)
 ```
@@ -53,7 +52,7 @@ BleConnectStrategy connectOverTime
 
 设置连接时重连次数和重连间隔（毫秒），默认为0次不重连<br>
 ```
-BleConnectStrategy setReConnectCount(count: Int, interval: Long)
+BleConnectStrategy setReConnectCount(count: Int) setReConnectInterval(interval: Long)
 ```
 
 设置连接背压策略<br>
