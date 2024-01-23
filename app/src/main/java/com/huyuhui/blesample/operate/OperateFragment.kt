@@ -71,7 +71,7 @@ class OperateFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentOperateBinding.inflate(layoutInflater, container, false)
         return binding.root
@@ -188,7 +188,7 @@ class OperateFragment : Fragment() {
                     override fun onReadSuccess(
                         bleDevice: BleDevice,
                         characteristic: BluetoothGattCharacteristic,
-                        data: ByteArray
+                        data: ByteArray,
                     ) {
                         readData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
                         readAdapter.notifyItemInserted(readData.lastIndex)
@@ -198,7 +198,7 @@ class OperateFragment : Fragment() {
                     override fun onReadFailure(
                         bleDevice: BleDevice,
                         characteristic: BluetoothGattCharacteristic?,
-                        exception: BleException
+                        exception: BleException,
                     ) {
 
                     }
@@ -206,6 +206,7 @@ class OperateFragment : Fragment() {
                 })
         }
     }
+
     private val bleWriteCallback = object : BleWriteCallback() {
         override fun onWriteSuccess(
             bleDevice: BleDevice,
@@ -213,7 +214,7 @@ class OperateFragment : Fragment() {
             current: Int,
             total: Int,
             justWrite: ByteArray,
-            data: ByteArray
+            data: ByteArray,
         ) {
             if (current == total) {
                 writeData.add(
@@ -236,7 +237,7 @@ class OperateFragment : Fragment() {
             total: Int,
             justWrite: ByteArray?,
             data: ByteArray?,
-            isTotalFail: Boolean
+            isTotalFail: Boolean,
         ) {
             if (isTotalFail) {
                 writeData.add(
@@ -262,10 +263,20 @@ class OperateFragment : Fragment() {
                     .bleWriteCallback(bleWriteCallback)
                     .continuous(continuous)
                     .delay(if (continuous) 10 else 100)
+                    .splitNum(20)
                     .timeout(1000)
                     .build()
-            if(!BleManager.addOperatorToQueue(bleDevice, sequenceBleOperator = sequenceWriteOperator)){
-                bleWriteCallback.onWriteFailure(bleDevice!!,it,BleException.OtherException(description = "write to queue failed"), justWrite = data)
+            if (!BleManager.addOperatorToQueue(
+                    bleDevice,
+                    sequenceBleOperator = sequenceWriteOperator
+                )
+            ) {
+                bleWriteCallback.onWriteFailure(
+                    bleDevice!!,
+                    it,
+                    BleException.OtherException(description = "write to queue failed"),
+                    justWrite = data
+                )
             }
         }
     }
@@ -287,7 +298,7 @@ class OperateFragment : Fragment() {
     private val bleNotifyCallback = object : BleNotifyCallback() {
         override fun onNotifySuccess(
             bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
         ) {
             binding.swNotify.takeUnless { it.isChecked }?.isChecked = true
         }
@@ -295,7 +306,7 @@ class OperateFragment : Fragment() {
         override fun onNotifyFailure(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
-            exception: BleException
+            exception: BleException,
         ) {
             Toast.makeText(
                 requireContext(),
@@ -307,7 +318,7 @@ class OperateFragment : Fragment() {
 
         override fun onNotifyCancel(
             bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
         ) {
             binding.swNotify.takeIf { it.isChecked }?.isChecked = false
         }
@@ -315,7 +326,7 @@ class OperateFragment : Fragment() {
         override fun onCharacteristicChanged(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic,
-            data: ByteArray
+            data: ByteArray,
         ) {
             notifyData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
             notifyAdapter.notifyItemInserted(notifyData.lastIndex)
@@ -347,7 +358,7 @@ class OperateFragment : Fragment() {
     private val bleIndicateCallback = object : BleIndicateCallback() {
         override fun onIndicateSuccess(
             bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
         ) {
             binding.swIndicate.takeUnless { it.isChecked }?.isChecked = true
         }
@@ -355,7 +366,7 @@ class OperateFragment : Fragment() {
         override fun onIndicateFailure(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic?,
-            exception: BleException
+            exception: BleException,
         ) {
             Toast.makeText(
                 requireContext(),
@@ -367,7 +378,7 @@ class OperateFragment : Fragment() {
 
         override fun onIndicateCancel(
             bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic
+            characteristic: BluetoothGattCharacteristic,
         ) {
             binding.swIndicate.takeIf { it.isChecked }?.isChecked = false
         }
@@ -375,7 +386,7 @@ class OperateFragment : Fragment() {
         override fun onCharacteristicChanged(
             bleDevice: BleDevice,
             characteristic: BluetoothGattCharacteristic,
-            data: ByteArray?
+            data: ByteArray?,
         ) {
             indicateData.add("${sdf.format(Date())}: ${HexUtil.encodeHexStr(data)}")
             indicateAdapter.notifyItemInserted(indicateData.lastIndex)

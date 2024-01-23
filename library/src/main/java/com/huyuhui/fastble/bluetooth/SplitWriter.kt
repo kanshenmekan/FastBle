@@ -25,19 +25,22 @@ class SplitWriter(private val writeOperator: BleOperator) {
     private var mDataQueue: Queue<ByteArray>? = null
     private var mTotalNum = 0
 
+    //避免多次调用onWriteFailure
+    private var closeFromFailure = false
     fun splitWrite(
         data: ByteArray,
-        splitNum:Int,
+        splitNum: Int,
         continueWhenLastFail: Boolean,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback?,
-        writeType: Int
+        writeType: Int,
     ) {
         mData = data
         mContinueWhenLastFail = continueWhenLastFail
         mIntervalBetweenTwoPackage = intervalBetweenTwoPackage
         mCallback = callback
         mCount = splitNum
+        closeFromFailure = false
         splitWrite(writeType)
     }
 
@@ -50,7 +53,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
             current: Int,
             total: Int,
             justWrite: ByteArray,
-            data: ByteArray
+            data: ByteArray,
         ) {
             val position = mTotalNum - mDataQueue!!.size
             mCallback?.onWriteSuccess(
@@ -80,7 +83,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
             total: Int,
             justWrite: ByteArray?,
             data: ByteArray?,
-            isTotalFail: Boolean
+            isTotalFail: Boolean,
         ) {
             val position = mTotalNum - mDataQueue!!.size
             if (mContinueWhenLastFail) {
@@ -95,6 +98,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
                     mDataQueue?.isEmpty() ?: true
                 )
                 if (mDataQueue!!.isEmpty()) {
+                    closeFromFailure = true
                     channel.close()
                 } else {
                     writeOperator.launch {
@@ -113,6 +117,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
                     mData,
                     true
                 )
+                closeFromFailure = true
                 channel.close()
             }
         }
@@ -134,7 +139,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
             channel.receiveAsFlow()
                 .onCompletion {
                     withContext(NonCancellable + Dispatchers.Main) {
-                        if (mDataQueue!!.isNotEmpty()) {
+                        if (mDataQueue!!.isNotEmpty() && !closeFromFailure) {
                             val position = mTotalNum - mDataQueue!!.size
                             mCallback?.onWriteFailure(
                                 writeOperator.bleDevice,

@@ -29,6 +29,9 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         private set
     var split: Boolean = true
         private set
+
+    var splitNum: Int = BleManager.splitWriteNum
+        private set
     var continueWhenLastFail: Boolean = false
         private set
     var intervalBetweenTwoPackage: Long = 0
@@ -46,7 +49,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 current: Int,
                 total: Int,
                 justWrite: ByteArray,
-                data: ByteArray
+                data: ByteArray,
             ) {
                 bleWriteCallback?.onWriteSuccess(
                     bleDevice,
@@ -56,8 +59,9 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                     justWrite,
                     data
                 )
-                if (current == total){
-                    channelWeakReference?.get()?.trySend(TaskResult(this@SequenceWriteOperator, true))
+                if (current == total) {
+                    channelWeakReference?.get()
+                        ?.trySend(TaskResult(this@SequenceWriteOperator, true))
                 }
             }
 
@@ -69,7 +73,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 total: Int,
                 justWrite: ByteArray?,
                 data: ByteArray?,
-                isTotalFail: Boolean
+                isTotalFail: Boolean,
             ) {
                 bleWriteCallback?.onWriteFailure(
                     bleDevice,
@@ -81,8 +85,9 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                     data,
                     isTotalFail
                 )
-                if (isTotalFail){
-                    channelWeakReference?.get()?.trySend(TaskResult(this@SequenceWriteOperator, false))
+                if (isTotalFail) {
+                    channelWeakReference?.get()
+                        ?.trySend(TaskResult(this@SequenceWriteOperator, false))
                 }
             }
 
@@ -106,6 +111,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 writeType = writeType,
                 data = data,
                 split = split,
+                splitNum = splitNum,
                 continueWhenLastFail = continueWhenLastFail,
                 intervalBetweenTwoPackage = intervalBetweenTwoPackage
             )
@@ -118,6 +124,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 writeType = writeType,
                 data = data,
                 split = split,
+                splitNum = splitNum,
                 continueWhenLastFail = continueWhenLastFail,
                 intervalBetweenTwoPackage = intervalBetweenTwoPackage
             )
@@ -137,6 +144,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         private var data: ByteArray? = null
         private var bleWriteCallback: BleWriteCallback? = null
         private var split: Boolean = true
+        private var splitNum = BleManager.splitWriteNum
         private var continueWhenLastFail: Boolean = false
         private var intervalBetweenTwoPackage: Long = 0
         private var writeType: Int = BleOperator.WRITE_TYPE_DEFAULT
@@ -151,6 +159,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             this.data = writeOperator.data
             this.bleWriteCallback = writeOperator.bleWriteCallback
             this.split = writeOperator.split
+            this.splitNum = writeOperator.splitNum
             this.continueWhenLastFail = writeOperator.continueWhenLastFail
             this.intervalBetweenTwoPackage = writeOperator.intervalBetweenTwoPackage
             this.writeType = writeOperator.writeType
@@ -193,6 +202,11 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             return this
         }
 
+        fun splitNum(splitNum: Int): Builder {
+            this.splitNum = splitNum
+            return this
+        }
+
         fun continueWhenLastFail(continueWhenLastFail: Boolean): Builder {
             this.continueWhenLastFail = continueWhenLastFail
             return this
@@ -224,6 +238,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             writeOperator.data = this.data
             writeOperator.bleWriteCallback = this.bleWriteCallback
             writeOperator.split = this.split
+            writeOperator.splitNum = this.splitNum
             writeOperator.continueWhenLastFail = this.continueWhenLastFail
             writeOperator.intervalBetweenTwoPackage = this.intervalBetweenTwoPackage
             writeOperator.writeType = this.writeType
