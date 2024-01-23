@@ -1,5 +1,5 @@
 package com.huyuhui.fastble.data
 
-enum class BleScanState(val code: Int) {
-    STATE_IDLE(-1), STATE_SCANNING(0X01);
+enum class BleScanState {
+    STATE_IDLE, STATE_SCANNING;
 }

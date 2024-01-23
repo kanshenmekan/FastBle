@@ -1,7 +1,6 @@
 package com.huyuhui.fastble.bluetooth
 
 import android.bluetooth.BluetoothGattCharacteristic
-import com.huyuhui.fastble.BleManager
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
@@ -28,6 +27,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
 
     fun splitWrite(
         data: ByteArray,
+        splitNum:Int,
         continueWhenLastFail: Boolean,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback?,
@@ -37,7 +37,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
         mContinueWhenLastFail = continueWhenLastFail
         mIntervalBetweenTwoPackage = intervalBetweenTwoPackage
         mCallback = callback
-        mCount = BleManager.splitWriteNum
+        mCount = splitNum
         splitWrite(writeType)
     }
 
@@ -140,7 +140,7 @@ class SplitWriter(private val writeOperator: BleOperator) {
                                 writeOperator.bleDevice,
                                 writeOperator.mCharacteristic,
                                 BleException.OtherException(
-                                    BleException.COROUTINESCOPE_CANCELLED,
+                                    BleException.COROUTINE_SCOPE_CANCELLED,
                                     "CoroutineScope Cancelled when sending"
                                 ),
                                 position,

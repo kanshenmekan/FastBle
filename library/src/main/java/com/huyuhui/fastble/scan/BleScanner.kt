@@ -29,6 +29,7 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
     private val map = linkedMapOf<String, BleDevice>()
     override fun onScanFailed(errorCode: Int) {
         super.onScanFailed(errorCode)
+        BleLog.e("scan failed,errorCode = $errorCode")
         mBleScanState = BleScanState.STATE_IDLE
         bleScanCallback?.onScanStarted(false)
     }
@@ -90,6 +91,7 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
         }
         map.clear()
         bleScanCallback?.onScanStarted(true)
+        BleLog.i("scan start")
         mBleScanState = BleScanState.STATE_SCANNING
         launch {
             BleManager.bluetoothAdapter?.bluetoothLeScanner?.startScan(
@@ -110,6 +112,7 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
             BleManager.bluetoothAdapter?.bluetoothLeScanner?.stopScan(this@BleScanner)
             mBleScanState = BleScanState.STATE_IDLE
             bleScanCallback?.onScanFinished(map.values.toList())
+            BleLog.i("scan finished")
             coroutineContext.cancelChildren()
         }
     }

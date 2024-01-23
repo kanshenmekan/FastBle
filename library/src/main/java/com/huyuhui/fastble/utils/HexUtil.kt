@@ -1,7 +1,7 @@
 package com.huyuhui.fastble.utils
 
 import java.util.Locale
-
+@Suppress("unused")
 object HexUtil {
     private val DIGITS_LOWER = charArrayOf(
         '0', '1', '2', '3', '4', '5',

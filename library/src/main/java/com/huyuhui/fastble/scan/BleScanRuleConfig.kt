@@ -6,7 +6,7 @@ import android.os.ParcelUuid
 import com.huyuhui.fastble.BleManager
 import java.util.UUID
 
-
+@Suppress("unused")
 class BleScanRuleConfig private constructor() {
 
     var mServiceUuids: List<UUID>? = null

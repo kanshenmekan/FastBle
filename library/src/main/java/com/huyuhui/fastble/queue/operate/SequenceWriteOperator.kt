@@ -16,6 +16,7 @@ const val PRIORITY_WRITE_DEFAULT = 500
 const val DELAY_WRITE_DEFAULT: Long = 100
 
 @SuppressLint("MissingPermission")
+@Suppress("unused")
 class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
     SequenceBleOperator(priority, delay) {
     var serviceUUID: String? = null

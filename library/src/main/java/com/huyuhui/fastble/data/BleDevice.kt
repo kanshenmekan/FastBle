@@ -9,6 +9,7 @@ import android.os.Parcelable
 import com.huyuhui.fastble.BleManager
 
 @SuppressLint("MissingPermission")
+@Suppress("unused")
 data class BleDevice(
     var scanResult: ScanResult?,
     var device: BluetoothDevice

@@ -1,5 +1,5 @@
 package com.huyuhui.fastble.utils
-
+@Suppress("unused")
 object UuidUtils {
     private const val base_uuid_regex =
         "0000([0-9a-f][0-9a-f][0-9a-f][0-9a-f])-0000-1000-8000-00805f9b34fb"
@@ -21,16 +21,16 @@ object UuidUtils {
         return uuidPattern.matches(str)
     }
 
-    fun uuid128To16(uuid: String, lower_case: Boolean = true): String? {
+    fun uuid128To16(uuid: String, lowerCase: Boolean = true): String? {
         return if (isBaseUUID(uuid)) {
-            if (lower_case) uuid.substring(4, 8).lowercase()
+            if (lowerCase) uuid.substring(4, 8).lowercase()
             else uuid.substring(4, 8).uppercase()
         } else null
     }
 
-    fun uuid16To128(uuid: String, lower_case: Boolean = true): String? {
+    fun uuid16To128(uuid: String, lowerCase: Boolean = true): String? {
         return if (is16UUID(uuid)) {
-            if (lower_case) baseUUID.replaceRange(4, 8, uuid)
+            if (lowerCase) baseUUID.replaceRange(4, 8, uuid)
                 .lowercase() else baseUUID.replaceRange(4, 8, uuid).uppercase()
         } else null
     }

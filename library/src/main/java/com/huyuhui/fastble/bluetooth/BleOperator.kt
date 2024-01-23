@@ -90,11 +90,11 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
      * notify
      */
     fun enableCharacteristicNotify(
-        bleNotifyCallback: BleNotifyCallback?, uuid_notify: String
+        bleNotifyCallback: BleNotifyCallback?, uuidNotify: String
     ) {
         if (mCharacteristic != null && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
             operateCallback = bleNotifyCallback
-            bleBluetooth.addNotifyOperator(uuid_notify, this)
+            bleBluetooth.addNotifyOperator(uuidNotify, this)
             launch {
                 timeOutTask.start()
             }
@@ -218,13 +218,13 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     }
 
     fun enableCharacteristicIndicate(
-        bleIndicateCallback: BleIndicateCallback?, uuid_indicate: String
+        bleIndicateCallback: BleIndicateCallback?, uuidIndicate: String
     ) {
         if (mCharacteristic != null
             && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
         ) {
             operateCallback = bleIndicateCallback
-            bleBluetooth.addIndicateOperator(uuid_indicate, this)
+            bleBluetooth.addIndicateOperator(uuidIndicate, this)
             launch {
                 timeOutTask.start()
             }
@@ -350,7 +350,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     fun writeCharacteristic(
         data: ByteArray?,
         bleWriteCallback: BleWriteCallback?,
-        uuid_write: String,
+        uuidWrite: String,
         writeType: Int
     ) {
         this.data = data
@@ -395,7 +395,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             launch {
                 timeOutTask.start()
             }
-            bleBluetooth.addWriteOperator(uuid_write, this)
+            bleBluetooth.addWriteOperator(uuidWrite, this)
             mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
 //            val status = mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
 //            if (status != BluetoothStatusCodes.SUCCESS) {
@@ -411,7 +411,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 launch {
                     timeOutTask.start()
                 }
-                bleBluetooth.addWriteOperator(uuid_write, this)
+                bleBluetooth.addWriteOperator(uuidWrite, this)
                 mBluetoothGatt!!.writeCharacteristic(mCharacteristic)
 //                if (!mBluetoothGatt!!.writeCharacteristic(mCharacteristic)) {
 //                    removeTimeOut()
@@ -436,7 +436,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     /**
      * read
      */
-    fun readCharacteristic(bleReadCallback: BleReadCallback?, uuid_read: String) {
+    fun readCharacteristic(bleReadCallback: BleReadCallback?, uuidRead: String) {
         if (mCharacteristic != null
             && mCharacteristic!!.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
         ) {
@@ -444,7 +444,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             launch {
                 timeOutTask.start()
             }
-            bleBluetooth.addReadOperator(uuid_read, this)
+            bleBluetooth.addReadOperator(uuidRead, this)
             if (!mBluetoothGatt!!.readCharacteristic(mCharacteristic)) {
                 removeTimeOut()
                 bleReadCallback?.onReadFailure(

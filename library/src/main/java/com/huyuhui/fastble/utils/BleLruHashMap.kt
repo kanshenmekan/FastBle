@@ -9,6 +9,7 @@ internal class BleLruHashMap<K, V>(private val maxSize: Int) : LinkedHashMap<K, 
 
     override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>): Boolean {
         if (size > maxSize && eldest.value is BleBluetooth) {
+            BleLog.w("The number of connections has surpassed the maximum limit.")
             (eldest.value as BleBluetooth).disconnect()
         }
         return size > maxSize

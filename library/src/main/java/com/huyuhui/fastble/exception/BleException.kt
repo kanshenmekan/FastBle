@@ -44,7 +44,7 @@ sealed class BleException(open var code: Int, open var description: String) {
         val DESCRIPTOR_ERROR = 2014
 
         @JvmStatic
-        val COROUTINESCOPE_CANCELLED = 2015
+        val COROUTINE_SCOPE_CANCELLED = 2015
 
         @JvmStatic
         val DEVICE_HAS_CONNECTED = 2016

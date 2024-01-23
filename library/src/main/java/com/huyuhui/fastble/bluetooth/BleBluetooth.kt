@@ -122,6 +122,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         if (bluetoothGatt != null) {
             if (connectRetryCount == 0) {
                 bleGattCallback?.onStartConnect(bleDevice)
+                BleLog.i("Start connecting device $bleDevice,$bleConnectStrategy")
             }
         } else {
             connectTimeOutTask.success()
@@ -138,12 +139,13 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 bleDevice,
                 exception
             )
+            BleLog.i("Connection failure,$exception")
             destroy()
         }
     }
 
-    fun newOperator(uuid_service: String, uuid_characteristic: String): BleOperator {
-        return BleOperator(this).withUUIDString(uuid_service, uuid_characteristic)
+    fun newOperator(uuidService: String, uuidCharacteristic: String): BleOperator {
+        return BleOperator(this).withUUIDString(uuidService, uuidCharacteristic)
     }
 
     fun newOperator(): BleOperator {
@@ -212,6 +214,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
             BleManager.multipleBluetoothController.addConnectedBleBluetooth(this@BleBluetooth)
             bleGattCallback?.onConnectSuccess(bleDevice, bluetoothGatt, status)
+            BleLog.i("Connect success,$bleDevice")
         }
     }
 
@@ -438,6 +441,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                             bluetoothGatt,
                             status
                         )
+                        BleLog.i("disconnect,$bleDevice,isActiveDisconnect = $isActiveDisconnect")
                         destroy()
                     }
                 }
@@ -601,6 +605,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                                         bleDevice,
                                         descriptor!!.characteristic
                                     )
+                                    BleLog.i("onIndicateSuccess,characteristic = ${descriptor!!.characteristic.uuid}")
                                 } else {
                                     (operator.operateCallback as? BleIndicateCallback)?.onIndicateFailure(
                                         bleDevice, descriptor!!.characteristic,

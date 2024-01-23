@@ -34,7 +34,7 @@ import com.huyuhui.fastble.scan.BleScanRuleConfig
 import com.huyuhui.fastble.scan.BleScanner
 import com.huyuhui.fastble.utils.BleLog
 
-
+@Suppress("unused")
 object BleManager {
     const val DEFAULT_SCAN_TIME: Long = 10000
     private const val DEFAULT_MAX_MULTIPLE_DEVICE = 7
@@ -98,7 +98,7 @@ object BleManager {
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_SCAN")
     fun scan(bleScanCallback: BleScanCallback?) {
-        if (context == null){
+        if (context == null) {
             BleLog.e("BleManager may not be initialized")
             return
         }
@@ -137,7 +137,7 @@ object BleManager {
         bleGattCallback: BleGattCallback?,
         strategy: BleConnectStrategy = bleConnectStrategy,
     ): BluetoothGatt? {
-        if (context == null){
+        if (context == null) {
             BleLog.e("BleManager may not be initialized")
             return null
         }
@@ -229,15 +229,15 @@ object BleManager {
      * notify
      *
      * @param bleDevice
-     * @param uuid_service
-     * @param uuid_notify
+     * @param uuidService
+     * @param uuidNotify
      * @param callback
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun notify(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_notify: String,
+        uuidService: String,
+        uuidNotify: String,
         callback: BleNotifyCallback?,
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -251,20 +251,20 @@ object BleManager {
                 )
             )
         } else {
-            bleBluetooth.newOperator(uuid_service, uuid_notify)
-                .enableCharacteristicNotify(callback, uuid_notify)
+            bleBluetooth.newOperator(uuidService, uuidNotify)
+                .enableCharacteristicNotify(callback, uuidNotify)
         }
     }
 
     /**
      * @param bleDevice
-     * @param uuid_indicate
+     * @param uuidIndicate
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun indicate(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_indicate: String,
+        uuidService: String,
+        uuidIndicate: String,
         callback: BleIndicateCallback?,
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
@@ -278,8 +278,8 @@ object BleManager {
                 )
             )
         } else {
-            bleBluetooth.newOperator(uuid_service, uuid_indicate)
-                .enableCharacteristicIndicate(callback, uuid_indicate)
+            bleBluetooth.newOperator(uuidService, uuidIndicate)
+                .enableCharacteristicIndicate(callback, uuidIndicate)
         }
     }
 
@@ -287,19 +287,19 @@ object BleManager {
      * stop notify, remove callback
      *
      * @param bleDevice
-     * @param uuid_service
-     * @param uuid_notify
+     * @param uuidService
+     * @param uuidNotify
      * @return
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun stopNotify(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_notify: String,
+        uuidService: String,
+        uuidNotify: String,
     ): Boolean {
         val bleBluetooth =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice) ?: return false
-        return bleBluetooth.newOperator(uuid_service, uuid_notify)
+        return bleBluetooth.newOperator(uuidService, uuidNotify)
             .disableCharacteristicNotify()
     }
 
@@ -307,19 +307,19 @@ object BleManager {
      * stop indicate, remove callback
      *
      * @param bleDevice
-     * @param uuid_service
-     * @param uuid_indicate
+     * @param uuidService
+     * @param uuidIndicate
      * @return
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun stopIndicate(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_indicate: String,
+        uuidService: String,
+        uuidIndicate: String,
     ): Boolean {
         val bleBluetooth =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice) ?: return false
-        return bleBluetooth.newOperator(uuid_service, uuid_indicate)
+        return bleBluetooth.newOperator(uuidService, uuidIndicate)
             .disableCharacteristicIndicate()
     }
 
@@ -329,10 +329,11 @@ object BleManager {
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun write(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_write: String,
+        uuidService: String,
+        uuidWrite: String,
         data: ByteArray?,
         split: Boolean = true,
+        splitNum: Int = splitWriteNum,
         continueWhenLastFail: Boolean = false,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback?,
@@ -362,13 +363,18 @@ object BleManager {
                 justWrite = data
             )
         } else {
-            if (split && data.size > splitWriteNum) {
-                SplitWriter(bleBluetooth.newOperator(uuid_service, uuid_write)).splitWrite(
-                    data, continueWhenLastFail, intervalBetweenTwoPackage, callback, writeType
+            if (split && data.size > splitNum) {
+                SplitWriter(bleBluetooth.newOperator(uuidService, uuidWrite)).splitWrite(
+                    data,
+                    splitNum,
+                    continueWhenLastFail,
+                    intervalBetweenTwoPackage,
+                    callback,
+                    writeType
                 )
             } else {
-                bleBluetooth.newOperator(uuid_service, uuid_write)
-                    .writeCharacteristic(data, callback, uuid_write, writeType)
+                bleBluetooth.newOperator(uuidService, uuidWrite)
+                    .writeCharacteristic(data, callback, uuidWrite, writeType)
             }
         }
     }
@@ -377,21 +383,21 @@ object BleManager {
      * read
      *
      * @param bleDevice
-     * @param uuid_service
-     * @param uuid_read
+     * @param uuidService
+     * @param uuidRead
      * @param callback
      */
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun read(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_read: String,
+        uuidService: String,
+        uuidRead: String,
         callback: BleReadCallback?,
     ) {
         requireNotNull(callback) { "BleReadCallback can not be Null!" }
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-        bleBluetooth?.newOperator(uuid_service, uuid_read)
-            ?.readCharacteristic(callback, uuid_read)
+        bleBluetooth?.newOperator(uuidService, uuidRead)
+            ?.readCharacteristic(callback, uuidRead)
             ?: callback.onReadFailure(
                 bleDevice,
                 null,
@@ -584,9 +590,11 @@ object BleManager {
     fun scannerDestroy() {
         BleScanner.destroy()
     }
-    fun cancelOrDisconnect(bleDevice: BleDevice?){
+
+    fun cancelOrDisconnect(bleDevice: BleDevice?) {
         multipleBluetoothController.cancelOrDisconnect(bleDevice)
     }
+
     fun removeScanCallback() {
         BleScanner.bleScanCallback = null
     }
@@ -599,7 +607,7 @@ object BleManager {
         multipleBluetoothController.cancelAllConnectingDevice()
     }
 
-    fun isConnecting(bleDevice: BleDevice?):Boolean {
+    fun isConnecting(bleDevice: BleDevice?): Boolean {
         return multipleBluetoothController.isConnecting(bleDevice)
     }
 
@@ -649,24 +657,24 @@ object BleManager {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.removeMtuOperator()
     }
 
-    fun removeNotifyCallback(bleDevice: BleDevice?, uuid_notify: String) {
+    fun removeNotifyCallback(bleDevice: BleDevice?, uuidNotify: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeNotifyOperator(uuid_notify)
+            ?.removeNotifyOperator(uuidNotify)
     }
 
-    fun removeIndicateCallback(bleDevice: BleDevice?, uuid_indicate: String) {
+    fun removeIndicateCallback(bleDevice: BleDevice?, uuidIndicate: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeIndicateOperator(uuid_indicate)
+            ?.removeIndicateOperator(uuidIndicate)
     }
 
-    fun removeWriteCallback(bleDevice: BleDevice?, uuid_write: String) {
+    fun removeWriteCallback(bleDevice: BleDevice?, uuidWrite: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeWriteOperator(uuid_write)
+            ?.removeWriteOperator(uuidWrite)
     }
 
-    fun removeReadCallback(bleDevice: BleDevice?, uuid_read: String) {
+    fun removeReadCallback(bleDevice: BleDevice?, uuidRead: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeReadOperator(uuid_read)
+            ?.removeReadOperator(uuidRead)
     }
 
     fun clearCharacterCallback(bleDevice: BleDevice?) {
@@ -674,7 +682,7 @@ object BleManager {
     }
 
     private fun initBleObserver() {
-        if (context == null){
+        if (context == null) {
             BleLog.e("BleManager may not be initialized")
             return
         }
@@ -691,7 +699,7 @@ object BleManager {
     }
 
     private fun releaseBleObserver() {
-        if (context == null){
+        if (context == null) {
             BleLog.e("BleManager may not be initialized")
             return
         }

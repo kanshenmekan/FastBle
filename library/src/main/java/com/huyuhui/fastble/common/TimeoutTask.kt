@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
-
+@Suppress("unused")
 class TimeoutTask(
     private val delayTime: Long,
     var onTimeoutResultCallBack: OnResultCallBack? = null

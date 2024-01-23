@@ -2,7 +2,7 @@ package com.huyuhui.fastble.common
 
 import kotlin.math.max
 
-
+@Suppress("unused")
 class BleConnectStrategy private constructor() {
     companion object {
         /**
@@ -76,4 +76,10 @@ class BleConnectStrategy private constructor() {
             return strategy
         }
     }
+
+    override fun toString(): String {
+        return "BleConnectStrategy(connectBackpressureStrategy=$connectBackpressureStrategy, reConnectCount=$reConnectCount, reConnectInterval=$reConnectInterval, connectOverTime=$connectOverTime)"
+    }
+
+
 }
