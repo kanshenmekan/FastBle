@@ -331,6 +331,7 @@ fun write(
     uuid_write: String,
     data: ByteArray?,
     split: Boolean = true,
+    splitNum: Int = splitWriteNum,
     continueWhenLastFail: Boolean = false,
     intervalBetweenTwoPackage: Long = 0,
     callback: BleWriteCallback?,
@@ -369,7 +370,7 @@ BleWriteCallback() {
 
 }
 Tips:
-- 在没有扩大MTU及扩大MTU无效的情况下，当遇到超过20字节的长数据需要发送的时候，需要进行分包。参数`boolean split`表示是否使用分包发送；无`boolean split`参数的`write`方法默认对超过20字节的数据进行分包发送。
+- 在没有扩大MTU及扩大MTU无效的情况下，当遇到超过20字节的长数据需要发送的时候，需要进行分包。splitNum表示分包的字节数，默认20，参数`boolean split`表示是否使用分包发送，默认为true，默认对超过splitNum字节的数据进行分包发送。
 - 对于分包发送的策略，可以选择发送上一包数据发送失败之后，后面的数据还需不需要发送，continueWhenLastFail，默认为false。
 - 参数`intervalBetweenTwoPackage`表示延时多长时间发送下一包，单位ms，默认0。
 - 参数writeType，表示使用哪种发送模式BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE，WRITE_TYPE_DEFAULT，WRITE_TYPE_SIGNED，默认是判断characteristic具备那种发送模式
@@ -392,6 +393,8 @@ val sequenceWriteOperator =
         .continuous(continuous)
         .delay(if (continuous) 10 else 100)
         .timeout(1000)
+        .split(true)
+        .splitNum(20)
         .build()
 BleManager.addOperatorToQueue(bleDevice, sequenceBleOperator = sequenceWriteOperator)
 Tips:
