@@ -65,6 +65,14 @@ BleConnectStrategy connectBackpressureStrategy
 2.BleConnectStrategy.CONNECT_BACKPRESSURE_LAST
   当存在mac相同的设备已经在连接的时候，取消之前的链接，直接用最新发起的，已经存在连接成功，不会发起连接
 ```
+
+设置autoConnect
+```
+BleConnectStrategy.Builder().setAutoConnect(autoConnect: Boolean)
+true 当发起连接的时候，如果无法找到设备，会保持连接状态，不回调结果（如果设置了超时，会一直等待到超时时间回调连接超时），等待设备可以连接之后，再回调结果。
+false 直接连接，回调结果，默认为false
+  
+```
 ### 配置分包发送
 设置分包发送的时候，每一包的数据长度，默认20个字节<br>
 ```
@@ -105,7 +113,6 @@ Tips:
 val scanRuleConfig = BleScanRuleConfig.Builder()
     .setServiceUuids(serviceUUID) // 只扫描指定的服务的设备，可选
     .setDeviceName(names, true) // 只扫描指定广播名的设备，可选
-    .setAutoConnect(autoConnect) // 连接时的autoConnect参数，可选，默认false
     .setScanTimeOut(10000) // 扫描超时时间，可选，默认10秒
     .setDeviceMac()
 //            .setScanSettings(scanSettings: ScanSettings)
