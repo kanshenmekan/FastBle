@@ -15,8 +15,6 @@ class BleScanRuleConfig private constructor() {
         private set
     var mDeviceNames: List<String>? = null
         private set
-    var mAutoConnect = false
-        private set
     var mScanTimeOut = BleManager.DEFAULT_SCAN_TIME
         private set
     var mFuzzyName: Boolean = false
@@ -71,7 +69,6 @@ class BleScanRuleConfig private constructor() {
         private var mServiceUuids: List<UUID>? = null
         private var mDeviceNames: List<String>? = null
         private var mDeviceMacs: List<String>? = null
-        private var mAutoConnect = false
         private var mTimeOut = BleManager.DEFAULT_SCAN_TIME
         private var scanSettings: ScanSettings? = null
         private var mFuzzyName: Boolean = false
@@ -95,10 +92,6 @@ class BleScanRuleConfig private constructor() {
             return this
         }
 
-        fun setAutoConnect(autoConnect: Boolean): Builder {
-            mAutoConnect = autoConnect
-            return this
-        }
 
         fun setScanTimeOut(timeOut: Long): Builder {
             mTimeOut = timeOut
@@ -113,7 +106,6 @@ class BleScanRuleConfig private constructor() {
             config.mServiceUuids = mServiceUuids
             config.mDeviceNames = mDeviceNames
             config.mDeviceMacs = mDeviceMacs
-            config.mAutoConnect = mAutoConnect
             config.mScanTimeOut = mTimeOut
             config.scanSettings = scanSettings
             config.mFuzzyName = mFuzzyName

@@ -29,6 +29,7 @@ import com.huyuhui.blesample.operate.OperateActivity
 import com.huyuhui.fastble.BleManager
 import com.huyuhui.fastble.callback.BleGattCallback
 import com.huyuhui.fastble.callback.BleScanCallback
+import com.huyuhui.fastble.common.BleConnectStrategy
 import com.huyuhui.fastble.common.BluetoothChangedObserver
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
@@ -213,12 +214,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             macStr.split(",".toRegex()).toList()
         }
-        val autoConnect = scanFilterBinding.cb.isChecked
 
         val scanRuleConfig = BleScanRuleConfig.Builder()
             .setServiceUuids(serviceUUID) // 只扫描指定的服务的设备，可选
             .setDeviceName(names, true) // 只扫描指定广播名的设备，可选
-            .setAutoConnect(autoConnect) // 连接时的autoConnect参数，可选，默认false
             .setScanTimeOut(10000) // 扫描超时时间，可选，默认10秒
             .setDeviceMac()
 //            .setScanSettings(scanSettings: ScanSettings)
@@ -310,6 +309,10 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("MissingPermission")
     private fun connect(bleDevice: BleDevice) {
+        val autoConnect = scanFilterBinding.cb.isChecked
+        val connectStrategy =
+            BleConnectStrategy.Builder(BleManager.bleConnectStrategy).setAutoConnect(autoConnect)
+                .build()
         BleManager.connect(
             bleDevice,
             object : BleGattCallback() {
@@ -369,7 +372,8 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-            })
+            }, connectStrategy
+        )
     }
 
     @SuppressLint("MissingPermission")

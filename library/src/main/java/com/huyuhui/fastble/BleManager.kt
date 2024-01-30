@@ -177,7 +177,7 @@ object BleManager {
             } else {
                 val bleBluetooth: BleBluetooth =
                     multipleBluetoothController.buildConnectingBle(bleDevice)
-                val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
+                val autoConnect: Boolean = strategy.mAutoConnect
                 bleBluetooth.connect(context!!, autoConnect, strategy, bleGattCallback)
             }
         } else {
@@ -186,7 +186,7 @@ object BleManager {
             }
             val bleBluetooth: BleBluetooth =
                 multipleBluetoothController.buildConnectingBle(bleDevice)
-            val autoConnect: Boolean = bleScanRuleConfig.mAutoConnect
+            val autoConnect: Boolean = strategy.mAutoConnect
             return bleBluetooth.connect(
                 context!!,
                 autoConnect,

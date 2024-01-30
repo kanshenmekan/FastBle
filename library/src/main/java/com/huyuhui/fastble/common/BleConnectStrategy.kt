@@ -21,6 +21,7 @@ class BleConnectStrategy private constructor() {
 
     var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
         private set
+
     /**
      * connect retry count
      */
@@ -40,12 +41,27 @@ class BleConnectStrategy private constructor() {
     var connectOverTime: Long = DEFAULT_CONNECT_OVER_TIME
         private set
 
+    /**
+     * true 当发起连接的时候，无法找到设备，会保持连接状态，不回调结果（如果设置了超时，会一直等待到超时时间回调连接超时），等待设备可以连接之后，再回调结果。
+     * false 直接连接，回调结果，默认为false
+     */
+    var mAutoConnect = false
+        private set
 
-    class Builder {
+    class Builder() {
         private var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
         private var reConnectCount = DEFAULT_CONNECT_RETRY_COUNT
         private var reConnectInterval = DEFAULT_CONNECT_RETRY_INTERVAL
         private var connectOverTime = DEFAULT_CONNECT_OVER_TIME
+        private var mAutoConnect = false
+
+        constructor(bleConnectStrategy: BleConnectStrategy) : this() {
+            connectBackpressureStrategy = bleConnectStrategy.connectBackpressureStrategy
+            reConnectCount = bleConnectStrategy.reConnectCount
+            reConnectInterval = bleConnectStrategy.reConnectInterval
+            connectOverTime = bleConnectStrategy.connectOverTime
+            mAutoConnect = bleConnectStrategy.mAutoConnect
+        }
 
         fun setConnectBackpressureStrategy(backpressureStrategy: Int): Builder {
             this.connectBackpressureStrategy = backpressureStrategy
@@ -67,18 +83,24 @@ class BleConnectStrategy private constructor() {
             return this
         }
 
+        fun setAutoConnect(autoConnect: Boolean): Builder {
+            mAutoConnect = autoConnect
+            return this
+        }
+
         fun build(): BleConnectStrategy {
             val strategy = BleConnectStrategy()
             strategy.reConnectCount = this.reConnectCount
             strategy.reConnectInterval = this.reConnectInterval
             strategy.connectOverTime = this.connectOverTime
             strategy.connectBackpressureStrategy = strategy.connectBackpressureStrategy
+            strategy.mAutoConnect = mAutoConnect
             return strategy
         }
     }
 
     override fun toString(): String {
-        return "BleConnectStrategy(connectBackpressureStrategy=$connectBackpressureStrategy, reConnectCount=$reConnectCount, reConnectInterval=$reConnectInterval, connectOverTime=$connectOverTime)"
+        return "BleConnectStrategy(connectBackpressureStrategy=$connectBackpressureStrategy, reConnectCount=$reConnectCount, reConnectInterval=$reConnectInterval, connectOverTime=$connectOverTime, mAutoConnect=$mAutoConnect)"
     }
 
 
