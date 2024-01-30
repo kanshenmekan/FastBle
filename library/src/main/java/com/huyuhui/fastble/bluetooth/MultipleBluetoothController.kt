@@ -13,8 +13,9 @@ import com.huyuhui.fastble.utils.BleLruHashMap
 @Suppress("unused")
 class MultipleBluetoothController {
     //保存已经连接成功的设备
-    private val bleLruHashMap: BleLruHashMap<String, BleBluetooth> =
+    private val bleLruHashMap: BleLruHashMap<String, BleBluetooth> by lazy {
         BleLruHashMap(BleManager.maxConnectCount)
+    }
 
     //保存正在连接的设备
     private val bleTempHashMap: HashMap<String, BleBluetooth> = HashMap()
