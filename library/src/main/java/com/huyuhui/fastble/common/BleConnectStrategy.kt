@@ -93,8 +93,8 @@ class BleConnectStrategy private constructor() {
             strategy.reConnectCount = this.reConnectCount
             strategy.reConnectInterval = this.reConnectInterval
             strategy.connectOverTime = this.connectOverTime
-            strategy.connectBackpressureStrategy = strategy.connectBackpressureStrategy
-            strategy.mAutoConnect = mAutoConnect
+            strategy.connectBackpressureStrategy = this.connectBackpressureStrategy
+            strategy.mAutoConnect = this.mAutoConnect
             return strategy
         }
     }
