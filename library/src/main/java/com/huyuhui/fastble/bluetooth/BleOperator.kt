@@ -396,7 +396,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 timeOutTask.start()
             }
             bleBluetooth.addWriteOperator(uuidWrite, this)
-            mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
+            mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, finalWriteType)
 //            val status = mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
 //            if (status != BluetoothStatusCodes.SUCCESS) {
 //                removeTimeOut()
