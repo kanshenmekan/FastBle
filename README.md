@@ -210,6 +210,18 @@ fun connect(
     strategy: BleConnectStrategy = bleConnectStrategy,
 ): BluetoothGatt?
 ```
+### 断开后重连问题
+```kotlin
+val connectStrategy =
+BleConnectStrategy.Builder().setAutoConnect(true)
+    .setConnectOverTime(-1)
+    .setConnectBackpressureStrategy(BleConnectStrategy.CONNECT_BACKPRESSURE_DROP)
+    .build()
+BleManager.connect(bleDevice, reconnectBleGattCallback, connectStrategy)
+- 我们把AutoConnect参数设置为true，等待设备可以连接的时候才会进行回调
+- 设置一个最长的超时时间setConnectOverTime，单位为millisecond，如果超时未负数，则会一直处于连接状态，直至连接成功或失败，或者被取消这次连接
+- 可以在`onDisConnected`回调方法中再次调用`connect`方法。
+```
 
 ## 蓝牙操作
 
