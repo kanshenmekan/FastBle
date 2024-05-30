@@ -76,7 +76,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         context: Context,
         autoConnect: Boolean,
         bleConnectStrategy: BleConnectStrategy,
-        callback: BleGattCallback?
+        callback: BleGattCallback?,
     ): BluetoothGatt? {
         if (!isActive) throw Exception("this $this is destroyed,do not connect")
         bleGattCallback = callback
@@ -93,7 +93,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     private fun connect(
         context: Context,
         autoConnect: Boolean,
-        connectRetryCount: Int
+        connectRetryCount: Int,
     ): BluetoothGatt? {
         if (!isActive) return bluetoothGatt
         BleLog.i(
@@ -105,7 +105,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 connectCount:${connectRetryCount + 1}
                 """.trimIndent()
         )
-        if (bleConnectStrategy.connectOverTime > 0){
+        if (bleConnectStrategy.connectOverTime > 0) {
             launch(Dispatchers.Main.immediate) {
                 connectTimeOutTask.start()
             }
@@ -174,7 +174,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     @Synchronized
     fun removeOperatorFromQueue(
         identifier: String = DEFAULT_QUEUE_IDENTIFIER,
-        sequenceBleOperator: SequenceBleOperator
+        sequenceBleOperator: SequenceBleOperator,
     ): Boolean {
         return bleOperatorQueueMap[identifier]?.remove(sequenceBleOperator) ?: true
     }
@@ -182,7 +182,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     @Synchronized
     fun addOperatorToQueue(
         identifier: String = DEFAULT_QUEUE_IDENTIFIER,
-        sequenceBleOperator: SequenceBleOperator
+        sequenceBleOperator: SequenceBleOperator,
     ): Boolean {
         createOperateQueue(identifier)
         return bleOperatorQueueMap[identifier]?.offer(sequenceBleOperator) ?: false
@@ -471,7 +471,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
-            value: ByteArray
+            value: ByteArray,
         ) {
             super.onCharacteristicChanged(gatt, characteristic, value)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -510,7 +510,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?
+            characteristic: BluetoothGattCharacteristic?,
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
@@ -548,85 +548,79 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         override fun onDescriptorWrite(
             gatt: BluetoothGatt?,
             descriptor: BluetoothGattDescriptor?,
-            status: Int
+            status: Int,
         ) {
             super.onDescriptorWrite(gatt, descriptor, status)
-            if (descriptor?.uuid.toString()
-                    .equals(BleOperator.UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR, true)
-            ) {
-                for ((uuid, operator) in bleNotifyOperatorMap) {
-                    if (operator.operateCallback is BleNotifyCallback && descriptor?.characteristic?.uuid.toString()
-                            .equals(uuid, true)
-                    ) {
-                        @Suppress("DEPRECATION")
-                        val data = descriptor?.value
-                        if (data.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
-                            operator.removeTimeOut()
-                            operator.launch {
-                                if (status == BluetoothGatt.GATT_SUCCESS) {
-                                    (operator.operateCallback as? BleNotifyCallback)?.onNotifySuccess(
-                                        bleDevice,
-                                        descriptor!!.characteristic
-                                    )
-                                } else {
-                                    (operator.operateCallback as? BleNotifyCallback)?.onNotifyFailure(
-                                        bleDevice, descriptor!!.characteristic,
-                                        BleException.GattException(gatt, status)
-                                    )
-                                }
-                            }
-                        } else if (data.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)) {
+            @Suppress("DEPRECATION")
+            val data =  descriptor?.value
+            for ((uuid, operator) in bleNotifyOperatorMap) {
+                if (operator.operateCallback is BleNotifyCallback && descriptor?.characteristic?.uuid.toString()
+                        .equals(uuid, true)
+                ) {
+                    if (data.contentEquals(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)) {
+                        operator.removeTimeOut()
+                        operator.launch {
                             if (status == BluetoothGatt.GATT_SUCCESS) {
-                                operator.launch {
-                                    (bleNotifyOperatorMap[descriptor!!.characteristic.uuid.toString()]?.operateCallback
-                                            as? BleNotifyCallback)?.onNotifyCancel(
-                                        bleDevice,
-                                        descriptor.characteristic
-                                    )
-                                    removeNotifyOperator(descriptor.characteristic.uuid.toString())
-                                }
+                                (operator.operateCallback as? BleNotifyCallback)?.onNotifySuccess(
+                                    bleDevice,
+                                    descriptor!!.characteristic
+                                )
+                            } else {
+                                (operator.operateCallback as? BleNotifyCallback)?.onNotifyFailure(
+                                    bleDevice, descriptor!!.characteristic,
+                                    BleException.GattException(gatt, status)
+                                )
                             }
                         }
-                        break
+                    } else if (data.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)) {
+                        if (status == BluetoothGatt.GATT_SUCCESS) {
+                            operator.launch {
+                                (bleNotifyOperatorMap[descriptor!!.characteristic.uuid.toString()]?.operateCallback
+                                        as? BleNotifyCallback)?.onNotifyCancel(
+                                    bleDevice,
+                                    descriptor.characteristic
+                                )
+                                removeNotifyOperator(descriptor.characteristic.uuid.toString())
+                            }
+                        }
                     }
+                    break
                 }
+            }
 
-                for ((uuid, operator) in bleIndicateOperatorMap) {
-                    if (operator.operateCallback is BleIndicateCallback && descriptor?.characteristic?.uuid.toString()
-                            .equals(uuid, true)
-                    ) {
-                        @Suppress("DEPRECATION")
-                        val data = descriptor?.value
-                        if (data.contentEquals(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
-                            operator.removeTimeOut()
-                            operator.launch {
-                                if (status == BluetoothGatt.GATT_SUCCESS) {
-                                    (operator.operateCallback as? BleIndicateCallback)?.onIndicateSuccess(
-                                        bleDevice,
-                                        descriptor!!.characteristic
-                                    )
-                                    BleLog.i("onIndicateSuccess,characteristic = ${descriptor!!.characteristic.uuid}")
-                                } else {
-                                    (operator.operateCallback as? BleIndicateCallback)?.onIndicateFailure(
-                                        bleDevice, descriptor!!.characteristic,
-                                        BleException.GattException(gatt, status)
-                                    )
-                                }
-                            }
-                        } else if (data.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)) {
+            for ((uuid, operator) in bleIndicateOperatorMap) {
+                if (operator.operateCallback is BleIndicateCallback && descriptor?.characteristic?.uuid.toString()
+                        .equals(uuid, true)
+                ) {
+                    if (data.contentEquals(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE)) {
+                        operator.removeTimeOut()
+                        operator.launch {
                             if (status == BluetoothGatt.GATT_SUCCESS) {
-                                operator.launch {
-                                    (bleIndicateOperatorMap[descriptor!!.characteristic.uuid.toString()]?.operateCallback
-                                            as? BleIndicateCallback)?.onIndicateCancel(
-                                        bleDevice,
-                                        descriptor.characteristic
-                                    )
-                                    removeIndicateOperator(descriptor.characteristic.uuid.toString())
-                                }
+                                (operator.operateCallback as? BleIndicateCallback)?.onIndicateSuccess(
+                                    bleDevice,
+                                    descriptor!!.characteristic
+                                )
+                                BleLog.i("onIndicateSuccess,characteristic = ${descriptor!!.characteristic.uuid}")
+                            } else {
+                                (operator.operateCallback as? BleIndicateCallback)?.onIndicateFailure(
+                                    bleDevice, descriptor!!.characteristic,
+                                    BleException.GattException(gatt, status)
+                                )
                             }
                         }
-                        break
+                    } else if (data.contentEquals(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE)) {
+                        if (status == BluetoothGatt.GATT_SUCCESS) {
+                            operator.launch {
+                                (bleIndicateOperatorMap[descriptor!!.characteristic.uuid.toString()]?.operateCallback
+                                        as? BleIndicateCallback)?.onIndicateCancel(
+                                    bleDevice,
+                                    descriptor.characteristic
+                                )
+                                removeIndicateOperator(descriptor.characteristic.uuid.toString())
+                            }
+                        }
                     }
+                    break
                 }
             }
             bleGattCallback?.onDescriptorWrite(gatt, descriptor, status)
@@ -640,7 +634,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         override fun onCharacteristicWrite(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
-            status: Int
+            status: Int,
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
             for ((uuid, operator) in bleWriteOperatorMap) {
@@ -678,7 +672,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
             value: ByteArray,
-            status: Int
+            status: Int,
         ) {
             super.onCharacteristicRead(gatt, characteristic, value, status)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -711,7 +705,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         override fun onCharacteristicRead(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
-            status: Int
+            status: Int,
         ) {
             super.onCharacteristicRead(gatt, characteristic, status)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {

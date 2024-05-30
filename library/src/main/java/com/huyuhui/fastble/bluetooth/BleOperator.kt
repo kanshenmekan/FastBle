@@ -75,10 +75,10 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     }
 
     fun withUUIDString(serviceUUID: String, characteristicUUID: String): BleOperator {
-        return withUUID(formUUID(serviceUUID), formUUID(characteristicUUID))
+        return withUUID(fromUUID(serviceUUID), fromUUID(characteristicUUID))
     }
 
-    private fun formUUID(uuid: String): UUID {
+    private fun fromUUID(uuid: String): UUID {
         return UUID.fromString(uuid)
     }
 
@@ -90,7 +90,9 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
      * notify
      */
     fun enableCharacteristicNotify(
-        bleNotifyCallback: BleNotifyCallback?, uuidNotify: String
+        bleNotifyCallback: BleNotifyCallback?,
+        uuidNotify: String,
+        useCharacteristicDescriptor: Boolean,
     ) {
         if (mCharacteristic != null && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
             operateCallback = bleNotifyCallback
@@ -102,7 +104,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 mBluetoothGatt,
                 mCharacteristic,
                 true,
-                bleNotifyCallback
+                bleNotifyCallback,
+                useCharacteristicDescriptor
             )
         } else {
             launch {
@@ -121,12 +124,12 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     /**
      * stop notify
      */
-    fun disableCharacteristicNotify(): Boolean {
+    fun disableCharacteristicNotify(useCharacteristicDescriptor: Boolean): Boolean {
         return if (mCharacteristic != null
             && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
         ) {
             setCharacteristicNotification(
-                mBluetoothGatt, mCharacteristic, false, null
+                mBluetoothGatt, mCharacteristic, false, null, useCharacteristicDescriptor
             )
         } else {
             false
@@ -139,7 +142,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         gatt: BluetoothGatt?,
         characteristic: BluetoothGattCharacteristic?,
         enable: Boolean,
-        bleNotifyCallback: BleNotifyCallback?
+        bleNotifyCallback: BleNotifyCallback?,
+        useCharacteristicDescriptor: Boolean,
     ): Boolean {
         if (gatt == null || characteristic == null) {
             removeTimeOut()
@@ -167,7 +171,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             return false
         }
         val descriptor: BluetoothGattDescriptor? =
-            characteristic.getDescriptor(formUUID(UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR))
+            if (useCharacteristicDescriptor) characteristic.getDescriptor(characteristic.uuid) else
+                characteristic.getDescriptor(fromUUID(UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR))
         return if (descriptor == null) {
             removeTimeOut()
             bleNotifyCallback?.onNotifyFailure(
@@ -179,8 +184,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         } else {
             data =
                 if (enable) BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            descriptor.value = data!!
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                descriptor.value = data!!
                 val state = gatt.writeDescriptor(
                     descriptor,
                     data!!
@@ -199,7 +204,6 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 }
                 success2
             } else {
-                descriptor.value = data!!
                 val success2 = gatt.writeDescriptor(descriptor)
                 if (!success2) {
                     removeTimeOut()
@@ -218,7 +222,9 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     }
 
     fun enableCharacteristicIndicate(
-        bleIndicateCallback: BleIndicateCallback?, uuidIndicate: String
+        bleIndicateCallback: BleIndicateCallback?,
+        uuidIndicate: String,
+        useCharacteristicDescriptor: Boolean,
     ) {
         if (mCharacteristic != null
             && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
@@ -230,7 +236,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             }
             setCharacteristicIndication(
                 mBluetoothGatt, mCharacteristic,
-                true, bleIndicateCallback
+                true, bleIndicateCallback, useCharacteristicDescriptor
             )
         } else {
             bleIndicateCallback?.onIndicateFailure(
@@ -248,13 +254,13 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
     /**
      * stop indicate
      */
-    fun disableCharacteristicIndicate(): Boolean {
+    fun disableCharacteristicIndicate(useCharacteristicDescriptor: Boolean): Boolean {
         return if (mCharacteristic != null
             && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
         ) {
             setCharacteristicIndication(
                 mBluetoothGatt, mCharacteristic,
-                false, null
+                false, null, useCharacteristicDescriptor
             )
         } else {
             false
@@ -269,7 +275,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         gatt: BluetoothGatt?,
         characteristic: BluetoothGattCharacteristic?,
         enable: Boolean,
-        bleIndicateCallback: BleIndicateCallback?
+        bleIndicateCallback: BleIndicateCallback?,
+        useCharacteristicDescriptor: Boolean,
     ): Boolean {
         if (gatt == null || characteristic == null) {
             removeTimeOut()
@@ -297,7 +304,8 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             return false
         }
         val descriptor: BluetoothGattDescriptor? =
-            characteristic.getDescriptor(formUUID(UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR))
+            if (useCharacteristicDescriptor) characteristic.getDescriptor(characteristic.uuid) else
+                characteristic.getDescriptor(fromUUID(UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR))
         return if (descriptor == null) {
             removeTimeOut()
             bleIndicateCallback?.onIndicateFailure(
@@ -309,6 +317,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         } else {
             data =
                 if (enable) BluetoothGattDescriptor.ENABLE_INDICATION_VALUE else BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            descriptor.value = data
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val state = gatt.writeDescriptor(
                     descriptor,
@@ -328,7 +337,6 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
                 }
                 success2
             } else {
-                descriptor.value = data
                 val success2 = gatt.writeDescriptor(descriptor)
                 if (!success2) {
                     removeTimeOut()
@@ -351,7 +359,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
         data: ByteArray?,
         bleWriteCallback: BleWriteCallback?,
         uuidWrite: String,
-        writeType: Int
+        writeType: Int,
     ) {
         this.data = data
         if (data == null || data.isEmpty()) {

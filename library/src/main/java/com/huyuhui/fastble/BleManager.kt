@@ -239,6 +239,7 @@ object BleManager {
         uuidService: String,
         uuidNotify: String,
         callback: BleNotifyCallback?,
+        useCharacteristicDescriptor: Boolean = false,
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         if (bleBluetooth == null) {
@@ -252,7 +253,7 @@ object BleManager {
             )
         } else {
             bleBluetooth.newOperator(uuidService, uuidNotify)
-                .enableCharacteristicNotify(callback, uuidNotify)
+                .enableCharacteristicNotify(callback, uuidNotify, useCharacteristicDescriptor)
         }
     }
 
@@ -266,6 +267,7 @@ object BleManager {
         uuidService: String,
         uuidIndicate: String,
         callback: BleIndicateCallback?,
+        useCharacteristicDescriptor: Boolean = false,
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         if (bleBluetooth == null) {
@@ -279,7 +281,7 @@ object BleManager {
             )
         } else {
             bleBluetooth.newOperator(uuidService, uuidIndicate)
-                .enableCharacteristicIndicate(callback, uuidIndicate)
+                .enableCharacteristicIndicate(callback, uuidIndicate,useCharacteristicDescriptor)
         }
     }
 
@@ -296,11 +298,12 @@ object BleManager {
         bleDevice: BleDevice,
         uuidService: String,
         uuidNotify: String,
+        useCharacteristicDescriptor: Boolean = false,
     ): Boolean {
         val bleBluetooth =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice) ?: return false
         return bleBluetooth.newOperator(uuidService, uuidNotify)
-            .disableCharacteristicNotify()
+            .disableCharacteristicNotify(useCharacteristicDescriptor)
     }
 
     /**
@@ -316,11 +319,12 @@ object BleManager {
         bleDevice: BleDevice,
         uuidService: String,
         uuidIndicate: String,
+        useCharacteristicDescriptor: Boolean = false,
     ): Boolean {
         val bleBluetooth =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice) ?: return false
         return bleBluetooth.newOperator(uuidService, uuidIndicate)
-            .disableCharacteristicIndicate()
+            .disableCharacteristicIndicate(useCharacteristicDescriptor)
     }
 
     /**

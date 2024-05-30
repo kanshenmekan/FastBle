@@ -211,7 +211,7 @@ fun connect(
 ): BluetoothGatt?
 ```
 ### 断开后重连问题
-```kotlin
+```
 val connectStrategy =
 BleConnectStrategy.Builder().setAutoConnect(true)
     .setConnectOverTime(-1)

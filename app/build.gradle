@@ -63,5 +63,5 @@ dependencies {
     implementation "androidx.navigation:navigation-fragment-ktx:$nav_version"
     implementation "androidx.navigation:navigation-ui-ktx:$nav_version"
     implementation 'com.github.li-xiaojun:XPopup:2.9.19'
-    implementation 'com.google.guava:guava:30.1-jre'
+//    implementation 'com.google.guava:guava:30.1-jre'
 }
