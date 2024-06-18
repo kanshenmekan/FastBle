@@ -41,9 +41,10 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
         if (bleScanRuleConfig.mFuzzyName && !bleScanRuleConfig.mDeviceNames.isNullOrEmpty()) {
             if (bleDevice.name == null) return
             var hasFound = false
-            bleScanRuleConfig.mDeviceNames?.forEach {
+            bleScanRuleConfig.mDeviceNames?.forEach forEach@{
                 if (bleDevice.name!!.contains(it, true)) {
                     hasFound = true
+                    return@forEach
                 }
             }
             if (!hasFound) return

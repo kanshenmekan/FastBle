@@ -355,6 +355,31 @@ class OperateFragment : Fragment() {
         }
     }
 
+    private fun enableNotifyByQueue(continuous: Boolean = false, delay: Long) {
+        characteristic?.let {
+            val sequenceNotifyOperator =
+                SequenceNotifyOperator.Builder().serviceUUID(it.service.uuid.toString())
+                    .priority(PRIORITY_WRITE_DEFAULT)
+                    .characteristicUUID(it.uuid.toString())
+                    .bleNotifyCallback(bleNotifyCallback)
+                    .continuous(continuous)
+                    .delay(delay)
+                    .timeout(1000)
+                    .build()
+            if (!BleManager.addOperatorToQueue(
+                    bleDevice,
+                    sequenceBleOperator = sequenceNotifyOperator
+                )
+            ) {
+                bleNotifyCallback.onNotifyFailure(
+                    bleDevice!!,
+                    it,
+                    BleException.OtherException(description = "write to queue failed")
+                )
+            }
+        }
+    }
+
     private val bleIndicateCallback = object : BleIndicateCallback() {
         override fun onIndicateSuccess(
             bleDevice: BleDevice,

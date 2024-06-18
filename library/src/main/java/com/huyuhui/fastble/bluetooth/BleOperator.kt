@@ -405,6 +405,7 @@ class BleOperator(private val bleBluetooth: BleBluetooth) :
             }
             bleBluetooth.addWriteOperator(uuidWrite, this)
             mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, finalWriteType)
+            //这里会触发一次，onCharacteristicWrite里面还会触发一次
 //            val status = mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
 //            if (status != BluetoothStatusCodes.SUCCESS) {
 //                removeTimeOut()

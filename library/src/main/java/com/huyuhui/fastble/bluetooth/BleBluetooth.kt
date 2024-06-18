@@ -641,11 +641,12 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 if (operator.operateCallback is BleWriteCallback && characteristic?.uuid.toString()
                         .equals(uuid, true)
                 ) {
-                    val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        operator.data
-                    } else {
-                        characteristic?.value
-                    }
+//                    val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                        operator.data
+//                    } else {
+//                        characteristic?.value
+//                    }
+                    val data = operator.data
                     operator.removeTimeOut()
                     operator.launch {
                         if (status == BluetoothGatt.GATT_SUCCESS) {
