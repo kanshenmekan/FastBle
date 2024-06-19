@@ -1,10 +1,14 @@
 package com.huyuhui.fastble.utils
+
+import android.annotation.SuppressLint
+
 @Suppress("unused")
 object UuidUtils {
-    private const val base_uuid_regex =
+    private const val BASE_UUID_REGEX =
         "0000([0-9a-f][0-9a-f][0-9a-f][0-9a-f])-0000-1000-8000-00805f9b34fb"
-    private const val baseUUID = "0000xxxx-0000-1000-8000-00805F9B34FB"
+    private const val BASE_UUID = "0000xxxx-0000-1000-8000-00805F9B34FB"
 
+    @SuppressLint("PrivateApi")
     fun isBaseUUID(uuid: String): Boolean {
         return uuid.lowercase()
             .matches(Regex("0000([0-9a-f][0-9a-f][0-9a-f][0-9a-f])-0000-1000-8000-00805f9b34fb"))
@@ -30,8 +34,8 @@ object UuidUtils {
 
     fun uuid16To128(uuid: String, lowerCase: Boolean = true): String? {
         return if (is16UUID(uuid)) {
-            if (lowerCase) baseUUID.replaceRange(4, 8, uuid)
-                .lowercase() else baseUUID.replaceRange(4, 8, uuid).uppercase()
+            if (lowerCase) BASE_UUID.replaceRange(4, 8, uuid)
+                .lowercase() else BASE_UUID.replaceRange(4, 8, uuid).uppercase()
         } else null
     }
 }

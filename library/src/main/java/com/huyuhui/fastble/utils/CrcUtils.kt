@@ -1,7 +1,7 @@
 package com.huyuhui.fastble.utils
 
 import java.util.zip.CRC32
-@Suppress("unused")
+@Suppress("unused","FunctionName")
 object CrcUtils {
     @JvmStatic
     fun CRC8(source: ByteArray, offset: Int = 0, length: Int = source.size): Int {

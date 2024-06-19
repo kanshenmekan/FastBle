@@ -153,6 +153,7 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
             return this
         }
 
+        @SuppressLint("PrivateApi")
         fun applySequenceNotifyOperator(notifyOperator: SequenceNotifyOperator) {
             notifyOperator.serviceUUID = this.serviceUUID
             notifyOperator.characteristicUUID = this.characteristicUUID

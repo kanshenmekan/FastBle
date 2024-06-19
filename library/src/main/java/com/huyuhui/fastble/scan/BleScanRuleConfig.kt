@@ -1,5 +1,6 @@
 package com.huyuhui.fastble.scan
 
+import android.annotation.SuppressLint
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanSettings
 import android.os.ParcelUuid
@@ -101,7 +102,7 @@ class BleScanRuleConfig private constructor() {
         fun setScanSettings(scanSettings: ScanSettings) {
             this.scanSettings = scanSettings
         }
-
+        @SuppressLint("PrivateApi")
         fun applyConfig(config: BleScanRuleConfig) {
             config.mServiceUuids = mServiceUuids
             config.mDeviceNames = mDeviceNames

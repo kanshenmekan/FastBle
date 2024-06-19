@@ -232,6 +232,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             return this
         }
 
+        @SuppressLint("PrivateApi")
         fun applySequenceWriteOperator(writeOperator: SequenceWriteOperator) {
             writeOperator.serviceUUID = this.serviceUUID
             writeOperator.characteristicUUID = this.characteristicUUID

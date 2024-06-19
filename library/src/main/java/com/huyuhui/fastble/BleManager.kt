@@ -1,5 +1,6 @@
 package com.huyuhui.fastble
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -85,6 +86,7 @@ object BleManager {
     internal val multipleBluetoothController: MultipleBluetoothController =
         MultipleBluetoothController()
 
+    @SuppressLint("PrivateApi")
     var bluetoothManager: BluetoothManager? = null
         private set
 

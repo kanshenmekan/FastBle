@@ -2,6 +2,7 @@ package com.huyuhui.fastble.utils
 
 import android.util.Log
 
+@Suppress("unused")
 object BleLog {
     var isPrint = true
 

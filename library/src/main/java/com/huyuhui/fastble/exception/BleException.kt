@@ -1,8 +1,9 @@
 package com.huyuhui.fastble.exception
 
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 
-sealed class BleException(open var code: Int, open var description: String) {
+sealed class BleException(open val code: Int, open val description: String) {
     companion object {
         @JvmStatic
         val ERROR_CODE_TIMEOUT = 100
@@ -46,8 +47,8 @@ sealed class BleException(open var code: Int, open var description: String) {
         @JvmStatic
         val COROUTINE_SCOPE_CANCELLED = 2015
 
-        @JvmStatic
-        val DEVICE_HAS_CONNECTED = 2016
+//        @JvmStatic
+//        val DEVICE_HAS_CONNECTED = 2016
     }
 
     override fun toString(): String {
@@ -56,24 +57,30 @@ sealed class BleException(open var code: Int, open var description: String) {
 
     data class OtherException(
         override var code: Int = ERROR_CODE_OTHER,
-        override var description: String
+        override var description: String,
     ) :
         BleException(code, description)
 
-    data class TimeoutException(override var description: String = "Timeout Exception Occurred!") :
+    data class TimeoutException(override val description: String = "Timeout Exception Occurred!") :
         BleException(ERROR_CODE_TIMEOUT, description)
 
-    data class DiscoverException(override var description: String = "GATT discover services exception occurred!") :
+    data class DiscoverException(override val description: String = "GATT discover services exception occurred!") :
         BleException(ERROR_CODE_TIMEOUT, description)
 
-    class ConnectException(var bluetoothGatt: BluetoothGatt?, var gattStatus: Int) :
+    class ConnectException(
+        @SuppressLint("PrivateApi") val bluetoothGatt: BluetoothGatt?,
+        @SuppressLint("PrivateApi") val gattStatus: Int,
+    ) :
         BleException(ERROR_CODE_GATT, "Gatt Exception Occurred! ") {
         override fun toString(): String {
             return "ConnectException(bluetoothGatt=$bluetoothGatt, gattStatus=$gattStatus) ${super.toString()}"
         }
     }
 
-    class GattException(var bluetoothGatt: BluetoothGatt?, var gattStatus: Int) :
+    class GattException(
+        @SuppressLint("PrivateApi") val bluetoothGatt: BluetoothGatt?,
+        @SuppressLint("PrivateApi") val gattStatus: Int,
+    ) :
         BleException(ERROR_CODE_GATT, "Gatt Exception Occurred! ") {
         override fun toString(): String {
             return "GattException(bluetoothGatt=$bluetoothGatt, gattStatus=$gattStatus) ${super.toString()}"

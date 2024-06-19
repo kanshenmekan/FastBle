@@ -28,6 +28,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.UUID
 
+@Suppress("unused")
 class OperateFragment : Fragment() {
     private val sdf = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
     private val readData = mutableListOf<String>()
