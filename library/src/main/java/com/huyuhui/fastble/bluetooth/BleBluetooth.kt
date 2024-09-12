@@ -626,9 +626,8 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             bleGattCallback?.onDescriptorWrite(gatt, descriptor, status)
         }
 
-        @Suppress("DEPRECATION")
         /**
-         * android13 Build.VERSION_CODES.TIRAMISU 这个方法characteristic?.value 一直为null
+         * android13 Build.VERSION_CODES.TIRAMISU 不用Characteristic!!.setValue(data)这个方法，characteristic?.value 一直为null
          * @see BleOperator.writeCharacteristic
          */
         override fun onCharacteristicWrite(

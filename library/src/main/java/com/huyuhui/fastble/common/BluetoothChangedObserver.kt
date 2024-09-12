@@ -40,11 +40,7 @@ class BluetoothChangedObserver {
     }
 
     class BleReceiver(bluetoothChangedObserver: BluetoothChangedObserver) : BroadcastReceiver() {
-        private var mObserverWeakReference: WeakReference<BluetoothChangedObserver>
-
-        init {
-            mObserverWeakReference = WeakReference(bluetoothChangedObserver)
-        }
+        private var mObserverWeakReference: WeakReference<BluetoothChangedObserver> = WeakReference(bluetoothChangedObserver)
 
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {

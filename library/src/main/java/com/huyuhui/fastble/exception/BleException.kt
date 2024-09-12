@@ -56,8 +56,8 @@ sealed class BleException(open val code: Int, open val description: String) {
     }
 
     data class OtherException(
-        override var code: Int = ERROR_CODE_OTHER,
-        override var description: String,
+        override val code: Int = ERROR_CODE_OTHER,
+        override val description: String,
     ) :
         BleException(code, description)
 

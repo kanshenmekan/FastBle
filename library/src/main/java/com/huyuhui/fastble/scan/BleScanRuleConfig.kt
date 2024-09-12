@@ -47,16 +47,16 @@ class BleScanRuleConfig private constructor() {
     public static final int CALLBACK_TYPE_FIRST_MATCH = 2; //要设置过滤条件，不设置就不返回，首次匹配的设备的时候才会回调。
     public static final int CALLBACK_TYPE_MATCH_LOST = 4; // 要设置过滤条件，之前搜索过滤完符合条件，后面搜索的时候，没有找到了，当设备不再匹配过滤条件时，您可以触发警报或采取其他适当的措施。
     @NonNull
-    public static final int MATCH_MODE_AGGRESSIVE = 1;  //激进模式，即使信号强度微弱且持续时间内瞄准/匹配的次数很少，hw也会更快地确定匹配
-    public static final int MATCH_MODE_STICKY = 2; //粘性模式，在通过硬件报告之前，需要更高的信号强度和目击阈值
+    public static final int MATCH_MODE_AGGRESSIVE = 1;  //激进模式，即使信号强度微弱且持续时间内匹配的次数很少，硬件也会更快地确定匹配
+    public static final int MATCH_MODE_STICKY = 2; //粘性模式，需要更高的信号强度和目击阈值，才能被确定匹配
     public static final int MATCH_NUM_FEW_ADVERTISEMENT = 2; //每个过滤器过滤少量的设备，取决于系统资源
     public static final int MATCH_NUM_MAX_ADVERTISEMENT = 3; //每个过滤器尽可能匹配更多的广播，取决于系统资源
-    public static final int MATCH_NUM_ONE_ADVERTISEMENT = 1; //确定的数量，因为系统资源少
+    public static final int MATCH_NUM_ONE_ADVERTISEMENT = 1; //确定每个筛选条件要匹配的播发数量，因为这是稀缺的硬件资源。为每个筛选条件匹配一个广播
     public static final int PHY_LE_ALL_SUPPORTED = 255;
     public static final int SCAN_MODE_BALANCED = 1; //平衡模式
     public static final int SCAN_MODE_LOW_LATENCY = 2; //低延时扫描,高功耗模式(建议仅在应用程序在前台运行时才使用此模式。)
     public static final int SCAN_MODE_LOW_POWER = 0; //低功耗模式(默认扫描模式,如果扫描应用程序不在前台，则强制使用此模式。)
-    public static final int SCAN_MODE_OPPORTUNISTIC = -1; //空闲时扫描
+    public static final int SCAN_MODE_OPPORTUNISTIC = -1; //一种特殊的蓝牙 LE 扫描模式。使用此扫描模式的应用程序将被动监听其他扫描结果，而不会自行启动 BLE 扫描。
      */
     fun generateScanSettings(): ScanSettings {
         return if (scanSettings == null) {
