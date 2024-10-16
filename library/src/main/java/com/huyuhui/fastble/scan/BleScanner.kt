@@ -84,7 +84,7 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
     }
 
     @Synchronized
-    fun startLeScan() {
+    fun startLeScan(scanTimeout: Long) {
         if (mBleScanState != BleScanState.STATE_IDLE) {
             BleLog.w("scan action already exists, complete the previous scan action first")
             bleScanCallback?.onScanStarted(false)
@@ -99,8 +99,8 @@ internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
                 bleScanRuleConfig.generateScanFilter(),
                 bleScanRuleConfig.generateScanSettings(), this@BleScanner
             )
-            if (bleScanRuleConfig.mScanTimeOut > 0) {
-                delay(bleScanRuleConfig.mScanTimeOut)
+            if (scanTimeout > 0) {
+                delay(scanTimeout)
                 stopLeScan()
             }
         }

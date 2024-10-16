@@ -99,7 +99,7 @@ object BleManager {
     }
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_SCAN")
-    fun scan(bleScanCallback: BleScanCallback?) {
+    fun scan(bleScanCallback: BleScanCallback?,timeout: Long = bleScanRuleConfig.mScanTimeOut) {
         if (context == null) {
             BleLog.e("BleManager may not be initialized")
             return
@@ -109,7 +109,7 @@ object BleManager {
             return
         }
         BleScanner.bleScanCallback = bleScanCallback
-        BleScanner.startLeScan()
+        BleScanner.startLeScan(timeout)
     }
 
     /**
@@ -283,7 +283,7 @@ object BleManager {
             )
         } else {
             bleBluetooth.newOperator(uuidService, uuidIndicate)
-                .enableCharacteristicIndicate(callback, uuidIndicate,useCharacteristicDescriptor)
+                .enableCharacteristicIndicate(callback, uuidIndicate, useCharacteristicDescriptor)
         }
     }
 

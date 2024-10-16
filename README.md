@@ -152,7 +152,8 @@ BleManager.scan(object : BleScanCallback {
     override fun onFilter(bleDevice: BleDevice): Boolean {
                // 通过配置扫描规则之后，自定义过滤规则    
     }
-})
+}，5000)
+第二个参数可选，默认为配置的扫描规则，可以每次配置时间
 ```
 
 ### 停止扫描
