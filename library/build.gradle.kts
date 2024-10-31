@@ -8,7 +8,7 @@ val GROUP_ID = "com.github.kanshenmekan"
 val ARTIFACT_ID = "FastBle"
 android {
     namespace = "com.huyuhui.fastble"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 21
@@ -47,6 +47,6 @@ afterEvaluate {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
 }
