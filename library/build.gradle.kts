@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("maven-publish")
 }
-val VERSION_NAME = latestGitTag().ifEmpty { "1.0.0" }
+val VERSION_NAME = android.defaultConfig.versionName
 val GROUP_ID = "com.github.kanshenmekan"
 val ARTIFACT_ID = "FastBle"
 android {
@@ -23,13 +23,6 @@ android {
     packaging {
         // 剔除这个包下的所有文件（不会移除签名信息）
         resources.excludes.add("META-INF/*******")
-    }
-}
-
-fun latestGitTag(): String {
-    val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0").start()
-    return process.inputStream.bufferedReader().use { bufferedReader ->
-        bufferedReader.readText().trim()
     }
 }
 
