@@ -10,7 +10,6 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.os.Build
 import android.os.Looper
-import androidx.annotation.RequiresApi
 import com.huyuhui.fastble.BleManager
 import com.huyuhui.fastble.callback.BleGattCallback
 import com.huyuhui.fastble.callback.BleIndicateCallback
@@ -23,19 +22,23 @@ import com.huyuhui.fastble.common.BleConnectStrategy
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
+import com.huyuhui.fastble.exception.BleMainScope
 import com.huyuhui.fastble.queue.operate.BleOperatorQueue
 import com.huyuhui.fastble.queue.operate.SequenceBleOperator
 import com.huyuhui.fastble.utils.BleLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
+internal class BleBluetooth(val bleDevice: BleDevice) :
+    CoroutineScope by BleMainScope({ _, throwable ->
+        BleLog.e("BleDevice $bleDevice: a coroutine error has occurred ${throwable.message}")
+    }) {
+
     companion object {
         const val DEFAULT_QUEUE_IDENTIFIER = "com.hyh.ble.bluetooth.BleBluetooth"
     }
@@ -103,6 +106,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                 autoConnect: $autoConnect
                 currentThread: ${Thread.currentThread().id}
                 connectCount:${connectRetryCount + 1}
+                isMain: ${Looper.myLooper() == Looper.getMainLooper()}
                 """.trimIndent()
         )
         if (bleConnectStrategy.connectOverTime > 0) {
@@ -114,7 +118,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             bleDevice.device.connectGatt(
                 context, autoConnect, coreGattCallback,
-                BluetoothDevice.TRANSPORT_LE
+                BluetoothDevice.TRANSPORT_AUTO
             )
         } else {
             bleDevice.device.connectGatt(context, autoConnect, coreGattCallback)
@@ -151,6 +155,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
     fun newOperator(): BleOperator {
         return BleOperator(this)
     }
+
 
     @Synchronized
     private fun createOperateQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER): Boolean {
@@ -456,6 +461,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                        BluetoothGattCallback：onServicesDiscovered 
                        status: $status
                        currentThread: ${Thread.currentThread().id}
+                       isMain: ${Looper.myLooper() == Looper.getMainLooper()}
                        """.trimIndent()
             )
             bluetoothGatt = gatt
@@ -467,7 +473,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             bleGattCallback?.onServicesDiscovered(gatt, status)
         }
 
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+        //        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
@@ -503,7 +509,9 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
                     }
                 }
             }
-            bleGattCallback?.onCharacteristicChanged(gatt, characteristic, value)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                bleGattCallback?.onCharacteristicChanged(gatt, characteristic, value)
+            }
         }
 
         @Deprecated("Deprecated in Java")
@@ -552,7 +560,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
         ) {
             super.onDescriptorWrite(gatt, descriptor, status)
             @Suppress("DEPRECATION")
-            val data =  descriptor?.value
+            val data = descriptor?.value
             for ((uuid, operator) in bleNotifyOperatorMap) {
                 if (operator.operateCallback is BleNotifyCallback && descriptor?.characteristic?.uuid.toString()
                         .equals(uuid, true)
@@ -647,14 +655,17 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
 //                    }
                     val data = operator.data
                     operator.removeTimeOut()
-                    operator.launch {
+                    //这里改用BleBluetooth的协程作用域，当发送很快，触发这个回调也很快，上一个operator可能被当前这个取消，导致回调不能被执行
+                    //operator销毁之后callback也被置为null了，这里先记录一下
+                    val callback = operator.operateCallback
+                    launch(Dispatchers.Main.immediate) {
                         if (status == BluetoothGatt.GATT_SUCCESS) {
-                            (operator.operateCallback as? BleWriteCallback)?.onWriteSuccess(
+                            (callback as? BleWriteCallback)?.onWriteSuccess(
                                 bleDevice = bleDevice, characteristic = characteristic!!,
                                 justWrite = data!!
                             )
                         } else {
-                            (operator.operateCallback as? BleWriteCallback)?.onWriteFailure(
+                            (callback as? BleWriteCallback)?.onWriteFailure(
                                 bleDevice, characteristic,
                                 BleException.GattException(gatt, status),
                                 justWrite = data
@@ -667,7 +678,7 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
             bleGattCallback?.onCharacteristicWrite(gatt, characteristic, status)
         }
 
-        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+        //        @RequiresApi(Build.VERSION_CODES.TIRAMISU)
         override fun onCharacteristicRead(
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic,
@@ -758,19 +769,24 @@ class BleBluetooth(val bleDevice: BleDevice) : CoroutineScope by MainScope() {
 
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
             super.onMtuChanged(gatt, mtu, status)
-            bleMtuOperator?.let {
-                it.removeTimeOut()
-                if (it.operateCallback is BleMtuChangedCallback) {
-                    if (status == BluetoothGatt.GATT_SUCCESS) {
-                        (it.operateCallback as? BleMtuChangedCallback)?.onMtuChanged(bleDevice, mtu)
-                    } else {
-                        (it.operateCallback as? BleMtuChangedCallback)?.onSetMTUFailure(
-                            bleDevice,
-                            BleException.GattException(
-                                gatt,
-                                status
+            launch {
+                bleMtuOperator?.let {
+                    it.removeTimeOut()
+                    if (it.operateCallback is BleMtuChangedCallback) {
+                        if (status == BluetoothGatt.GATT_SUCCESS) {
+                            (it.operateCallback as? BleMtuChangedCallback)?.onMtuChanged(
+                                bleDevice,
+                                mtu
                             )
-                        )
+                        } else {
+                            (it.operateCallback as? BleMtuChangedCallback)?.onSetMTUFailure(
+                                bleDevice,
+                                BleException.GattException(
+                                    gatt,
+                                    status
+                                )
+                            )
+                        }
                     }
                 }
             }

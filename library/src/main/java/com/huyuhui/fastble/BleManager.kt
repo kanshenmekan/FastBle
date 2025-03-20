@@ -12,6 +12,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Looper
+import androidx.annotation.IntDef
 import androidx.annotation.RequiresPermission
 import com.huyuhui.fastble.bluetooth.BleBluetooth
 import com.huyuhui.fastble.bluetooth.BleOperator
@@ -99,7 +100,7 @@ object BleManager {
     }
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_SCAN")
-    fun scan(bleScanCallback: BleScanCallback?,timeout: Long = bleScanRuleConfig.mScanTimeOut) {
+    fun scan(bleScanCallback: BleScanCallback?, timeout: Long = bleScanRuleConfig.mScanTimeOut) {
         if (context == null) {
             BleLog.e("BleManager may not be initialized")
             return
@@ -329,6 +330,23 @@ object BleManager {
             .disableCharacteristicIndicate(useCharacteristicDescriptor)
     }
 
+    const val WRITE_TYPE_AUTO = BleOperator.WRITE_TYPE_DEFAULT
+
+    const val WRITE_TYPE_DEFAULT = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+
+    const val WRITE_TYPE_NO_RESPONSE = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+
+    const val WRITE_TYPE_SIGNED = BluetoothGattCharacteristic.WRITE_TYPE_SIGNED
+
+    @Retention(AnnotationRetention.SOURCE)
+    @IntDef(
+        value = [WRITE_TYPE_AUTO,
+            WRITE_TYPE_DEFAULT,
+            WRITE_TYPE_NO_RESPONSE,
+            WRITE_TYPE_SIGNED]
+    )
+    internal annotation class BleWriteType
+
     /**
      * write
      */
@@ -343,7 +361,7 @@ object BleManager {
         continueWhenLastFail: Boolean = false,
         intervalBetweenTwoPackage: Long = 0,
         callback: BleWriteCallback?,
-        writeType: Int = BleOperator.WRITE_TYPE_DEFAULT,
+        @BleWriteType writeType: Int = WRITE_TYPE_AUTO,
     ) {
         if (data == null) {
             BleLog.e("data is Null!")

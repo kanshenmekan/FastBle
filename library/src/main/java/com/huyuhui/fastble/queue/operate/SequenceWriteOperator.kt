@@ -3,7 +3,6 @@ package com.huyuhui.fastble.queue.operate
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGattCharacteristic
 import com.huyuhui.fastble.BleManager
-import com.huyuhui.fastble.bluetooth.BleBluetooth
 import com.huyuhui.fastble.bluetooth.BleOperator
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.data.BleDevice
@@ -94,7 +93,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         }
     }
 
-    override fun execute(bleBluetooth: BleBluetooth, channel: Channel<TaskResult>) {
+    override fun execute(bleDevice: BleDevice, channel: Channel<TaskResult>) {
         if (serviceUUID.isNullOrEmpty() || characteristicUUID.isNullOrEmpty()) {
             if (continuous) {
                 channel.trySend(TaskResult(this, false))
@@ -104,7 +103,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         if (continuous) {
             channelWeakReference = WeakReference(channel)
             BleManager.write(
-                bleBluetooth.bleDevice,
+                bleDevice,
                 serviceUUID!!,
                 characteristicUUID!!,
                 callback = wrappedBleWriteCallback,
@@ -117,7 +116,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             )
         } else {
             BleManager.write(
-                bleBluetooth.bleDevice,
+                bleDevice,
                 serviceUUID!!,
                 characteristicUUID!!,
                 callback = bleWriteCallback,

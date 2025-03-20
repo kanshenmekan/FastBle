@@ -302,6 +302,7 @@ class OperateFragment : Fragment() {
             characteristic: BluetoothGattCharacteristic,
         ) {
             binding.swNotify.takeUnless { it.isChecked }?.isChecked = true
+
         }
 
         override fun onNotifyFailure(

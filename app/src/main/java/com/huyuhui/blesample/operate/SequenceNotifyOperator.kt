@@ -3,7 +3,6 @@ package com.huyuhui.blesample.operate
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGattCharacteristic
 import com.huyuhui.fastble.BleManager
-import com.huyuhui.fastble.bluetooth.BleBluetooth
 import com.huyuhui.fastble.callback.BleNotifyCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
@@ -66,7 +65,7 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
 
     }
 
-    override fun execute(bleBluetooth: BleBluetooth, channel: Channel<TaskResult>) {
+    override fun execute(bleDevice: BleDevice, channel: Channel<TaskResult>) {
         if (serviceUUID.isNullOrEmpty() || characteristicUUID.isNullOrEmpty()) {
             if (continuous) {
                 channel.trySend(TaskResult(this, false))
@@ -76,7 +75,7 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
         if (continuous) {
             channelWeakReference = WeakReference(channel)
             BleManager.notify(
-                bleBluetooth.bleDevice,
+                bleDevice,
                 serviceUUID!!,
                 characteristicUUID!!,
                 callback = wrappedBleNotifyCallback,
@@ -84,7 +83,7 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
             )
         } else {
             BleManager.notify(
-                bleBluetooth.bleDevice,
+                bleDevice,
                 serviceUUID!!,
                 characteristicUUID!!,
                 callback = bleNotifyCallback,

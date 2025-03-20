@@ -1,5 +1,5 @@
 package com.huyuhui.fastble.data
 
-enum class BleScanState {
+internal enum class BleScanState {
     STATE_IDLE, STATE_SCANNING;
 }

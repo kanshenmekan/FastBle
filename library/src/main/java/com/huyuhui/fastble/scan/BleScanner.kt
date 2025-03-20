@@ -7,6 +7,7 @@ import com.huyuhui.fastble.BleManager
 import com.huyuhui.fastble.callback.BleScanCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.data.BleScanState
+import com.huyuhui.fastble.exception.BleMainScope
 import com.huyuhui.fastble.utils.BleLog
 import com.huyuhui.fastble.utils.HexUtil
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +21,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 @SuppressLint("MissingPermission")
-internal object BleScanner : ScanCallback(), CoroutineScope by MainScope() {
+internal object BleScanner : ScanCallback(), CoroutineScope by BleMainScope({ _, throwable ->
+    BleLog.e("BleScanner: a coroutine error has occurred ${throwable.message}")
+}) {
     var mBleScanState = BleScanState.STATE_IDLE
         private set
     private val bleScanRuleConfig
