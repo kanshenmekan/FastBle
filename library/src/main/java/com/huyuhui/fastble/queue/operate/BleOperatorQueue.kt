@@ -8,11 +8,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.job
 
-class BleOperatorQueue(private val bleBluetooth: BleBluetooth) : Queue<SequenceBleOperator>(),
+internal class BleOperatorQueue(private val bleBluetooth: BleBluetooth) : Queue<SequenceBleOperator>(),
     CoroutineScope by CoroutineScope(
         SupervisorJob(bleBluetooth.coroutineContext.job)
     ) {
     override fun execute(task: SequenceBleOperator, channel: Channel<TaskResult>) {
-        task.execute(bleBluetooth, channel)
+        task.execute(bleBluetooth.bleDevice, channel)
     }
 }

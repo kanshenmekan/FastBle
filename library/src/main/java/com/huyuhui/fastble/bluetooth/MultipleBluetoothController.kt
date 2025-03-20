@@ -11,7 +11,7 @@ import com.huyuhui.fastble.utils.BleLruHashMap
 
 @SuppressLint("MissingPermission")
 @Suppress("unused")
-class MultipleBluetoothController {
+internal class MultipleBluetoothController {
     //保存已经连接成功的设备
     private val bleLruHashMap: BleLruHashMap<String, BleBluetooth> by lazy {
         BleLruHashMap(BleManager.maxConnectCount)

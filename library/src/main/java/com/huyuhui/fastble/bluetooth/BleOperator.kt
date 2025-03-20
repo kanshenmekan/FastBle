@@ -17,7 +17,9 @@ import com.huyuhui.fastble.callback.BleRssiCallback
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.data.BleDevice
+import com.huyuhui.fastble.exception.BleCoroutineExceptionHandler
 import com.huyuhui.fastble.exception.BleException
+import com.huyuhui.fastble.utils.BleLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -27,15 +29,21 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
-class BleOperator(private val bleBluetooth: BleBluetooth) :
-    CoroutineScope by CoroutineScope(SupervisorJob(bleBluetooth.coroutineContext.job) + Dispatchers.Main.immediate) {
+internal class BleOperator(private val bleBluetooth: BleBluetooth) :
+    CoroutineScope by CoroutineScope(SupervisorJob(bleBluetooth.coroutineContext.job) + Dispatchers.Main.immediate
+            + BleCoroutineExceptionHandler { _, throwable ->
+        BleLog.e(
+            "Bluetooth operation: a coroutine error has occurred. ${throwable.message}\n " +
+                    "Device:${bleBluetooth.bleDevice} \n"
+        )
+    }) {
     companion object {
         @JvmStatic
         val UUID_CLIENT_CHARACTERISTIC_CONFIG_DESCRIPTOR =
             "00002902-0000-1000-8000-00805f9b34fb"
 
-        @JvmStatic
-        val WRITE_TYPE_DEFAULT = -1
+
+        const val WRITE_TYPE_DEFAULT = -1
     }
 
     /**

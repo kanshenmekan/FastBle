@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Queue
 
-class SplitWriter(private val writeOperator: BleOperator) {
+internal class SplitWriter(private val writeOperator: BleOperator) {
     private var mData: ByteArray? = null
     private var mCount = 0
     private var mIntervalBetweenTwoPackage: Long = 0
