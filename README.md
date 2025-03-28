@@ -8,7 +8,9 @@
 支持配置超时机制
 
 ## 接入文档
+
 ### 1. Add it in your root build.gradle at the end of repositories
+
 ```
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
@@ -18,16 +20,22 @@ dependencyResolutionManagement {
     }
 }
 ```
+
 ### 2. Add the dependency
+
 ```
 implementation 'com.github.kanshenmekan:FastBle:latestVersion'
 ```
+
 ### android12 权限适配
+
 ```
 <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 ```
+
 ### 初始化和全局配置
+
 ```
 BleManager.apply {
     enableLog(true)
@@ -38,24 +46,38 @@ BleManager.apply {
                 .setConnectBackpressureStrategy(BleConnectStrategy.CONNECT_BACKPRESSURE_DROP)
                 .setReConnectCount(1).setReConnectInterval(2000).build()
     }
+    //bleFactory为null默认是通过macd地址来区分不同设备，你可以通过传入一个bleFactory来自定义你的方式
+    //可以混合mac地址和广播数据等方式，如getManufacturerSpecificData获取厂商自定义的数据字段
+     bleFactory = object :BleFactory{
+         override fun generateUniqueKey(bleDevice: BleDevice): String {
+            return bleDevice.mac
+         }
+     }
 }.init(this)
 ```
+
 ### 默认打开库中的运行日志，如果不喜欢可以关闭
+
 ```
 BleManager enableLog(boolean enable)
 ```
+
 ### 配置全局连接策略 BleManager bleConnectStrategy
+
 设置连接超时<br>
+
 ```
 BleConnectStrategy connectOverTime
 ```
 
 设置连接时重连次数和重连间隔（毫秒），默认为0次不重连<br>
+
 ```
 BleConnectStrategy setReConnectCount(count: Int) setReConnectInterval(interval: Long)
 ```
 
 设置连接背压策略<br>
+
 ```
 BleConnectStrategy connectBackpressureStrategy
 
@@ -67,23 +89,32 @@ BleConnectStrategy connectBackpressureStrategy
 ```
 
 设置autoConnect
+
 ```
 BleConnectStrategy.Builder().setAutoConnect(autoConnect: Boolean)
 true 当发起连接的时候，如果无法找到设备，会保持连接状态，不回调结果（如果设置了超时，会一直等待到超时时间回调连接超时），等待设备可以连接之后，再回调结果。
 false 直接连接，回调结果，默认为false
   
 ```
+
 ### 配置分包发送
+
 设置分包发送的时候，每一包的数据长度，默认20个字节<br>
+
 ```
 BleManager.splitWriteNum
 ```
+
 ### 配置操作超时
+
 设置readRssi、setMtu、write、read、notify、indicate的超时时间（毫秒），默认5秒<br>
+
 ```
 BleManager.operateTimeout
 ```
+
 ## 监听蓝牙的打开和关闭
+
 ```
 BleManager.setBleStateCallback(object : BluetoothChangedObserver.BleStatusCallback {
     override fun onStateOn() {
@@ -108,7 +139,9 @@ Tips:
 ```
 
 ## 扫描及连接
+
 ### 配置扫描规则
+
 ```
 val scanRuleConfig = BleScanRuleConfig.Builder()
     .setServiceUuids(serviceUUID) // 只扫描指定的服务的设备，可选
@@ -129,6 +162,7 @@ Tips:
 ```
 
 ### 扫描
+
 ```
 BleManager.scan(object : BleScanCallback {
     override fun onScanStarted(success: Boolean) {
@@ -157,6 +191,7 @@ BleManager.scan(object : BleScanCallback {
 ```
 
 ### 停止扫描
+
 ```
 BleManager.cancelScan()
 Tips:
@@ -164,6 +199,7 @@ Tips:
 ```
 
 ### 通过设备对象连接
+
 ```
 BleManager.connect(bleDevice,
     object : BleGattCallback() {
@@ -202,8 +238,11 @@ Tips:
 - 某些机型上连接失败后会短暂地无法扫描到设备，可以通过设备对象或设备mac直连，而不经过扫描。
 - 可以单独配置某次连接的连接策略，不设置默认为全局的策略
 ```
+
 ### 通过mac连接设备
+
 通过已知设备Mac直接<br>
+
 ```
 fun connect(
     mac: String,
@@ -211,7 +250,9 @@ fun connect(
     strategy: BleConnectStrategy = bleConnectStrategy,
 ): BluetoothGatt?
 ```
+
 ### 断开后重连问题
+
 ```
 val connectStrategy =
 BleConnectStrategy.Builder().setAutoConnect(true)
@@ -227,6 +268,7 @@ BleManager.connect(bleDevice, reconnectBleGattCallback, connectStrategy)
 ## 蓝牙操作
 
 ### 订阅通知notify
+
 ```
 fun notify(
     bleDevice: BleDevice,
@@ -264,6 +306,7 @@ BleNotifyCallback() {
 ```
 
 ### 取消订阅通知notify，并移除数据接收的回调监听
+
 ```
 fun stopNotify(
     bleDevice: BleDevice,
@@ -273,6 +316,7 @@ fun stopNotify(
 ```
 
 ### 订阅通知indicate
+
 ```
 fun indicate(
     bleDevice: BleDevice,
@@ -312,6 +356,7 @@ BleIndicateCallback() {
 ```
 
 ### 取消订阅通知indicate，并移除数据接收的回调监听
+
 ```
 fun stopNotify(
         bleDevice: BleDevice,
@@ -319,7 +364,9 @@ fun stopNotify(
         uuid_notify: String,
     ): Boolean
 ```
+
 ### 读
+
 ```
 fun read(
     bleDevice: BleDevice,
@@ -344,6 +391,7 @@ BleReadCallback() {
 ```
 
 ### 写
+
 ```
 fun write(
     bleDevice: BleDevice,
@@ -398,6 +446,7 @@ Tips:
 ```
 
 ### 使用队列写入数据
+
 ```
 fun addOperatorToQueue(
     bleDevice: BleDevice?,
@@ -431,7 +480,9 @@ Tips:
   如果timeout为0，则会一直等待，直到任务回调触发
 
 ```
+
 ### 队列的一些其他操作
+
 ```
 //移除队列中某个任务
 fun removeOperatorFromQueue(
@@ -458,6 +509,7 @@ fun resume(bleDevice: BleDevice?, identifier: String = BleBluetooth.DEFAULT_QUEU
 ```
 
 ### 获取设备的信号强度Rssi
+
 ```
 BleManager.readRssi(bleDevice,
     object : BleRssiCallback() {
@@ -473,7 +525,9 @@ Tips：
 获取设备的信号强度，需要在设备连接之后进行。
 某些设备可能无法读取Rssi，不会回调onRssiSuccess(),而会因为超时而回调onRssiFailure()。
 ```
+
 ### 设置最大传输单元MTU
+
 ```
 BleManager.setMtu(bleDevice,mtu,object : BleMtuChangedCallback() {
     override fun onSetMTUFailure(bleDevice: BleDevice, exception: BleException) {
@@ -493,7 +547,9 @@ MTU为23，表示最多可以发送20个字节的数据。
 该方法的参数mtu，最小设置为23，最大设置为512。
 并不是每台设备都支持拓展MTU，需要通讯双方都支持才行，也就是说，需要设备硬件也支持拓展MTU该方法才会起效果。调用该方法后，可以通过onMtuChanged(int mtu)查看最终设置完后，设备的最大传输单元被拓展到多少。如果设备不支持，可能无论设置多少，最终的mtu还是23。
 ```
+
 ### requestConnectionPriority
+
 ```
 fun requestConnectionPriority(bleDevice: BleDevice, connectionPriority: Int): Boolean
 
@@ -504,16 +560,19 @@ Tips:
 ## 断开设备
 
 ### 断开某个设备
+
 ```
 fun disconnect(bleDevice: BleDevice?)
 ```
 
 ### 断开所有设备
+
 ```
 fun disconnectAllDevice()
 ```
 
 ### 退出使用，清理资源
+
 ```
 //退出，无回调 
 fun destroy()
@@ -521,4 +580,5 @@ fun destroy()
 //退出，有scan和connect的回调
 fun release()
 ```
+
 ## [更多方法参考BleManager类](https://github.com/kanshenmekan/FastBle/blob/master/library/src/main/java/com/huyuhui/fastble/BleManager.kt)
