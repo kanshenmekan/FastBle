@@ -27,6 +27,7 @@ import com.huyuhui.fastble.callback.BleRssiCallback
 import com.huyuhui.fastble.callback.BleScanCallback
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.common.BleConnectStrategy
+import com.huyuhui.fastble.common.BleFactory
 import com.huyuhui.fastble.common.BluetoothChangedObserver
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.data.BleScanState
@@ -79,6 +80,7 @@ object BleManager {
         private set
     var bleScanRuleConfig: BleScanRuleConfig = BleScanRuleConfig.Builder().build()
     var bleConnectStrategy: BleConnectStrategy = BleConnectStrategy.Builder().build()
+    var bleFactory: BleFactory? = null
     val bluetoothAdapter: BluetoothAdapter?
         get() = bluetoothManager?.adapter
 

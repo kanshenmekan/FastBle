@@ -12,7 +12,7 @@ import com.huyuhui.fastble.BleManager
 @Suppress("unused")
 data class BleDevice(
     var scanResult: ScanResult?,
-    var device: BluetoothDevice
+    var device: BluetoothDevice,
 ) : Parcelable {
 
     constructor(scanResult: ScanResult) : this(scanResult, scanResult.device)
@@ -24,7 +24,7 @@ data class BleDevice(
         get() = device.address
 
     val key
-        get() = "$name$mac"
+        get() = BleManager.bleFactory?.generateUniqueKey(this) ?: mac
 
     val scanRecord
         get() = scanResult?.scanRecord?.bytes
