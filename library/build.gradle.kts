@@ -8,7 +8,7 @@ val GROUP_ID = "com.github.kanshenmekan"
 val ARTIFACT_ID = "FastBle"
 android {
     namespace = "com.huyuhui.fastble"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21

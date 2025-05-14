@@ -169,6 +169,7 @@ object BleManager {
         }
 
         if (multipleBluetoothController.isConnectedDevice(bleDevice)) {
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bleGattCallback = bleGattCallback
             bleGattCallback?.onConnectCancel(bleDevice, true)
             return getBluetoothGatt(bleDevice)
         }
