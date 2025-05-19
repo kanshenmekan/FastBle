@@ -181,7 +181,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         identifier: String = DEFAULT_QUEUE_IDENTIFIER,
         sequenceBleOperator: SequenceBleOperator,
     ): Boolean {
-        return bleOperatorQueueMap[identifier]?.remove(sequenceBleOperator) ?: true
+        return bleOperatorQueueMap[identifier]?.remove(sequenceBleOperator) != false
     }
 
     @Synchronized
@@ -190,7 +190,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         sequenceBleOperator: SequenceBleOperator,
     ): Boolean {
         createOperateQueue(identifier)
-        return bleOperatorQueueMap[identifier]?.offer(sequenceBleOperator) ?: false
+        return bleOperatorQueueMap[identifier]?.offer(sequenceBleOperator) == true
     }
 
     @Synchronized

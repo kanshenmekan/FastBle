@@ -12,9 +12,9 @@ import com.huyuhui.fastble.utils.BleLog
 import com.huyuhui.fastble.utils.HexUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -39,51 +39,53 @@ internal object BleScanner : ScanCallback(), CoroutineScope by BleMainScope({ _,
 
     override fun onScanResult(callbackType: Int, result: ScanResult?) {
         super.onScanResult(callbackType, result)
-        if (result == null) return
-        val bleDevice = BleDevice(result)
-        if (bleScanRuleConfig.mFuzzyName && !bleScanRuleConfig.mDeviceNames.isNullOrEmpty()) {
-            if (bleDevice.name == null) return
-            var hasFound = false
-            bleScanRuleConfig.mDeviceNames?.forEach forEach@{
-                if (bleDevice.name!!.contains(it, true)) {
-                    hasFound = true
-                    return@forEach
+        launch(Dispatchers.IO) {
+            if (result == null) return@launch
+            val bleDevice = BleDevice(result)
+            if (bleScanRuleConfig.mFuzzyName && !bleScanRuleConfig.mDeviceNames.isNullOrEmpty()) {
+                if (bleDevice.name == null) return@launch
+                var hasFound = false
+                bleScanRuleConfig.mDeviceNames?.forEach forEach@{
+                    if (bleDevice.name!!.contains(it, true)) {
+                        hasFound = true
+                        return@forEach
+                    }
                 }
+                if (!hasFound) return@launch
             }
-            if (!hasFound) return
-        }
-        if (bleScanCallback?.onFilter(bleDevice) != false) {
-            correctDeviceAndNextStep(bleDevice)
+            if (bleScanCallback?.onFilter(bleDevice) != false) {
+                correctDeviceAndNextStep(bleDevice)
+            }
         }
     }
 
     private val mutex = Mutex()
-    private fun correctDeviceAndNextStep(bleDevice: BleDevice) {
-        launch(Dispatchers.IO) {
-            mutex.withLock {
-                if (!map.contains(bleDevice.key)) {
-                    BleLog.i(
-                        "device detected  ------  name: ${bleDevice.name}  mac: ${bleDevice.mac} " +
-                                "  Rssi: ${bleDevice.rssi}  scanRecord: ${
-                                    HexUtil.formatHexString(
-                                        bleDevice.scanRecord,
-                                        true
-                                    )
-                                }"
-                    )
-                    map[bleDevice.key] = bleDevice
-                    withContext(Dispatchers.Main) {
-                        bleScanCallback?.onLeScan(bleDevice, bleDevice, false)
-                    }
-                } else {
-                    val oldDevice = map[bleDevice.key]
-                    map[bleDevice.key] = bleDevice
-                    withContext(Dispatchers.Main) {
-                        bleScanCallback?.onLeScan(oldDevice!!, bleDevice, true)
-                    }
+    private suspend fun correctDeviceAndNextStep(bleDevice: BleDevice) {
+        mutex.withLock {
+            ensureActive()
+            if (!map.contains(bleDevice.key)) {
+                BleLog.i(
+                    "device detected  ------  name: ${bleDevice.name}  mac: ${bleDevice.mac} " +
+                            "  Rssi: ${bleDevice.rssi}  scanRecord: ${
+                                HexUtil.formatHexString(
+                                    bleDevice.scanRecord,
+                                    true
+                                )
+                            }"
+                )
+                map[bleDevice.key] = bleDevice
+                withContext(Dispatchers.Main) {
+                    bleScanCallback?.onLeScan(bleDevice, bleDevice, false)
+                }
+            } else {
+                val oldDevice = map[bleDevice.key]
+                map[bleDevice.key] = bleDevice
+                withContext(Dispatchers.Main) {
+                    bleScanCallback?.onLeScan(oldDevice!!, bleDevice, true)
                 }
             }
         }
+
     }
 
     @Synchronized
