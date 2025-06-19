@@ -8,7 +8,6 @@ import android.os.Parcel
 import android.os.Parcelable
 import com.huyuhui.fastble.BleManager
 
-@SuppressLint("MissingPermission")
 @Suppress("unused")
 data class BleDevice(
     var scanResult: ScanResult?,
@@ -17,9 +16,16 @@ data class BleDevice(
 
     constructor(scanResult: ScanResult) : this(scanResult, scanResult.device)
     constructor(device: BluetoothDevice) : this(null, device)
-
+    //获取名称需要权限，没有权限的时候返回null
     val name: String?
-        get() = device.name
+        @SuppressLint("MissingPermission")
+        get() {
+            return try {
+                device.name
+            } catch (e: SecurityException) {
+                null
+            }
+        }
     val mac: String
         get() = device.address
 
@@ -38,13 +44,21 @@ data class BleDevice(
     var bleAlias: String? = null
 
     /**
+     * 获取类型的时候需要权限，没有权限的时候返回null
      * DEVICE_TYPE_UNKNOWN = 0
      * DEVICE_TYPE_CLASSIC = 1
      * DEVICE_TYPE_LE = 2
      * DEVICE_TYPE_DUAL = 3
      */
-    val deviceType
-        get() = device.type
+    val deviceType: Int
+        @SuppressLint("MissingPermission")
+        get() {
+            return try {
+                device.type
+            } catch (e: SecurityException) {
+                0
+            }
+        }
 
     /**
      * 自定义属性值

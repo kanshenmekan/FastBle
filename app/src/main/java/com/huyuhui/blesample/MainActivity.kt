@@ -297,7 +297,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                         return@let false
-                    } ?: true
+                    } != false
                 }
             })
         }

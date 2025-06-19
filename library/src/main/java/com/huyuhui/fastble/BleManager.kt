@@ -169,7 +169,8 @@ object BleManager {
         }
 
         if (multipleBluetoothController.isConnectedDevice(bleDevice)) {
-            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bleGattCallback = bleGattCallback
+            multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.bleGattCallback =
+                bleGattCallback
             bleGattCallback?.onConnectCancel(bleDevice, true)
             return getBluetoothGatt(bleDevice)
         }
@@ -644,9 +645,16 @@ object BleManager {
     }
 
     fun convertBleDevice(mac: String): BleDevice? {
-        bluetoothAdapter?.getRemoteDevice(mac).let {
-            return convertBleDevice(it)
+        if (bluetoothAdapter == null) {
+            BleLog.e("BleManager may not be initialized")
+            return null
         }
+        return try {
+            convertBleDevice(bluetoothAdapter?.getRemoteDevice(mac))
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+
     }
 
     fun getBluetoothGatt(bleDevice: BleDevice?): BluetoothGatt? {
