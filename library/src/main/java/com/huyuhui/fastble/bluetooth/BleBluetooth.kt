@@ -37,6 +37,7 @@ import kotlinx.coroutines.launch
 internal class BleBluetooth(val bleDevice: BleDevice) :
     CoroutineScope by BleMainScope({ _, throwable ->
         BleLog.e("BleDevice $bleDevice: a coroutine error has occurred ${throwable.message}")
+        BleManager.cancelOrDisconnect(bleDevice)
     }) {
 
     companion object {
@@ -255,17 +256,19 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
 
     @Synchronized
     fun destroy() {
-        lastState = LastState.CONNECT_IDLE
-        disconnect()
-        refreshDeviceCache()
-        closeBluetoothGatt()
-        bleGattCallback = null
-        removeRssiOperator()
-        removeMtuOperator()
-        clearCharacterOperator()
-        clearOperatorQueue()
-        connectTimeOutTask.onTimeoutResultCallBack = null
-        cancel()
+        if (isActive) {
+            lastState = LastState.CONNECT_IDLE
+            disconnect()
+            refreshDeviceCache()
+            closeBluetoothGatt()
+            bleGattCallback = null
+            removeRssiOperator()
+            removeMtuOperator()
+            clearCharacterOperator()
+            clearOperatorQueue()
+            connectTimeOutTask.onTimeoutResultCallBack = null
+            cancel()
+        }
     }
 
     @Synchronized

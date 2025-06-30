@@ -80,10 +80,13 @@ internal class MultipleBluetoothController {
 
     @Synchronized
     fun cancelAllConnectingDevice() {
-        for (entry: Map.Entry<String?, BleBluetooth> in bleTempHashMap) {
-            cancelConnecting(entry.value.bleDevice, false)
+        val iterator = bleTempHashMap.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            entry.value.bleGattCallback?.onConnectCancel(entry.value.bleDevice, false)
+            entry.value.destroy() // 清理资源
+            iterator.remove()    //通过迭代器安全移除
         }
-        bleTempHashMap.clear()
     }
 
     @Synchronized
@@ -119,21 +122,25 @@ internal class MultipleBluetoothController {
 
     @Synchronized
     fun disconnectAllDevice() {
-        for (stringBleBluetoothEntry: Map.Entry<String?, BleBluetooth> in bleLruHashMap) {
-            stringBleBluetoothEntry.value.disconnect()
+        val keys = ArrayList(bleLruHashMap.keys)
+        keys.forEach { key ->
+            bleLruHashMap[key]?.disconnect()
         }
     }
 
     @Synchronized
     fun destroy() {
-        for (entry: Map.Entry<String?, BleBluetooth> in bleLruHashMap) {
-            entry.value.destroy()
+        // 处理已连接设备
+        val connectedKeys = ArrayList(bleLruHashMap.keys)
+        connectedKeys.forEach { key ->
+            bleLruHashMap.remove(key)?.destroy() // 原子操作：移除并销毁
         }
-        bleLruHashMap.clear()
-        for (entry: Map.Entry<String?, BleBluetooth> in bleTempHashMap) {
-            entry.value.destroy()
+
+        // 处理连接中设备
+        val connectingKeys = ArrayList(bleTempHashMap.keys)
+        connectingKeys.forEach { key ->
+            bleTempHashMap.remove(key)?.destroy() // 原子操作
         }
-        bleTempHashMap.clear()
     }
 
     @Synchronized

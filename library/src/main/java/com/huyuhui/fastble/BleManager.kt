@@ -594,6 +594,10 @@ object BleManager {
         return multipleBluetoothController.getConnectedDeviceList()
     }
 
+    fun getConnectingDeviceList(): List<BleDevice> {
+        return multipleBluetoothController.getConnectingDeviceList()
+    }
+
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun isConnected(mac: String?): Boolean {
         val list: List<BleDevice> = getAllConnectedDevice()
