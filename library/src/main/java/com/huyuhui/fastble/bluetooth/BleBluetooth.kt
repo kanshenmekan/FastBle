@@ -256,19 +256,17 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
 
     @Synchronized
     fun destroy() {
-        if (isActive) {
-            lastState = LastState.CONNECT_IDLE
-            disconnect()
-            refreshDeviceCache()
-            closeBluetoothGatt()
-            bleGattCallback = null
-            removeRssiOperator()
-            removeMtuOperator()
-            clearCharacterOperator()
-            clearOperatorQueue()
-            connectTimeOutTask.onTimeoutResultCallBack = null
-            cancel()
-        }
+        lastState = LastState.CONNECT_IDLE
+        disconnect()
+        refreshDeviceCache()
+        closeBluetoothGatt()
+        bleGattCallback = null
+        removeRssiOperator()
+        removeMtuOperator()
+        clearCharacterOperator()
+        clearOperatorQueue()
+        connectTimeOutTask.onTimeoutResultCallBack = null
+        cancel()
     }
 
     @Synchronized
@@ -435,9 +433,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                             connect(BleManager.context!!, false, currentConnectRetryCount)
                         }
                     } else {
-                        launch {
-                            connectedFail(BleException.ConnectException(bluetoothGatt, status))
-                        }
+                        connectedFail(BleException.ConnectException(bluetoothGatt, status))
                     }
                 } else if (lastState == LastState.CONNECT_CONNECTED) {
                     lastState = LastState.CONNECT_DISCONNECT
