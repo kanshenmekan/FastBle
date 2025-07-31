@@ -2,15 +2,19 @@ package com.huyuhui.blesample.operate
 
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
-import com.huyuhui.fastble.BleManager
-import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.blesample.R
 import com.huyuhui.blesample.databinding.ActivityOperateBinding
+import com.huyuhui.fastble.BleManager
+import com.huyuhui.fastble.data.BleDevice
 
 class OperateActivity : AppCompatActivity() {
     private var bleDevice: BleDevice? = null
@@ -27,6 +31,18 @@ class OperateActivity : AppCompatActivity() {
         }
         if (bleDevice == null) {
             finish()
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v: View, insets: WindowInsetsCompat ->
+            insets.getInsets(WindowInsetsCompat.Type.statusBars()).run {
+                v.updatePadding(left, top, right, bottom)
+            }
+            return@setOnApplyWindowInsetsListener insets
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v: View, insets: WindowInsetsCompat ->
+            insets.getInsets(WindowInsetsCompat.Type.navigationBars()).run {
+                v.updatePadding(left, top, right, bottom)
+            }
+            return@setOnApplyWindowInsetsListener insets
         }
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

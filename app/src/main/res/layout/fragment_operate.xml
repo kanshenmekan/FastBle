@@ -47,10 +47,11 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
             android:orientation="vertical">
+
             <com.google.android.material.textfield.TextInputLayout
-                android:layout_marginHorizontal="10dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
                 android:hint="@string/input_hex"
                 app:endIconMode="clear_text">
 
@@ -60,6 +61,7 @@
                     android:layout_height="wrap_content"
                     android:textSize="13sp" />
             </com.google.android.material.textfield.TextInputLayout>
+
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -87,7 +89,8 @@
                     android:maxWidth="100dp"
                     android:text="@string/write_no_response"
                     android:textSize="10sp"
-                    app:backgroundTint="@color/colorPrimary" />
+                    app:backgroundTint="@color/colorPrimary"
+                    tools:ignore="SmallSp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_write_signed"
@@ -98,7 +101,8 @@
                     android:maxWidth="100dp"
                     android:text="@string/write_signed"
                     android:textSize="10sp"
-                    app:backgroundTint="@color/colorPrimary" />
+                    app:backgroundTint="@color/colorPrimary"
+                    tools:ignore="SmallSp" />
             </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView

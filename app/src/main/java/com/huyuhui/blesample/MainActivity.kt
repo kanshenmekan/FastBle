@@ -15,6 +15,9 @@ import androidx.activity.result.ActivityResultCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -52,6 +55,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v: View, insets: WindowInsetsCompat ->
+            insets.getInsets(WindowInsetsCompat.Type.statusBars()).run {
+                v.updatePadding(left, top, right, bottom)
+            }
+            return@setOnApplyWindowInsetsListener insets
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v: View, insets: WindowInsetsCompat ->
+            insets.getInsets(WindowInsetsCompat.Type.navigationBars()).run {
+                v.updatePadding(left, top, right, bottom)
+            }
+            return@setOnApplyWindowInsetsListener insets
+        }
         setSupportActionBar(binding.toolbar)
         bleDeviceAdapter = BleDeviceAdapter(bleDevices).apply {
             onItemButtonClickListener = object : BleDeviceAdapter.OnItemButtonClickListener {

@@ -1,6 +1,5 @@
 package com.huyuhui.fastble.exception
 
-import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 
 sealed class BleException(open val code: Int, open val description: String) {
@@ -68,8 +67,8 @@ sealed class BleException(open val code: Int, open val description: String) {
         BleException(ERROR_CODE_TIMEOUT, description)
 
     class ConnectException(
-        @SuppressLint("PrivateApi") val bluetoothGatt: BluetoothGatt?,
-        @SuppressLint("PrivateApi") val gattStatus: Int,
+        val bluetoothGatt: BluetoothGatt?,
+        val gattStatus: Int,
     ) :
         BleException(ERROR_CODE_GATT, "Gatt Exception Occurred! ") {
         override fun toString(): String {
@@ -78,8 +77,8 @@ sealed class BleException(open val code: Int, open val description: String) {
     }
 
     class GattException(
-        @SuppressLint("PrivateApi") val bluetoothGatt: BluetoothGatt?,
-        @SuppressLint("PrivateApi") val gattStatus: Int,
+        val bluetoothGatt: BluetoothGatt?,
+        val gattStatus: Int,
     ) :
         BleException(ERROR_CODE_GATT, "Gatt Exception Occurred! ") {
         override fun toString(): String {
