@@ -1,5 +1,8 @@
 package com.huyuhui.fastble.common
 
+import android.bluetooth.BluetoothDevice
+import android.os.Build
+import androidx.annotation.RequiresApi
 import kotlin.math.max
 
 @Suppress("unused")
@@ -48,6 +51,12 @@ class BleConnectStrategy private constructor() {
     var mAutoConnect = false
         private set
 
+    /**
+     *
+     * @see BluetoothDevice.TRANSPORT_AUTO
+     */
+    var transport: Int = 0
+        private set
     class Builder() {
         private var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
         private var reConnectCount = DEFAULT_CONNECT_RETRY_COUNT
@@ -55,12 +64,19 @@ class BleConnectStrategy private constructor() {
         private var connectOverTime = DEFAULT_CONNECT_OVER_TIME
         private var mAutoConnect = false
 
+        /**
+         *
+         * @see BluetoothDevice.TRANSPORT_AUTO
+         */
+        private var transport: Int = 0
+
         constructor(bleConnectStrategy: BleConnectStrategy) : this() {
             connectBackpressureStrategy = bleConnectStrategy.connectBackpressureStrategy
             reConnectCount = bleConnectStrategy.reConnectCount
             reConnectInterval = bleConnectStrategy.reConnectInterval
             connectOverTime = bleConnectStrategy.connectOverTime
             mAutoConnect = bleConnectStrategy.mAutoConnect
+            transport = bleConnectStrategy.transport
         }
 
         fun setConnectBackpressureStrategy(backpressureStrategy: Int): Builder {
@@ -87,6 +103,10 @@ class BleConnectStrategy private constructor() {
             mAutoConnect = autoConnect
             return this
         }
+        @RequiresApi(Build.VERSION_CODES.M)
+        fun setTransport(transport: Int) = apply {
+            this.transport = transport
+        }
 
         fun build(): BleConnectStrategy {
             val strategy = BleConnectStrategy()
@@ -95,6 +115,7 @@ class BleConnectStrategy private constructor() {
             strategy.connectOverTime = this.connectOverTime
             strategy.connectBackpressureStrategy = this.connectBackpressureStrategy
             strategy.mAutoConnect = this.mAutoConnect
+            strategy.transport = this.transport
             return strategy
         }
     }

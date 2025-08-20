@@ -119,7 +119,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             bleDevice.device.connectGatt(
                 context, autoConnect, coreGattCallback,
-                BluetoothDevice.TRANSPORT_AUTO
+                if (bleConnectStrategy.transport == 0) BluetoothDevice.TRANSPORT_AUTO else bleConnectStrategy.transport
             )
         } else {
             bleDevice.device.connectGatt(context, autoConnect, coreGattCallback)
