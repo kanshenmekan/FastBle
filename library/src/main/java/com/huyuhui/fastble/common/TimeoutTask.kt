@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+
 @Suppress("unused")
 class TimeoutTask(
     private val delayTime: Long,
@@ -106,9 +107,20 @@ class TimeoutTask(
     }
 
     sealed class TimeoutThrowable(message: String? = null) : Throwable(message) {
-        object Success : TimeoutThrowable("success")
-        object ActiveError : TimeoutThrowable("error")
-        object TimeOutError : TimeoutThrowable("time out")
-        object SkipError : TimeoutThrowable("skip")
+        object Success : TimeoutThrowable("success") {
+            private fun readResolve(): Any = Success
+        }
+
+        object ActiveError : TimeoutThrowable("error") {
+            private fun readResolve(): Any = ActiveError
+        }
+
+        object TimeOutError : TimeoutThrowable("time out") {
+            private fun readResolve(): Any = TimeOutError
+        }
+
+        object SkipError : TimeoutThrowable("skip") {
+            private fun readResolve(): Any = SkipError
+        }
     }
 }

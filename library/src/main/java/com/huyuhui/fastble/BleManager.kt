@@ -1,5 +1,6 @@
 package com.huyuhui.fastble
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothAdapter
@@ -11,8 +12,10 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Looper
 import androidx.annotation.IntDef
+import androidx.annotation.RequiresApi
 import androidx.annotation.RequiresPermission
 import com.huyuhui.fastble.bluetooth.BleBluetooth
 import com.huyuhui.fastble.bluetooth.BleOperator
@@ -497,6 +500,26 @@ object BleManager {
                     "This device is not connected!"
                 )
             )
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun readPhy(bleDevice: BleDevice): Boolean {
+        val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        return bleBluetooth?.bluetoothGatt?.let {
+            it.readPhy()
+            true
+        } ?: false
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresPermission(Manifest.permission.BLUETOOTH_CONNECT)
+    fun setPreferredPhy(bleDevice: BleDevice, txPhy: Int, rxPhy: Int, phyOptions: Int): Boolean {
+        val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        return bleBluetooth?.bluetoothGatt?.let {
+            it.setPreferredPhy(txPhy, rxPhy, phyOptions)
+            true
+        } ?: false
     }
 
     /**

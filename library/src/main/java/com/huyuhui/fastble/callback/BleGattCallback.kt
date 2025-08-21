@@ -14,7 +14,7 @@ abstract class BleGattCallback : BluetoothGattCallback() {
     /**
      * @param skip true表示 当前发起的连接，设备已经连接，或者该连接被新发起的连接覆盖 false 则表示手动取消了该次连接
      */
-    abstract fun onConnectCancel(bleDevice: BleDevice, skip: Boolean)
+    open fun onConnectCancel(bleDevice: BleDevice, skip: Boolean) {}
     abstract fun onConnectSuccess(bleDevice: BleDevice, gatt: BluetoothGatt?, status: Int)
 
     abstract fun onDisConnected(
@@ -23,4 +23,25 @@ abstract class BleGattCallback : BluetoothGattCallback() {
         gatt: BluetoothGatt?,
         status: Int
     )
+
+    open fun onPhyUpdate(
+        bleDevice: BleDevice,
+        gatt: BluetoothGatt?,
+        txPhy: Int,
+        rxPhy: Int,
+        status: Int
+    ) {
+
+    }
+
+    open fun onPhyRead(
+        bleDevice: BleDevice,
+        gatt: BluetoothGatt?,
+        txPhy: Int,
+        rxPhy: Int,
+        status: Int
+    ) {
+
+    }
+
 }

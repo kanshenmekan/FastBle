@@ -28,6 +28,7 @@ import com.huyuhui.fastble.queue.operate.SequenceBleOperator
 import com.huyuhui.fastble.utils.BleLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -100,6 +101,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         connectRetryCount: Int,
     ): BluetoothGatt? {
         if (!isActive) return bluetoothGatt
+        discoverServiceJob?.takeIf { it.isActive }?.cancel()
         BleLog.i(
             """
                 connect device: ${bleDevice.name}
@@ -116,14 +118,21 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
             }
         }
         lastState = LastState.CONNECT_CONNECTING
-        bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            bleDevice.device.connectGatt(
-                context, autoConnect, coreGattCallback,
-                if (bleConnectStrategy.transport == 0) BluetoothDevice.TRANSPORT_AUTO else bleConnectStrategy.transport
-            )
-        } else {
-            bleDevice.device.connectGatt(context, autoConnect, coreGattCallback)
-        }
+        bluetoothGatt =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                bleDevice.device.connectGatt(
+                    context, autoConnect, coreGattCallback,
+                    if (bleConnectStrategy.transport == 0) BluetoothDevice.TRANSPORT_AUTO else bleConnectStrategy.transport,
+                    if (bleConnectStrategy.phy == 1) BluetoothDevice.PHY_LE_1M_MASK else bleConnectStrategy.phy
+                )
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                bleDevice.device.connectGatt(
+                    context, autoConnect, coreGattCallback,
+                    if (bleConnectStrategy.transport == 0) BluetoothDevice.TRANSPORT_AUTO else bleConnectStrategy.transport
+                )
+            } else {
+                bleDevice.device.connectGatt(context, autoConnect, coreGattCallback)
+            }
         if (bluetoothGatt != null) {
             if (connectRetryCount == 0) {
                 bleGattCallback?.onStartConnect(bleDevice)
@@ -209,11 +218,13 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         bleOperatorQueueMap[identifier]?.resume()
     }
 
-    private fun discoverFail() {
-        connectedFail(BleException.DiscoverException())
+    private fun discoverFail(exception: BleException.DiscoverException = BleException.DiscoverException()) {
+        discoverServiceJob?.takeIf { it.isActive }?.cancel()
+        connectedFail(exception)
     }
 
     private fun connectAndDiscoverSuccess(status: Int) {
+        discoverServiceJob?.takeIf { it.isActive }?.cancel()
         launch(Dispatchers.Main.immediate) {
             lastState = LastState.CONNECT_CONNECTED
             isActiveDisconnect = false
@@ -791,14 +802,48 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
             }
             bleGattCallback?.onMtuChanged(gatt, mtu, status)
         }
-    }
 
+        override fun onPhyUpdate(gatt: BluetoothGatt?, txPhy: Int, rxPhy: Int, status: Int) {
+            super.onPhyUpdate(gatt, txPhy, rxPhy, status)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                launch {
+                    bleGattCallback?.onPhyUpdate(bleDevice, gatt, txPhy, rxPhy, status)
+                }
+                bleGattCallback?.onPhyUpdate(gatt, txPhy, rxPhy, status)
+            }
+        }
+
+        override fun onPhyRead(gatt: BluetoothGatt?, txPhy: Int, rxPhy: Int, status: Int) {
+            super.onPhyRead(gatt, txPhy, rxPhy, status)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                launch {
+                    bleGattCallback?.onPhyRead(bleDevice, gatt, txPhy, rxPhy, status)
+                }
+                bleGattCallback?.onPhyRead(gatt, txPhy, rxPhy, status)
+            }
+        }
+
+    }
+    private var discoverServiceJob: Job? = null
     private fun discoverService() {
+        discoverServiceJob?.takeIf { it.isActive }?.cancel()
         if (bluetoothGatt != null) {
+            discoverServiceJob = launch {
+                delay(bleConnectStrategy.discoverServiceTimeout)
+                BleLog.e("discoverService timeout ${bleConnectStrategy.discoverServiceTimeout}")
+                discoverFail(
+                    BleException.DiscoverException(
+                        BleException.ERROR_CODE_TIMEOUT,
+                        "discoverService timeout ${bleConnectStrategy.discoverServiceTimeout}"
+                    )
+                )
+            }
             val discoverServiceResult = bluetoothGatt!!.discoverServices()
+
             if (!discoverServiceResult) {
                 discoverFail()
             }
+
         } else {
             discoverFail()
         }

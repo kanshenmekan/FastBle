@@ -63,8 +63,8 @@ sealed class BleException(open val code: Int, open val description: String) {
     data class TimeoutException(override val description: String = "Timeout Exception Occurred!") :
         BleException(ERROR_CODE_TIMEOUT, description)
 
-    data class DiscoverException(override val description: String = "GATT discover services exception occurred!") :
-        BleException(ERROR_CODE_TIMEOUT, description)
+    data class DiscoverException(override val code: Int = ERROR_CODE_GATT,override val description: String = "GATT discover services exception occurred!") :
+        BleException(code, description)
 
     class ConnectException(
         val bluetoothGatt: BluetoothGatt?,

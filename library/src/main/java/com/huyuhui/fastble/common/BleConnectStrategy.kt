@@ -20,6 +20,8 @@ class BleConnectStrategy private constructor() {
         const val DEFAULT_CONNECT_RETRY_COUNT = 0
         const val DEFAULT_CONNECT_RETRY_INTERVAL: Long = 2000
         const val DEFAULT_CONNECT_OVER_TIME: Long = 10000
+
+        const val DEFAULT_DISCOVER_SERVICE_TIMEOUT: Long = 5000
     }
 
     var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
@@ -45,6 +47,12 @@ class BleConnectStrategy private constructor() {
         private set
 
     /**
+     * 发现服务超时时间
+     */
+    var discoverServiceTimeout = DEFAULT_DISCOVER_SERVICE_TIMEOUT
+        private set
+
+    /**
      * true 当发起连接的时候，无法找到设备，会保持连接状态，不回调结果（如果设置了超时，会一直等待到超时时间回调连接超时），等待设备可以连接之后，再回调结果。
      * false 直接连接，回调结果，默认为false
      */
@@ -57,11 +65,20 @@ class BleConnectStrategy private constructor() {
      */
     var transport: Int = 0
         private set
+
+    /**
+     * @see BluetoothDevice.PHY_LE_1M_MASK
+     */
+    var phy: Int = 1
+        private set
+
     class Builder() {
         private var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
         private var reConnectCount = DEFAULT_CONNECT_RETRY_COUNT
         private var reConnectInterval = DEFAULT_CONNECT_RETRY_INTERVAL
         private var connectOverTime = DEFAULT_CONNECT_OVER_TIME
+
+        private var discoverServiceTimeout = DEFAULT_DISCOVER_SERVICE_TIMEOUT
         private var mAutoConnect = false
 
         /**
@@ -70,6 +87,12 @@ class BleConnectStrategy private constructor() {
          */
         private var transport: Int = 0
 
+        /**
+         * @see BluetoothDevice.PHY_LE_1M_MASK
+         */
+        private var phy: Int = 1
+
+
         constructor(bleConnectStrategy: BleConnectStrategy) : this() {
             connectBackpressureStrategy = bleConnectStrategy.connectBackpressureStrategy
             reConnectCount = bleConnectStrategy.reConnectCount
@@ -77,6 +100,8 @@ class BleConnectStrategy private constructor() {
             connectOverTime = bleConnectStrategy.connectOverTime
             mAutoConnect = bleConnectStrategy.mAutoConnect
             transport = bleConnectStrategy.transport
+            phy = bleConnectStrategy.phy
+            discoverServiceTimeout = bleConnectStrategy.discoverServiceTimeout
         }
 
         fun setConnectBackpressureStrategy(backpressureStrategy: Int): Builder {
@@ -103,9 +128,15 @@ class BleConnectStrategy private constructor() {
             mAutoConnect = autoConnect
             return this
         }
+
         @RequiresApi(Build.VERSION_CODES.M)
         fun setTransport(transport: Int) = apply {
             this.transport = transport
+        }
+
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun setPhy(phy: Int) = apply {
+            this.phy = phy
         }
 
         fun build(): BleConnectStrategy {
@@ -116,12 +147,14 @@ class BleConnectStrategy private constructor() {
             strategy.connectBackpressureStrategy = this.connectBackpressureStrategy
             strategy.mAutoConnect = this.mAutoConnect
             strategy.transport = this.transport
+            strategy.phy = this.phy
+            strategy.discoverServiceTimeout = this.discoverServiceTimeout
             return strategy
         }
     }
 
     override fun toString(): String {
-        return "BleConnectStrategy(connectBackpressureStrategy=$connectBackpressureStrategy, reConnectCount=$reConnectCount, reConnectInterval=$reConnectInterval, connectOverTime=$connectOverTime, mAutoConnect=$mAutoConnect)"
+        return "BleConnectStrategy(connectBackpressureStrategy=$connectBackpressureStrategy, reConnectCount=$reConnectCount, reConnectInterval=$reConnectInterval, connectOverTime=$connectOverTime, discoverServiceTimeout=$discoverServiceTimeout, mAutoConnect=$mAutoConnect, transport=$transport, phy=$phy)"
     }
 
 
