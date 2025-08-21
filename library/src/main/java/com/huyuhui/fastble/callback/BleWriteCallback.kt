@@ -27,12 +27,4 @@ abstract class BleWriteCallback : BleOperateCallback() {
         isTotalFail: Boolean = true
     )
 
-    final override fun onTimeOutFailure(
-        bleDevice: BleDevice,
-        characteristic: BluetoothGattCharacteristic?,
-        exception: BleException,
-        data: ByteArray?
-    ) {
-        onWriteFailure(bleDevice, characteristic, exception, justWrite = data)
-    }
 }

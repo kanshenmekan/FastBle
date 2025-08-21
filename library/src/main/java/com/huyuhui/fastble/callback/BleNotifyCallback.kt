@@ -20,12 +20,4 @@ abstract class BleNotifyCallback : BleOperateCallback() {
         data: ByteArray
     )
 
-    final override fun onTimeOutFailure(
-        bleDevice: BleDevice,
-        characteristic: BluetoothGattCharacteristic?,
-        exception: BleException,
-        data: ByteArray?
-    ) {
-        onNotifyFailure(bleDevice, characteristic, exception)
-    }
 }

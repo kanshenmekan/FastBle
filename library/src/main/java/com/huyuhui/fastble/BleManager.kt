@@ -262,7 +262,7 @@ object BleManager {
                 )
             )
         } else {
-            bleBluetooth.newOperator(uuidService, uuidNotify)
+            bleBluetooth.buildNotifyOperator(uuidService, uuidNotify)
                 .enableCharacteristicNotify(callback, uuidNotify, useCharacteristicDescriptor)
         }
     }
@@ -290,7 +290,7 @@ object BleManager {
                 )
             )
         } else {
-            bleBluetooth.newOperator(uuidService, uuidIndicate)
+            bleBluetooth.buildIndicateOperator(uuidService, uuidIndicate)
                 .enableCharacteristicIndicate(callback, uuidIndicate, useCharacteristicDescriptor)
         }
     }
@@ -312,7 +312,7 @@ object BleManager {
     ): Boolean {
         val bleBluetooth =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice) ?: return false
-        return bleBluetooth.newOperator(uuidService, uuidNotify)
+        return bleBluetooth.buildNotifyOperator(uuidService, uuidNotify)
             .disableCharacteristicNotify(useCharacteristicDescriptor)
     }
 
@@ -333,7 +333,7 @@ object BleManager {
     ): Boolean {
         val bleBluetooth =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice) ?: return false
-        return bleBluetooth.newOperator(uuidService, uuidIndicate)
+        return bleBluetooth.buildIndicateOperator(uuidService, uuidIndicate)
             .disableCharacteristicIndicate(useCharacteristicDescriptor)
     }
 
@@ -395,7 +395,7 @@ object BleManager {
             )
         } else {
             if (split && data.size > splitNum) {
-                SplitWriter(bleBluetooth.newOperator(uuidService, uuidWrite)).splitWrite(
+                SplitWriter(bleBluetooth.buildWriteOperator(uuidService, uuidWrite)).splitWrite(
                     data,
                     splitNum,
                     continueWhenLastFail,
@@ -404,7 +404,7 @@ object BleManager {
                     writeType
                 )
             } else {
-                bleBluetooth.newOperator(uuidService, uuidWrite)
+                bleBluetooth.buildWriteOperator(uuidService, uuidWrite)
                     .writeCharacteristic(data, callback, uuidWrite, writeType)
             }
         }
@@ -425,11 +425,10 @@ object BleManager {
         uuidRead: String,
         callback: BleReadCallback?,
     ) {
-        requireNotNull(callback) { "BleReadCallback can not be Null!" }
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-        bleBluetooth?.newOperator(uuidService, uuidRead)
+        bleBluetooth?.buildReadOperator(uuidService, uuidRead)
             ?.readCharacteristic(callback, uuidRead)
-            ?: callback.onReadFailure(
+            ?: callback?.onReadFailure(
                 bleDevice,
                 null,
                 BleException.OtherException(
@@ -452,7 +451,7 @@ object BleManager {
     ) {
         val bleBluetooth: BleBluetooth? =
             multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-        bleBluetooth?.newOperator()?.readRemoteRssi(callback)
+        bleBluetooth?.buildRssiOperator()?.readRemoteRssi(callback)
             ?: callback?.onRssiFailure(
                 bleDevice,
                 BleException.OtherException(
@@ -492,7 +491,7 @@ object BleManager {
             return
         }
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-        bleBluetooth?.newOperator()?.setMtu(mtu, callback)
+        bleBluetooth?.buildMtuOperator()?.setMtu(mtu, callback)
             ?: callback?.onSetMTUFailure(
                 bleDevice,
                 BleException.OtherException(

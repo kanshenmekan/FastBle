@@ -10,12 +10,4 @@ abstract class BleMtuChangedCallback : BleOperateCallback() {
 
     abstract fun onMtuChanged(bleDevice: BleDevice, mtu: Int)
 
-    final override fun onTimeOutFailure(
-        bleDevice: BleDevice,
-        characteristic: BluetoothGattCharacteristic?,
-        exception: BleException,
-        data: ByteArray?
-    ) {
-        onSetMTUFailure(bleDevice, exception)
-    }
 }
