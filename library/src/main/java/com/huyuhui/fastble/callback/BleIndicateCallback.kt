@@ -16,10 +16,10 @@ abstract class BleIndicateCallback : BleOperateCallback() {
         exception: BleException
     )
 
-    abstract fun onIndicateCancel(
+    open fun onIndicateCancel(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic
-    )
+    ){}
 
     abstract fun onCharacteristicChanged(
         bleDevice: BleDevice,

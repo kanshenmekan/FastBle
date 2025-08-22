@@ -5,10 +5,12 @@ import android.bluetooth.BluetoothGattCharacteristic
 import com.huyuhui.fastble.callback.BleReadCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-internal class BleReadOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluetooth) {
+internal class BleReadOperator(
+    bleBluetooth: BleBluetooth,
+    timeout: Long
+) : BleOperator(bleBluetooth, timeout) {
     var bleReadCallback: BleReadCallback? = null
         private set
 
@@ -20,9 +22,7 @@ internal class BleReadOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBlue
             && mCharacteristic!!.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
         ) {
             this.bleReadCallback = bleReadCallback
-            launch {
-                timeOutTask.start()
-            }
+            timeOutTask.start(this)
             bleBluetooth.addReadOperator(uuidRead, this)
             if (!mBluetoothGatt!!.readCharacteristic(mCharacteristic)) {
                 removeTimeOut()
@@ -52,7 +52,7 @@ internal class BleReadOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBlue
         e: Throwable?,
         isActive: Boolean
     ) {
-        bleReadCallback?.onReadFailure(bleDevice,mCharacteristic, BleException.TimeoutException())
+        bleReadCallback?.onReadFailure(bleDevice, mCharacteristic, BleException.TimeoutException())
     }
 
     override fun destroy() {

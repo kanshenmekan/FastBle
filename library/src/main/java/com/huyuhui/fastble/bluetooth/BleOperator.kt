@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
-import com.huyuhui.fastble.BleManager
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleCoroutineExceptionHandler
@@ -17,9 +16,12 @@ import kotlinx.coroutines.job
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
-internal abstract class BleOperator(protected val bleBluetooth: BleBluetooth) :
+internal abstract class BleOperator(
+    protected val bleBluetooth: BleBluetooth,
+    val timeout: Long
+) :
     CoroutineScope by CoroutineScope(
-        SupervisorJob(bleBluetooth.coroutineContext.job) + Dispatchers.Main.immediate
+        SupervisorJob(bleBluetooth.coroutineContext.job) + Dispatchers.Main
                 + BleCoroutineExceptionHandler { _, throwable ->
             BleLog.e(
                 "Bluetooth operation: a coroutine error has occurred. ${throwable.message}\n " +
@@ -40,13 +42,12 @@ internal abstract class BleOperator(protected val bleBluetooth: BleBluetooth) :
      */
     val bleDevice: BleDevice
         get() = bleBluetooth.bleDevice
-    var data: ByteArray? = null
-        protected set
+
 
     abstract fun onTimeout(task: TimeoutTask, e: Throwable?, isActive: Boolean)
 
     protected val timeOutTask = TimeoutTask(
-        BleManager.operateTimeout, object : TimeoutTask.OnResultCallBack {
+        timeout, object : TimeoutTask.OnResultCallBack {
             override fun onError(task: TimeoutTask, e: Throwable?, isActive: Boolean) {
                 super.onError(task, e, isActive)
                 onTimeout(task, e, isActive)
@@ -81,7 +82,6 @@ internal abstract class BleOperator(protected val bleBluetooth: BleBluetooth) :
     }
 
     open fun destroy() {
-        data = null
         timeOutTask.onTimeoutResultCallBack = null
         cancel()
     }

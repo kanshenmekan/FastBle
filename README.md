@@ -270,12 +270,17 @@ BleManager.connect(bleDevice, reconnectBleGattCallback, connectStrategy)
 ### 订阅通知notify
 
 ```
-fun notify(
-    bleDevice: BleDevice,
-    uuid_service: String,
-    uuid_notify: String,
-    callback: BleNotifyCallback?,
-)
+-timeout 指定这次操作的超时时间，超时不一定意味着最终失败，只是表示在指定时间内没有响应
+ 通过exception is BleException.TimeoutException 来判断是否是超时错误
+ 下面的操作同理
+  fun notify(
+        bleDevice: BleDevice,
+        uuidService: String,
+        uuidNotify: String,
+        callback: BleNotifyCallback?,
+        useCharacteristicDescriptor: Boolean = false,
+        timeout: Long = operateTimeout
+    )
 
 BleNotifyCallback() {
     override fun onNotifySuccess(
@@ -309,20 +314,25 @@ BleNotifyCallback() {
 
 ```
 fun stopNotify(
-    bleDevice: BleDevice,
-    uuid_service: String,
-    uuid_notify: String,
-): Boolean
+        bleDevice: BleDevice,
+        uuidService: String,
+        uuidNotify: String,
+        useCharacteristicDescriptor: Boolean = false,
+        timeout: Long = operateTimeout
+    ): Boolean
 ```
 
 ### 订阅通知indicate
 
 ```
-fun indicate(
-    bleDevice: BleDevice,
-    uuid_service: String,
-    uuid_indicate: String,
-    callback: BleIndicateCallback?)
+    fun indicate(
+        bleDevice: BleDevice,
+        uuidService: String,
+        uuidIndicate: String,
+        callback: BleIndicateCallback?,
+        useCharacteristicDescriptor: Boolean = false,
+        timeout: Long = operateTimeout
+    )
 
 BleIndicateCallback() {
     override fun onIndicateSuccess(
@@ -358,21 +368,25 @@ BleIndicateCallback() {
 ### 取消订阅通知indicate，并移除数据接收的回调监听
 
 ```
-fun stopNotify(
+ fun stopIndicate(
         bleDevice: BleDevice,
-        uuid_service: String,
-        uuid_notify: String,
+        uuidService: String,
+        uuidIndicate: String,
+        useCharacteristicDescriptor: Boolean = false,
+        timeout: Long = operateTimeout
     ): Boolean
 ```
 
 ### 读
 
 ```
-fun read(
-    bleDevice: BleDevice,
-    uuid_service: String,
-    uuid_read: String,
-    callback: BleReadCallback?)
+    fun read(
+        bleDevice: BleDevice,
+        uuidService: String,
+        uuidRead: String,
+        callback: BleReadCallback?,
+        timeout: Long = operateTimeout
+    )
 BleReadCallback() {
     override fun onReadSuccess(
         bleDevice: BleDevice,
@@ -393,17 +407,19 @@ BleReadCallback() {
 ### 写
 
 ```
-fun write(
-    bleDevice: BleDevice,
-    uuid_service: String,
-    uuid_write: String,
-    data: ByteArray?,
-    split: Boolean = true,
-    splitNum: Int = splitWriteNum,
-    continueWhenLastFail: Boolean = false,
-    intervalBetweenTwoPackage: Long = 0,
-    callback: BleWriteCallback?,
-    writeType: Int = BleOperator.WRITE_TYPE_DEFAULT)
+   fun write(
+        bleDevice: BleDevice,
+        uuidService: String,
+        uuidWrite: String,
+        data: ByteArray?,
+        split: Boolean = true,
+        splitNum: Int = splitWriteNum,
+        continueWhenLastFail: Boolean = false,
+        intervalBetweenTwoPackage: Long = 0,
+        callback: BleWriteCallback?,
+        @BleWriteType writeType: Int = WRITE_TYPE_AUTO,
+        timeout: Long = operateTimeout
+    )
 
 BleWriteCallback() {
     override fun onWriteSuccess(
@@ -462,6 +478,7 @@ val sequenceWriteOperator =
         .continuous(continuous)
         .delay(if (continuous) 10 else 100)
         .timeout(1000)
+        .operateTimeout(2000)
         .split(true)
         .splitNum(20)
         .build()
@@ -478,7 +495,9 @@ Tips:
 - timeout 当continuous为true之后，这个设置才有效果，如果任务在时间内没有回调，直接忽略掉，进行delay任务，之后获取下一个任务
   建议给一个适当的时长，以便任务有足够时间触发回调
   如果timeout为0，则会一直等待，直到任务回调触发
-
+- operateTimeout,和timeout的区别是，timeout是这个任务在队列当时超时的时间，如果超过这个时间就会进行下一个，operateTimeout表示
+  这个操作的执行时间，超过这个时间就会超时，和普通非队列写入方法的timeout作用相同，不能设置为<=0,否则会直接超时
+- 如果对于同一个characteristic,既用了普通写入，又用了队列写入，那么队列的timeout（非operateTimeout）不能设置为小于等于0，否则可能造成队列不继续执行的问题
 ```
 
 ### 队列的一些其他操作

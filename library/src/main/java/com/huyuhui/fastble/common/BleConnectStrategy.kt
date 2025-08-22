@@ -123,7 +123,9 @@ class BleConnectStrategy private constructor() {
             connectOverTime = time
             return this
         }
-
+        fun setDiscoverServiceTimeout(discoverServiceTimeout: Long) = apply{
+            this.discoverServiceTimeout = discoverServiceTimeout
+        }
         fun setAutoConnect(autoConnect: Boolean): Builder {
             mAutoConnect = autoConnect
             return this

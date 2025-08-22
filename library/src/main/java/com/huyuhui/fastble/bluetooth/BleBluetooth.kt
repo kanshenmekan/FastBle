@@ -54,11 +54,15 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         @Synchronized
         set
 
-    private val bleNotifyOperatorMap: ConcurrentHashMap<String, BleNotifyOperator> = ConcurrentHashMap()
-    private val bleIndicateOperatorMap: ConcurrentHashMap<String, BleIndicateOperator> = ConcurrentHashMap()
-    private val bleWriteOperatorMap: ConcurrentHashMap<String, BleWriteOperator> = ConcurrentHashMap()
+    private val bleNotifyOperatorMap: ConcurrentHashMap<String, BleNotifyOperator> =
+        ConcurrentHashMap()
+    private val bleIndicateOperatorMap: ConcurrentHashMap<String, BleIndicateOperator> =
+        ConcurrentHashMap()
+    private val bleWriteOperatorMap: ConcurrentHashMap<String, BleWriteOperator> =
+        ConcurrentHashMap()
     private val bleReadOperatorMap: ConcurrentHashMap<String, BleReadOperator> = ConcurrentHashMap()
-    private val bleOperatorQueueMap: ConcurrentHashMap<String, BleOperatorQueue> = ConcurrentHashMap()
+    private val bleOperatorQueueMap: ConcurrentHashMap<String, BleOperatorQueue> =
+        ConcurrentHashMap()
     private var bleRssiOperator: BleReadRssiOperator? = null
     private var bleMtuOperator: BleMtuOperator? = null
     private var lastState: LastState? = null
@@ -108,9 +112,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                 """.trimIndent()
         )
         if (bleConnectStrategy.connectOverTime > 0) {
-            launch(Dispatchers.Main.immediate) {
-                connectTimeOutTask.start()
-            }
+            connectTimeOutTask.start(this)
         }
         lastState = LastState.CONNECT_CONNECTING
         bluetoothGatt =
@@ -134,7 +136,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                 BleLog.i("Start connecting device $bleDevice,$bleConnectStrategy")
             }
         } else {
-            connectTimeOutTask.success()
+            connectTimeOutTask.cancel()
             connectedFail(BleException.OtherException(BleException.GATT_NULL, "GATT is null!"))
         }
         return bluetoothGatt
@@ -153,37 +155,44 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         }
     }
 
-    fun buildNotifyOperator(uuidService: String, uuidCharacteristic: String): BleNotifyOperator {
-        return BleNotifyOperator(this).withUUIDString(uuidService, uuidCharacteristic)
+    fun buildNotifyOperator(
+        uuidService: String,
+        uuidCharacteristic: String,
+        timeout: Long
+    ): BleNotifyOperator {
+        return BleNotifyOperator(this, timeout).withUUIDString(uuidService, uuidCharacteristic)
     }
 
     fun buildIndicateOperator(
         uuidService: String,
-        uuidCharacteristic: String
+        uuidCharacteristic: String,
+        timeout: Long
     ): BleIndicateOperator {
-        return BleIndicateOperator(this).withUUIDString(uuidService, uuidCharacteristic)
+        return BleIndicateOperator(this, timeout).withUUIDString(uuidService, uuidCharacteristic)
     }
 
     fun buildWriteOperator(
         uuidService: String,
-        uuidCharacteristic: String
+        uuidCharacteristic: String,
+        timeout: Long
     ): BleWriteOperator {
-        return BleWriteOperator(this).withUUIDString(uuidService, uuidCharacteristic)
+        return BleWriteOperator(this, timeout).withUUIDString(uuidService, uuidCharacteristic)
     }
 
     fun buildReadOperator(
         uuidService: String,
-        uuidCharacteristic: String
+        uuidCharacteristic: String,
+        timeout: Long
     ): BleReadOperator {
-        return BleReadOperator(this).withUUIDString(uuidService, uuidCharacteristic)
+        return BleReadOperator(this, timeout).withUUIDString(uuidService, uuidCharacteristic)
     }
 
-    fun buildRssiOperator(): BleReadRssiOperator {
-        return BleReadRssiOperator(this)
+    fun buildRssiOperator(timeout: Long): BleReadRssiOperator {
+        return BleReadRssiOperator(this, timeout)
     }
 
-    fun buildMtuOperator(): BleMtuOperator {
-        return BleMtuOperator(this)
+    fun buildMtuOperator(timeout: Long): BleMtuOperator {
+        return BleMtuOperator(this, timeout)
     }
 
     private fun createOperateQueue(identifier: String = DEFAULT_QUEUE_IDENTIFIER): Boolean {
@@ -439,11 +448,11 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                         disconnectGatt()
                         refreshDeviceCache()
                         closeBluetoothGatt()
-                        BleLog.e(
-                            "Connect fail, try reconnect " + bleConnectStrategy.reConnectInterval + " millisecond later"
-                        )
                         currentConnectRetryCount++
                         launch {
+                            BleLog.e(
+                                "Connect fail, try reconnect " + bleConnectStrategy.reConnectInterval + " millisecond later"
+                            )
                             delay(bleConnectStrategy.reConnectInterval)
                             connect(BleManager.context!!, false, currentConnectRetryCount)
                         }
@@ -483,6 +492,9 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                 connectAndDiscoverSuccess(status)
             } else {
                 discoverFail()
+            }
+            launch {
+                bleGattCallback?.onServicesDiscovered(bleDevice, gatt, status)
             }
             bleGattCallback?.onServicesDiscovered(gatt, status)
         }

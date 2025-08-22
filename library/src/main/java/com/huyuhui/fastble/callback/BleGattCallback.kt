@@ -24,6 +24,10 @@ abstract class BleGattCallback : BluetoothGattCallback() {
         status: Int
     )
 
+    open fun onServicesDiscovered(bleDevice: BleDevice, gatt: BluetoothGatt?, status: Int) {
+
+    }
+
     open fun onPhyUpdate(
         bleDevice: BleDevice,
         gatt: BluetoothGatt?,

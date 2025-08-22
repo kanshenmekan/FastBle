@@ -6,11 +6,14 @@ import android.os.Build
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-internal class BleWriteOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluetooth) {
+internal class BleWriteOperator(bleBluetooth: BleBluetooth, timeout: Long) :
+    BleOperator(bleBluetooth, timeout) {
     var bleWriteCallback: BleWriteCallback? = null
+        private set
+
+    var data: ByteArray? = null
         private set
 
     @Suppress("DEPRECATION")
@@ -59,9 +62,7 @@ internal class BleWriteOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBlu
         mCharacteristic!!.writeType = finalWriteType
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             this.bleWriteCallback = bleWriteCallback
-            launch {
-                timeOutTask.start()
-            }
+            timeOutTask.start(this)
             bleBluetooth.addWriteOperator(uuidWrite, this)
             mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, finalWriteType)
             //这里会触发一次，onCharacteristicWrite里面还会触发一次
@@ -76,9 +77,7 @@ internal class BleWriteOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBlu
         } else {
             if (mCharacteristic!!.setValue(data)) {
                 this.bleWriteCallback = bleWriteCallback
-                launch {
-                    timeOutTask.start()
-                }
+                timeOutTask.start(this)
                 bleBluetooth.addWriteOperator(uuidWrite, this)
                 mBluetoothGatt!!.writeCharacteristic(mCharacteristic)
 //                if (!mBluetoothGatt!!.writeCharacteristic(mCharacteristic)) {
@@ -106,11 +105,17 @@ internal class BleWriteOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBlu
         e: Throwable?,
         isActive: Boolean
     ) {
-        bleWriteCallback?.onWriteFailure(bleDevice, mCharacteristic, BleException.TimeoutException(), justWrite = data)
+        bleWriteCallback?.onWriteFailure(
+            bleDevice,
+            mCharacteristic,
+            BleException.TimeoutException(),
+            justWrite = data
+        )
     }
 
     override fun destroy() {
         super.destroy()
+        data = null
         bleWriteCallback = null
     }
 }

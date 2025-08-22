@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import com.huyuhui.fastble.callback.BleMtuChangedCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-internal class BleMtuOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluetooth) {
+internal class BleMtuOperator(
+    bleBluetooth: BleBluetooth,
+    timeout: Long
+) : BleOperator(bleBluetooth, timeout) {
 
     var bleMtuChangedCallback: BleMtuChangedCallback? = null
         private set
@@ -22,9 +24,7 @@ internal class BleMtuOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluet
                 BleException.OtherException(description = "gatt requestMtu fail")
             )
         } else {
-            launch {
-                timeOutTask.start()
-            }
+            timeOutTask.start(this)
             this.bleMtuChangedCallback = bleMtuChangedCallback
             bleBluetooth.setMtuOperator(this)
             if (!mBluetoothGatt!!.requestMtu(requiredMtu)) {

@@ -12,7 +12,10 @@ import com.huyuhui.fastble.exception.BleException
 import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-internal class BleNotifyOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluetooth) {
+internal class BleNotifyOperator(
+    bleBluetooth: BleBluetooth,
+    timeout: Long
+) : BleOperator(bleBluetooth, timeout) {
     var bleNotifyCallback: BleNotifyCallback? = null
         private set
 
@@ -27,9 +30,7 @@ internal class BleNotifyOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBl
         if (mCharacteristic != null && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
             this@BleNotifyOperator.bleNotifyCallback = bleNotifyCallback
             bleBluetooth.addNotifyOperator(uuidNotify, this)
-            launch {
-                timeOutTask.start()
-            }
+            timeOutTask.start(this)
             setCharacteristicNotification(
                 mBluetoothGatt,
                 mCharacteristic,

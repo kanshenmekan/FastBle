@@ -38,7 +38,12 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
     var writeType: Int = BleOperator.WRITE_TYPE_DEFAULT
         private set
     private var mContinuous = false
+
+    //在队列中的超时时间
     private var mTimeout = 0L
+
+    //这个写入过程的超时时间
+    private var operateTimeout = BleManager.operateTimeout
     private var channelWeakReference: WeakReference<Channel<TaskResult>>? = null
     private val wrappedBleWriteCallback by lazy {
         object : BleWriteCallback() {
@@ -112,7 +117,8 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 split = split,
                 splitNum = splitNum,
                 continueWhenLastFail = continueWhenLastFail,
-                intervalBetweenTwoPackage = intervalBetweenTwoPackage
+                intervalBetweenTwoPackage = intervalBetweenTwoPackage,
+                timeout = operateTimeout
             )
         } else {
             BleManager.write(
@@ -125,7 +131,8 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 split = split,
                 splitNum = splitNum,
                 continueWhenLastFail = continueWhenLastFail,
-                intervalBetweenTwoPackage = intervalBetweenTwoPackage
+                intervalBetweenTwoPackage = intervalBetweenTwoPackage,
+                timeout = operateTimeout
             )
         }
     }
@@ -150,6 +157,8 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         private var continuous: Boolean = false
         private var timeout: Long = 0
 
+        private var operateTimeout: Long = BleManager.operateTimeout
+
         constructor(writeOperator: SequenceWriteOperator) : this() {
             this.priority = writeOperator.priority
             this.delay = writeOperator.delay
@@ -164,6 +173,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             this.writeType = writeOperator.writeType
             this.continuous = writeOperator.continuous
             this.timeout = writeOperator.timeout
+            this.operateTimeout = writeOperator.operateTimeout
         }
 
         fun priority(priority: Int): Builder {
@@ -231,6 +241,10 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             return this
         }
 
+        fun operateTimeout(operateTimeout: Long) = apply {
+            this.operateTimeout = operateTimeout
+        }
+
         @SuppressLint("PrivateApi")
         fun applySequenceWriteOperator(writeOperator: SequenceWriteOperator) {
             writeOperator.serviceUUID = this.serviceUUID
@@ -244,6 +258,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             writeOperator.writeType = this.writeType
             writeOperator.mContinuous = this.continuous
             writeOperator.mTimeout = this.timeout
+            writeOperator.operateTimeout = this.operateTimeout
         }
 
         fun build(): SequenceWriteOperator {

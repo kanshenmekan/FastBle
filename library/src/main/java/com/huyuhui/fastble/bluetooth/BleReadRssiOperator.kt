@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import com.huyuhui.fastble.callback.BleRssiCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-internal class BleReadRssiOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluetooth) {
+internal class BleReadRssiOperator(
+    bleBluetooth: BleBluetooth,
+    timeout: Long
+) : BleOperator(bleBluetooth, timeout) {
     var bleRssiCallback: BleRssiCallback? = null
         private set
 
@@ -21,9 +23,7 @@ internal class BleReadRssiOperator(bleBluetooth: BleBluetooth) : BleOperator(ble
                 BleException.OtherException(BleException.GATT_NULL, "gatt is null")
             )
         } else {
-            launch {
-                timeOutTask.start()
-            }
+            timeOutTask.start(this)
             this.bleRssiCallback = bleRssiCallback
             bleBluetooth.setRssiOperator(this)
             if (!mBluetoothGatt!!.readRemoteRssi()) {

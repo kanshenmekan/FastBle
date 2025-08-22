@@ -2,6 +2,7 @@ package com.huyuhui.fastble.common
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
@@ -38,10 +39,9 @@ class TimeoutTask(
             }
         }
     }
-
-    suspend fun start() {
+    fun start(scope: CoroutineScope){
         job?.apply {
-            if (!isCompleted) {
+            if (isActive) {
                 isSkip = true
                 cancel(
                     CancellationException(
@@ -53,24 +53,26 @@ class TimeoutTask(
                 isSkip = false
             }
         }
-        supervisorScope {
-            job = launch(exceptionHandler) {
-                coroutineContext.job.invokeOnCompletion {
-                    onTimeoutResultCallBack?.onFinal(this@TimeoutTask, isSkip)
-                }
-                onTimeoutResultCallBack?.onStart(this@TimeoutTask)
-                try {
-                    delay(delayTime)
-                    throw TimeoutThrowable.TimeOutError
-                } catch (e: CancellationException) {
-                    throw e.cause ?: Throwable()
+        job = scope.launch {
+            supervisorScope {
+                launch(exceptionHandler) {
+                    coroutineContext.job.invokeOnCompletion {
+                        onTimeoutResultCallBack?.onFinal(this@TimeoutTask, isSkip)
+                    }
+                    onTimeoutResultCallBack?.onStart(this@TimeoutTask)
+                    try {
+                        delay(delayTime)
+                        throw TimeoutThrowable.TimeOutError
+                    } catch (e: CancellationException) {
+                        throw e.cause ?: Throwable()
+                    }
                 }
             }
         }
     }
 
     fun fail() {
-        job?.cancel(
+        job?.takeIf { it.isActive }?.cancel(
             CancellationException(
                 TimeoutThrowable.ActiveError.message,
                 TimeoutThrowable.ActiveError
@@ -79,7 +81,7 @@ class TimeoutTask(
     }
 
     fun success() {
-        job?.cancel(
+        job?.takeIf { it.isActive }?.cancel(
             CancellationException(
                 TimeoutThrowable.Success.message,
                 TimeoutThrowable.Success

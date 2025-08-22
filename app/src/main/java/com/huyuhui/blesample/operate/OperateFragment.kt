@@ -184,7 +184,8 @@ class OperateFragment : Fragment() {
     @SuppressLint("MissingPermission")
     private fun read() {
         characteristic?.let {
-            BleManager.read(bleDevice!!, it.service.uuid.toString(), it.uuid.toString(),
+            BleManager.read(
+                bleDevice!!, it.service.uuid.toString(), it.uuid.toString(),
                 object : BleReadCallback() {
                     override fun onReadSuccess(
                         bleDevice: BleDevice,
@@ -263,7 +264,8 @@ class OperateFragment : Fragment() {
                     .characteristicUUID(it.uuid.toString()).data(data).writeType(writeType)
                     .bleWriteCallback(bleWriteCallback)
                     .continuous(continuous)
-                    .delay(if (continuous) 10 else 100)
+                    .delay(if (continuous) 10 else 2000)
+                    .intervalBetweenTwoPackage(10)
                     .splitNum(20)
                     .timeout(1000)
                     .build()
@@ -302,7 +304,9 @@ class OperateFragment : Fragment() {
             characteristic: BluetoothGattCharacteristic,
         ) {
             binding.swNotify.takeUnless { it.isChecked }?.isChecked = true
-
+            notifyData.add("${sdf.format(Date())}: Notify Success")
+            notifyAdapter.notifyItemInserted(notifyData.lastIndex)
+            binding.rvNotify.scrollToPosition(notifyData.lastIndex)
         }
 
         override fun onNotifyFailure(

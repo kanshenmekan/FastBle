@@ -9,10 +9,12 @@ import android.os.Build
 import com.huyuhui.fastble.callback.BleIndicateCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
-internal class BleIndicateOperator(bleBluetooth: BleBluetooth) : BleOperator(bleBluetooth) {
+internal class BleIndicateOperator(
+    bleBluetooth: BleBluetooth,
+    timeout: Long
+) : BleOperator(bleBluetooth, timeout) {
 
     var bleIndicateCallback: BleIndicateCallback? = null
         private set
@@ -27,9 +29,7 @@ internal class BleIndicateOperator(bleBluetooth: BleBluetooth) : BleOperator(ble
         ) {
             this.bleIndicateCallback = bleIndicateCallback
             bleBluetooth.addIndicateOperator(uuidIndicate, this)
-            launch {
-                timeOutTask.start()
-            }
+            timeOutTask.start(this)
             setCharacteristicIndication(
                 mBluetoothGatt, mCharacteristic,
                 true, bleIndicateCallback, useCharacteristicDescriptor

@@ -13,7 +13,7 @@ abstract class BleNotifyCallback : BleOperateCallback() {
         exception: BleException
     )
 
-    abstract fun onNotifyCancel(bleDevice: BleDevice, characteristic: BluetoothGattCharacteristic)
+    open fun onNotifyCancel(bleDevice: BleDevice, characteristic: BluetoothGattCharacteristic){}
     abstract fun onCharacteristicChanged(
         bleDevice: BleDevice,
         characteristic: BluetoothGattCharacteristic,
