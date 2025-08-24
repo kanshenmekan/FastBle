@@ -165,7 +165,6 @@ internal class SplitWriter(private val writeOperator: BleWriteOperator) {
                     writeOperator.writeCharacteristic(
                         it,
                         callback,
-                        writeOperator.mCharacteristic!!.uuid.toString(),
                         writeType
                     )
                 }

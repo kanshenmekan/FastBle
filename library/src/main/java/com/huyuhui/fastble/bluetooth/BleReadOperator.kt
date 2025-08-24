@@ -9,21 +9,23 @@ import com.huyuhui.fastble.exception.BleException
 @SuppressLint("MissingPermission")
 internal class BleReadOperator(
     bleBluetooth: BleBluetooth,
-    timeout: Long
-) : BleOperator(bleBluetooth, timeout) {
+    timeout: Long,
+    uuidService: String,
+    uuidCharacteristic: String
+) : BleCharacteristicOperator(bleBluetooth, timeout, uuidService, uuidCharacteristic)  {
     var bleReadCallback: BleReadCallback? = null
         private set
 
     /**
      * read
      */
-    fun readCharacteristic(bleReadCallback: BleReadCallback?, uuidRead: String) {
+    fun readCharacteristic(bleReadCallback: BleReadCallback?) {
         if (mCharacteristic != null
-            && mCharacteristic!!.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
+            && mCharacteristic.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
         ) {
             this.bleReadCallback = bleReadCallback
             timeOutTask.start(this)
-            bleBluetooth.addReadOperator(uuidRead, this)
+            bleBluetooth.addReadOperator(key, this)
             if (!mBluetoothGatt!!.readCharacteristic(mCharacteristic)) {
                 removeTimeOut()
                 bleReadCallback?.onReadFailure(

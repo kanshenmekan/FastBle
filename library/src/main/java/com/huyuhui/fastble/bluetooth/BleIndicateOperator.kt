@@ -13,22 +13,23 @@ import com.huyuhui.fastble.exception.BleException
 @SuppressLint("MissingPermission")
 internal class BleIndicateOperator(
     bleBluetooth: BleBluetooth,
-    timeout: Long
-) : BleOperator(bleBluetooth, timeout) {
+    timeout: Long,
+    uuidService: String,
+    uuidCharacteristic: String
+) : BleCharacteristicOperator(bleBluetooth, timeout, uuidService, uuidCharacteristic) {
 
     var bleIndicateCallback: BleIndicateCallback? = null
         private set
 
     fun enableCharacteristicIndicate(
         bleIndicateCallback: BleIndicateCallback?,
-        uuidIndicate: String,
         useCharacteristicDescriptor: Boolean,
     ) {
         if (mCharacteristic != null
-            && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
+            && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
         ) {
             this.bleIndicateCallback = bleIndicateCallback
-            bleBluetooth.addIndicateOperator(uuidIndicate, this)
+            bleBluetooth.addIndicateOperator(key, this)
             timeOutTask.start(this)
             setCharacteristicIndication(
                 mBluetoothGatt, mCharacteristic,
@@ -52,7 +53,7 @@ internal class BleIndicateOperator(
      */
     fun disableCharacteristicIndicate(useCharacteristicDescriptor: Boolean): Boolean {
         return if (mCharacteristic != null
-            && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
+            && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
         ) {
             setCharacteristicIndication(
                 mBluetoothGatt, mCharacteristic,

@@ -33,6 +33,7 @@ import com.huyuhui.fastble.common.BleConnectStrategy
 import com.huyuhui.fastble.common.BleFactory
 import com.huyuhui.fastble.common.BluetoothChangedObserver
 import com.huyuhui.fastble.data.BleDevice
+import com.huyuhui.fastble.data.BleOperatorKey
 import com.huyuhui.fastble.data.BleScanState
 import com.huyuhui.fastble.exception.BleException
 import com.huyuhui.fastble.queue.operate.SequenceBleOperator
@@ -220,19 +221,13 @@ object BleManager {
         strategy: BleConnectStrategy = bleConnectStrategy,
     ): BluetoothGatt? {
         val bleDevice = convertBleDevice(bluetoothAdapter?.getRemoteDevice(mac))
-        return if (bleDevice == null) {
-            bleGattCallback?.onConnectFail(
-                null,
-                BleException.OtherException(BleException.DEVICE_NULL, "Device is null")
-            )
-            null
-        } else {
+        return if (bleDevice != null) {
             connect(
                 bleDevice,
                 bleGattCallback,
                 strategy
             )
-        }
+        } else null
     }
 
     /**
@@ -264,7 +259,7 @@ object BleManager {
             )
         } else {
             bleBluetooth.buildNotifyOperator(uuidService, uuidNotify, timeout)
-                .enableCharacteristicNotify(callback, uuidNotify, useCharacteristicDescriptor)
+                .enableCharacteristicNotify(callback, useCharacteristicDescriptor)
         }
     }
 
@@ -293,7 +288,7 @@ object BleManager {
             )
         } else {
             bleBluetooth.buildIndicateOperator(uuidService, uuidIndicate, timeout)
-                .enableCharacteristicIndicate(callback, uuidIndicate, useCharacteristicDescriptor)
+                .enableCharacteristicIndicate(callback, useCharacteristicDescriptor)
         }
     }
 
@@ -416,7 +411,7 @@ object BleManager {
                 )
             } else {
                 bleBluetooth.buildWriteOperator(uuidService, uuidWrite, timeout)
-                    .writeCharacteristic(data, callback, uuidWrite, writeType)
+                    .writeCharacteristic(data, callback, writeType)
             }
         }
     }
@@ -439,7 +434,7 @@ object BleManager {
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         bleBluetooth?.buildReadOperator(uuidService, uuidRead, timeout)
-            ?.readCharacteristic(callback, uuidRead)
+            ?.readCharacteristic(callback)
             ?: callback?.onReadFailure(
                 bleDevice,
                 null,
@@ -732,24 +727,24 @@ object BleManager {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)?.removeMtuOperator()
     }
 
-    fun removeNotifyCallback(bleDevice: BleDevice?, uuidNotify: String) {
+    fun removeNotifyCallback(bleDevice: BleDevice?, uuidService: String, uuidNotify: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeNotifyOperator(uuidNotify)
+            ?.removeNotifyOperator(BleOperatorKey(uuidService, uuidNotify))
     }
 
-    fun removeIndicateCallback(bleDevice: BleDevice?, uuidIndicate: String) {
+    fun removeIndicateCallback(bleDevice: BleDevice?, uuidService: String, uuidIndicate: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeIndicateOperator(uuidIndicate)
+            ?.removeIndicateOperator(BleOperatorKey(uuidService, uuidIndicate))
     }
 
-    fun removeWriteCallback(bleDevice: BleDevice?, uuidWrite: String) {
+    fun removeWriteCallback(bleDevice: BleDevice?, uuidService: String, uuidWrite: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeWriteOperator(uuidWrite)
+            ?.removeWriteOperator(BleOperatorKey(uuidService, uuidWrite))
     }
 
-    fun removeReadCallback(bleDevice: BleDevice?, uuidRead: String) {
+    fun removeReadCallback(bleDevice: BleDevice?, uuidService: String, uuidRead: String) {
         multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
-            ?.removeReadOperator(uuidRead)
+            ?.removeReadOperator(BleOperatorKey(uuidService, uuidRead))
     }
 
     fun clearCharacterCallback(bleDevice: BleDevice?) {

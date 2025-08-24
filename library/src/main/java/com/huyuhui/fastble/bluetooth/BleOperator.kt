@@ -2,8 +2,6 @@ package com.huyuhui.fastble.bluetooth
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothGatt
-import android.bluetooth.BluetoothGattCharacteristic
-import android.bluetooth.BluetoothGattService
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleCoroutineExceptionHandler
@@ -42,7 +40,8 @@ internal abstract class BleOperator(
      */
     val bleDevice: BleDevice
         get() = bleBluetooth.bleDevice
-
+    val mBluetoothGatt: BluetoothGatt?
+        get() = bleBluetooth.bluetoothGatt
 
     abstract fun onTimeout(task: TimeoutTask, e: Throwable?, isActive: Boolean)
 
@@ -54,27 +53,18 @@ internal abstract class BleOperator(
             }
         }
     )
-    protected val mBluetoothGatt: BluetoothGatt?
-        get() = bleBluetooth.bluetoothGatt
-    var mGattService: BluetoothGattService? = null
-        private set
-    var mCharacteristic: BluetoothGattCharacteristic? = null
-        private set
 
+    protected fun fromUUID(uuid: String): UUID? {
+        return try {
+            UUID.fromString(uuid)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
 
-    private fun <T : BleOperator> withUUID(serviceUUID: UUID, characteristicUUID: UUID): T {
-        mGattService = mBluetoothGatt?.getService(serviceUUID)
-        mCharacteristic = mGattService?.getCharacteristic(characteristicUUID)
-        @Suppress("UNCHECKED_CAST")
-        return this as T
     }
 
-    fun <T : BleOperator> withUUIDString(serviceUUID: String, characteristicUUID: String): T {
-        return withUUID(fromUUID(serviceUUID), fromUUID(characteristicUUID))
-    }
-
-    protected fun fromUUID(uuid: String): UUID {
-        return UUID.fromString(uuid)
+    fun hasTask(): Boolean {
+        return timeOutTask.hasTask()
     }
 
     fun removeTimeOut() {

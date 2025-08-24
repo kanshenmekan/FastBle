@@ -14,8 +14,10 @@ import kotlinx.coroutines.launch
 @SuppressLint("MissingPermission")
 internal class BleNotifyOperator(
     bleBluetooth: BleBluetooth,
-    timeout: Long
-) : BleOperator(bleBluetooth, timeout) {
+    timeout: Long,
+    uuidService: String,
+    uuidCharacteristic: String
+) : BleCharacteristicOperator(bleBluetooth, timeout, uuidService, uuidCharacteristic)  {
     var bleNotifyCallback: BleNotifyCallback? = null
         private set
 
@@ -24,12 +26,11 @@ internal class BleNotifyOperator(
      */
     fun enableCharacteristicNotify(
         bleNotifyCallback: BleNotifyCallback?,
-        uuidNotify: String,
         useCharacteristicDescriptor: Boolean,
     ) {
-        if (mCharacteristic != null && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
+        if (mCharacteristic != null && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
             this@BleNotifyOperator.bleNotifyCallback = bleNotifyCallback
-            bleBluetooth.addNotifyOperator(uuidNotify, this)
+            bleBluetooth.addNotifyOperator(key, this)
             timeOutTask.start(this)
             setCharacteristicNotification(
                 mBluetoothGatt,
@@ -57,7 +58,7 @@ internal class BleNotifyOperator(
      */
     fun disableCharacteristicNotify(useCharacteristicDescriptor: Boolean): Boolean {
         return if (mCharacteristic != null
-            && mCharacteristic!!.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
+            && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
         ) {
             setCharacteristicNotification(
                 mBluetoothGatt, mCharacteristic, false, null, useCharacteristicDescriptor
