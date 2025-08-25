@@ -145,9 +145,9 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
     }
 
     private fun connectedFail(exception: BleException) {
+        BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
+        lastState = LastState.CONNECT_FAILURE
         launch(Dispatchers.Main.immediate) {
-            lastState = LastState.CONNECT_FAILURE
-            BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
             bleGattCallback?.onConnectFail(
                 bleDevice,
                 exception
@@ -261,11 +261,11 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
 
     private fun connectAndDiscoverSuccess(status: Int) {
         discoverServiceJob?.takeIf { it.isActive }?.cancel()
+        BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
+        BleManager.multipleBluetoothController.addConnectedBleBluetooth(this@BleBluetooth)
         launch(Dispatchers.Main.immediate) {
             lastState = LastState.CONNECT_CONNECTED
             isActiveDisconnect = false
-            BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
-            BleManager.multipleBluetoothController.addConnectedBleBluetooth(this@BleBluetooth)
             bleGattCallback?.onConnectSuccess(bleDevice, bluetoothGatt, status)
             BleLog.i("Connect success,$bleDevice")
         }
