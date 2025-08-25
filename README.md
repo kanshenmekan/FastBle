@@ -497,7 +497,8 @@ Tips:
   如果timeout为0，则会一直等待，直到任务回调触发
 - operateTimeout,和timeout的区别是，timeout是这个任务在队列当时超时的时间，如果超过这个时间就会进行下一个，operateTimeout表示
   这个操作的执行时间，超过这个时间就会超时，和普通非队列写入方法的timeout作用相同，不能设置为<=0,否则会直接超时
-- 如果对于同一个characteristic,既用了普通写入，又用了队列写入，那么队列的timeout（非operateTimeout）不能设置为小于等于0，否则可能造成队列不继续执行的问题
+- 如果对于同一个characteristic,既用了普通写入，又用了队列写入，1.4.5版本以下，那么队列的timeout（非operateTimeout）不能设置为小于等于0，否则可能造成队列不继续执行的问题
+  除了写入操作以外的，如果是像demo里面自己实现了队列notify操作，对于同一个characteristic,既用了普通notify，又用了队列notify，那么也不要设置超时时间为小于等于0
 ```
 
 ### 队列的一些其他操作
