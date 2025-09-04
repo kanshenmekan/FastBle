@@ -487,7 +487,7 @@ object BleManager {
             BleLog.e("requiredMtu should lower than 512 !")
             callback?.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException(description = "requiredMtu should lower than 512 !")
+                BleException.OtherException(message = "requiredMtu should lower than 512 !")
             )
             return
         }
@@ -495,7 +495,7 @@ object BleManager {
             BleLog.e("requiredMtu should higher than 23 !")
             callback?.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException(description = "requiredMtu should higher than 23 !")
+                BleException.OtherException(message = "requiredMtu should higher than 23 !")
             )
             return
         }

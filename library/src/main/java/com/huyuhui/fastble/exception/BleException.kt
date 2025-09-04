@@ -2,7 +2,7 @@ package com.huyuhui.fastble.exception
 
 import android.bluetooth.BluetoothGatt
 
-sealed class BleException(open val code: Int, open val description: String) {
+sealed class BleException(open val code: Int, message: String) : Throwable(message) {
     companion object {
         @JvmStatic
         val ERROR_CODE_TIMEOUT = 100
@@ -51,38 +51,49 @@ sealed class BleException(open val code: Int, open val description: String) {
     }
 
     override fun toString(): String {
-        return "BleException(code=$code, description='$description')"
+        return "BleException(code=$code, message='$message')"
     }
 
-    data class OtherException(
+    class OtherException(
         override val code: Int = ERROR_CODE_OTHER,
-        override val description: String,
-    ) :
-        BleException(code, description)
+        message: String,
+    ) : BleException(code, message) {
+        override fun toString(): String {
+            return "OtherException(code=$code, message='$message')"
+        }
+    }
 
-    data class TimeoutException(override val description: String = "Timeout Exception Occurred!") :
-        BleException(ERROR_CODE_TIMEOUT, description)
+    class TimeoutException(message: String = "Timeout Exception Occurred!") :
+        BleException(ERROR_CODE_TIMEOUT, message) {
+        override fun toString(): String {
+            return "TimeoutException(code=$code, message='$message')"
+        }
+    }
 
-    data class DiscoverException(override val code: Int = ERROR_CODE_GATT,override val description: String = "GATT discover services exception occurred!") :
-        BleException(code, description)
+    class DiscoverException(
+        override val code: Int = ERROR_CODE_GATT,
+        message: String = "GATT discover services exception occurred!"
+    ) : BleException(code, message) {
+        override fun toString(): String {
+            return "DiscoverException(code=$code, message='$message')"
+        }
+    }
 
     class ConnectException(
         val bluetoothGatt: BluetoothGatt?,
         val gattStatus: Int,
-    ) :
-        BleException(ERROR_CODE_GATT, "Gatt Exception Occurred! ") {
+    ) : BleException(ERROR_CODE_GATT, "Gatt Exception Occurred!") {
         override fun toString(): String {
-            return "ConnectException(bluetoothGatt=$bluetoothGatt, gattStatus=$gattStatus) ${super.toString()}"
+            return "ConnectException(bluetoothGatt=$bluetoothGatt, gattStatus=$gattStatus) code=$code, message='$message'"
         }
     }
 
     class GattException(
         val bluetoothGatt: BluetoothGatt?,
         val gattStatus: Int,
-    ) :
-        BleException(ERROR_CODE_GATT, "Gatt Exception Occurred! ") {
+    ) : BleException(ERROR_CODE_GATT, "Gatt Exception Occurred!") {
         override fun toString(): String {
-            return "GattException(bluetoothGatt=$bluetoothGatt, gattStatus=$gattStatus) ${super.toString()}"
+            return "GattException(bluetoothGatt=$bluetoothGatt, gattStatus=$gattStatus) code=$code, message='$message'"
         }
     }
 }

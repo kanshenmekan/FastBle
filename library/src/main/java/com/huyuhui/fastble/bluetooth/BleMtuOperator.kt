@@ -21,7 +21,7 @@ internal class BleMtuOperator(
         if (mBluetoothGatt == null) {
             bleMtuChangedCallback?.onSetMTUFailure(
                 bleDevice,
-                BleException.OtherException(description = "gatt requestMtu fail")
+                BleException.OtherException(message = "gatt requestMtu fail")
             )
         } else {
             timeOutTask.start(this)
@@ -31,7 +31,7 @@ internal class BleMtuOperator(
                 removeTimeOut()
                 bleMtuChangedCallback?.onSetMTUFailure(
                     bleDevice,
-                    BleException.OtherException(description = "gatt requestMtu fail")
+                    BleException.OtherException(message = "gatt requestMtu fail")
                 )
             }
         }

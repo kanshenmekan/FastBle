@@ -243,7 +243,7 @@ class OperateFragment : Fragment() {
         ) {
             if (isTotalFail) {
                 writeData.add(
-                    "${sdf.format(Date())}: fail ${exception.description} ${
+                    "${sdf.format(Date())}: fail ${exception.message} ${
                         HexUtil.encodeHexStr(
                             data
                         )
@@ -277,7 +277,7 @@ class OperateFragment : Fragment() {
                 bleWriteCallback.onWriteFailure(
                     bleDevice!!,
                     it,
-                    BleException.OtherException(description = "write to queue failed"),
+                    BleException.OtherException(message = "write to queue failed"),
                     justWrite = data
                 )
             }
@@ -316,7 +316,7 @@ class OperateFragment : Fragment() {
         ) {
             Toast.makeText(
                 requireContext(),
-                "onNotifyFailure ${exception.description}",
+                "onNotifyFailure ${exception.message}",
                 Toast.LENGTH_LONG
             ).show()
             binding.swNotify.takeIf { it.isChecked }?.isChecked = false
@@ -380,7 +380,7 @@ class OperateFragment : Fragment() {
                 bleNotifyCallback.onNotifyFailure(
                     bleDevice!!,
                     it,
-                    BleException.OtherException(description = "write to queue failed")
+                    BleException.OtherException(message = "write to queue failed")
                 )
             }
         }
@@ -401,7 +401,7 @@ class OperateFragment : Fragment() {
         ) {
             Toast.makeText(
                 requireContext(),
-                "onIndicateFailure ${exception.description}",
+                "onIndicateFailure ${exception.message}",
                 Toast.LENGTH_LONG
             ).show()
             binding.swIndicate.takeIf { it.isChecked }?.isChecked = false

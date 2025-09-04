@@ -30,7 +30,7 @@ internal class BleReadRssiOperator(
                 removeTimeOut()
                 bleRssiCallback?.onRssiFailure(
                     bleDevice,
-                    BleException.OtherException(description = "gatt readRemoteRssi fail")
+                    BleException.OtherException(message = "gatt readRemoteRssi fail")
                 )
             }
         }
