@@ -460,6 +460,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                     discoverService()
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                discoverServiceJob?.takeIf { it.isActive }?.cancel()
                 if (lastState == LastState.CONNECT_CONNECTING) {
                     if (currentConnectRetryCount < bleConnectStrategy.reConnectCount) {
                         disconnectGatt()
