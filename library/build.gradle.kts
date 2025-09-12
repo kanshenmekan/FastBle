@@ -29,7 +29,10 @@ android {
         resources.excludes.add("META-INF/*******")
     }
     publishing {
-        singleVariant("release") {}
+        singleVariant("release") {
+            withSourcesJar()
+            withJavadocJar()
+        }
     }
 }
 
