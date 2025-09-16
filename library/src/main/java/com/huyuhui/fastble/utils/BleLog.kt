@@ -24,4 +24,8 @@ object BleLog {
     fun e(msg: String?) {
         if (isPrint && msg != null) Log.e(defaultTag, msg)
     }
+
+    fun e(msg: String?, e: Throwable) {
+        if (isPrint && msg != null) Log.e(defaultTag, msg, e)
+    }
 }

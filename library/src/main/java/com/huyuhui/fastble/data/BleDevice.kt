@@ -7,15 +7,18 @@ import android.os.Build
 import android.os.Parcel
 import android.os.Parcelable
 import com.huyuhui.fastble.BleManager
+import com.huyuhui.fastble.utils.BleLog
 
 @Suppress("unused")
 data class BleDevice(
-    var scanResult: ScanResult?,
-    var device: BluetoothDevice,
+    val device: BluetoothDevice
 ) : Parcelable {
+    var scanResult: ScanResult? = null
 
-    constructor(scanResult: ScanResult) : this(scanResult, scanResult.device)
-    constructor(device: BluetoothDevice) : this(null, device)
+    constructor(scanResult: ScanResult) : this(scanResult.device) {
+        this.scanResult = scanResult
+    }
+
     //获取名称需要权限，没有权限的时候返回null
     val name: String?
         @SuppressLint("MissingPermission")
@@ -61,7 +64,9 @@ data class BleDevice(
         }
 
     /**
-     * 自定义属性值
+     * 自定义属性值：仅支持以下类型，其他类型会导致序列化失败
+     * - 基础类型：String、Int、Long、Float、Double、Boolean、ByteArray
+     * - 自定义类型：实现 Parcelable 接口的类
      */
     private val propertyMap: HashMap<String, Any> by lazy {
         hashMapOf()
@@ -71,14 +76,6 @@ data class BleDevice(
     constructor(parcel: Parcel) : this(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             parcel.readParcelable(
-                ScanResult::class.java.classLoader,
-                ScanResult::class.java
-            )
-        } else {
-            parcel.readParcelable(ScanResult::class.java.classLoader)
-        },
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            parcel.readParcelable(
                 BluetoothDevice::class.java.classLoader,
                 BluetoothDevice::class.java
             )!!
@@ -86,12 +83,34 @@ data class BleDevice(
             parcel.readParcelable(BluetoothDevice::class.java.classLoader)!!
         }
     ) {
+        scanResult = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            parcel.readParcelable(
+                ScanResult::class.java.classLoader,
+                ScanResult::class.java
+            )
+        } else {
+            parcel.readParcelable(ScanResult::class.java.classLoader)
+        }
         bleAlias = parcel.readString()
         parcel.readMap(propertyMap, HashMap::class.java.classLoader)
 
     }
 
+    /**
+     * 存入自定义属性（仅支持指定合法类型，非法类型会打警告并拒绝存入）
+     * @param key 属性键
+     * @param value 属性值：支持基础类型（String/Int/Long等）或 Parcelable 类型
+     */
     fun put(key: String, value: Any) {
+        val isLegalType = when (value) {
+            is String, is Int, is Long, is Float, is Double, is Boolean, is ByteArray -> true
+            is Parcelable -> true
+            else -> false
+        }
+        if (!isLegalType) {
+            BleLog.e("put failed: Only basic types (String/Int/Long/Boolean/ByteArray) or Parcelable are supported! Illegal type: ${value.javaClass.name}")
+            return
+        }
         propertyMap[key] = value
     }
 
@@ -100,10 +119,15 @@ data class BleDevice(
     }
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
-        parcel.writeParcelable(scanResult, flags)
         parcel.writeParcelable(device, flags)
+        parcel.writeParcelable(scanResult, flags)
         parcel.writeString(bleAlias)
-        parcel.writeMap(propertyMap)
+        try {
+            parcel.writeMap(propertyMap)
+        } catch (e: Exception) {
+            BleLog.e("Only basic data types or Parcelable can be written.", e)
+            parcel.writeMap(hashMapOf<String, Any>()) // 写入空 Map 避免后续反序列化异常
+        }
     }
 
     override fun describeContents(): Int {
@@ -112,6 +136,19 @@ data class BleDevice(
 
     override fun toString(): String {
         return "BleDevice(scanResult=$scanResult, device=$device, bleAlias=$bleAlias, deviceType=$deviceType, propertyMap=$propertyMap)"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BleDevice
+
+        return key == other.key
+    }
+
+    override fun hashCode(): Int {
+        return key.hashCode()
     }
 
     companion object CREATOR : Parcelable.Creator<BleDevice> {
