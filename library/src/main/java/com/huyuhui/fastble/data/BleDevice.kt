@@ -32,8 +32,7 @@ data class BleDevice(
     val mac: String
         get() = device.address
 
-    val key
-        get() = BleManager.bleFactory?.generateUniqueKey(this) ?: mac
+    val key = BleManager.bleFactory?.generateUniqueKey(this) ?: mac
 
     val scanRecord
         get() = scanResult?.scanRecord?.bytes
