@@ -5,28 +5,26 @@ import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
 import com.huyuhui.fastble.utils.DataUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.onCompletion
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Queue
 
 internal class SplitWriter(private val writeOperator: BleWriteOperator) {
-    private var mData: ByteArray? = null
-    private var mCount = 0
+    private lateinit var mData: ByteArray
     private var mIntervalBetweenTwoPackage: Long = 0
     private var mContinueWhenLastFail: Boolean = false
     private var mCallback: BleWriteCallback? = null
-    private var mDataQueue: Queue<ByteArray>? = null
     private var mTotalNum = 0
 
     //避免多次调用onWriteFailure
-    private var closeFromFailure = false
     fun splitWrite(
         data: ByteArray,
         splitNum: Int,
@@ -39,54 +37,91 @@ internal class SplitWriter(private val writeOperator: BleWriteOperator) {
         mContinueWhenLastFail = continueWhenLastFail
         mIntervalBetweenTwoPackage = intervalBetweenTwoPackage
         mCallback = callback
-        mCount = splitNum
-        closeFromFailure = false
-        splitWrite(writeType)
+        splitWrite(splitNum, writeType)
     }
 
-    val channel = Channel<ByteArray?>()
-
-    private val callback = object : BleWriteCallback() {
-        override fun onWriteSuccess(
-            bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic,
-            current: Int,
-            total: Int,
-            justWrite: ByteArray,
-            data: ByteArray,
-        ) {
-            val position = mTotalNum - mDataQueue!!.size
-            mCallback?.onWriteSuccess(
-                bleDevice,
-                characteristic,
-                position,
-                mTotalNum,
-                justWrite,
-                mData!!
-            )
-            if (mDataQueue!!.isEmpty()) {
-                channel.close()
-            } else {
-                writeOperator.launch {
-                    ensureActive()//mIntervalBetweenTwoPackage可能为0
-                    delay(mIntervalBetweenTwoPackage)
-                    channel.trySend(mDataQueue!!.poll())
-                }
+    private fun splitWrite(splitNum: Int, writeType: Int) {
+        require(splitNum >= 1) { "split count should higher than 0!" }
+        writeOperator.launch {
+            val dataQueue = withContext(Dispatchers.IO) {
+                DataUtil.splitPacketForByte(mData, splitNum)
             }
+            mTotalNum = dataQueue.size
+            var currentData: ByteArray? = null
+            var currentPosition = 0
+            dataQueue.asFlow()
+                .onCompletion {
+                    dataQueue.clear()
+                    //不是被主动取消的，是协程被取消了,并且不是等待结果期间。如果hasTask，替换writeOperator会抛异常
+                    if (it is CancellationException && it.cause == null) {
+                        withContext(NonCancellable + Dispatchers.Main) {
+                            mCallback?.onWriteFailure(
+                                writeOperator.bleDevice,
+                                writeOperator.mCharacteristic,
+                                BleException.OtherException(
+                                    BleException.COROUTINE_SCOPE_CANCELLED,
+                                    "CoroutineScope Cancelled when sending"
+                                ),
+                                currentPosition,
+                                mTotalNum,
+                                currentData,
+                                mData,
+                                true
+                            )
+                            mCallback = null
+                        }
+                    }
+                }
+                .collectIndexed { position, bytes ->
+                    currentData = bytes
+                    currentPosition = position + 1
+                    val result = writeDataForResult(bytes, writeType = writeType, currentPosition)
+                    if (position < dataQueue.size - 1 && mIntervalBetweenTwoPackage > 0) {
+                        delay(mIntervalBetweenTwoPackage)
+                    }
+                    if (!result && !mContinueWhenLastFail) {
+                        cancel("send $position error", Throwable())
+                    }
+                }
         }
+    }
 
-        override fun onWriteFailure(
-            bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic?,
-            exception: BleException,
-            current: Int,
-            total: Int,
-            justWrite: ByteArray?,
-            data: ByteArray?,
-            isTotalFail: Boolean,
-        ) {
-            val position = mTotalNum - mDataQueue!!.size
-            if (mContinueWhenLastFail) {
+    private suspend fun writeDataForResult(
+        data: ByteArray,
+        writeType: Int,
+        position: Int
+    ): Boolean {
+        val deferred = CompletableDeferred<Boolean>()
+        val wrappedCallback = object : BleWriteCallback() {
+            override fun onWriteSuccess(
+                bleDevice: BleDevice,
+                characteristic: BluetoothGattCharacteristic,
+                current: Int,
+                total: Int,
+                justWrite: ByteArray,
+                data: ByteArray,
+            ) {
+                mCallback?.onWriteSuccess(
+                    bleDevice,
+                    characteristic,
+                    position,
+                    mTotalNum,
+                    justWrite,
+                    mData
+                )
+                deferred.complete(true)
+            }
+
+            override fun onWriteFailure(
+                bleDevice: BleDevice,
+                characteristic: BluetoothGattCharacteristic?,
+                exception: BleException,
+                current: Int,
+                total: Int,
+                justWrite: ByteArray?,
+                data: ByteArray?,
+                isTotalFail: Boolean,
+            ) {
                 mCallback?.onWriteFailure(
                     bleDevice,
                     characteristic,
@@ -95,79 +130,12 @@ internal class SplitWriter(private val writeOperator: BleWriteOperator) {
                     mTotalNum,
                     data,
                     mData,
-                    mDataQueue?.isEmpty() ?: true
+                    !mContinueWhenLastFail || position == mTotalNum
                 )
-                if (mDataQueue!!.isEmpty()) {
-                    closeFromFailure = true
-                    channel.close()
-                } else {
-                    writeOperator.launch {
-                        ensureActive() //mIntervalBetweenTwoPackage可能为0
-                        delay(mIntervalBetweenTwoPackage)
-                        channel.trySend(mDataQueue!!.poll())
-                    }
-                }
-            } else {
-                mCallback?.onWriteFailure(
-                    bleDevice, characteristic,
-                    exception,
-                    position,
-                    mTotalNum,
-                    data,
-                    mData,
-                    true
-                )
-                closeFromFailure = true
-                channel.close()
+                deferred.complete(false)
             }
         }
-
-    }
-
-    private fun splitWrite(writeType: Int) {
-        requireNotNull(mData) { "data is Null!" }
-        require(mCount >= 1) { "split count should higher than 0!" }
-        writeOperator.launch {
-            withContext(Dispatchers.IO) {
-                mDataQueue = DataUtil.splitPacketForByte(mData, mCount)
-            }
-            mTotalNum = mDataQueue!!.size
-            var currentData: ByteArray? = null
-            launch {
-                channel.send(mDataQueue!!.poll())
-            }
-            channel.receiveAsFlow()
-                .onCompletion {
-                    withContext(NonCancellable + Dispatchers.Main) {
-                        if (mDataQueue!!.isNotEmpty() && !closeFromFailure) {
-                            val position = mTotalNum - mDataQueue!!.size
-                            mCallback?.onWriteFailure(
-                                writeOperator.bleDevice,
-                                writeOperator.mCharacteristic,
-                                BleException.OtherException(
-                                    BleException.COROUTINE_SCOPE_CANCELLED,
-                                    "CoroutineScope Cancelled when sending"
-                                ),
-                                position,
-                                mTotalNum,
-                                currentData,
-                                mData,
-                                true
-                            )
-                        }
-                        mDataQueue?.clear()
-                        mCallback = null
-                        mData = null
-                    }
-                }
-                .collect {
-                    currentData = it
-                    writeOperator.writeCharacteristic(
-                        it,
-                        callback,
-                        writeType
-                    )
-                }
-        }
+        writeOperator.writeCharacteristic(data, wrappedCallback, writeType)
+        return deferred.await()
     }
 }

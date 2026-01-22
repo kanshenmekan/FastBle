@@ -39,30 +39,22 @@ class TimeoutTask(
             }
         }
     }
-    fun start(scope: CoroutineScope){
-        job?.apply {
-            if (isActive) {
-                isSkip = true
-                cancel(
-                    CancellationException(
-                        TimeoutThrowable.SkipError.message,
-                        TimeoutThrowable.SkipError
-                    )
-                )
-            } else {
-                isSkip = false
-            }
+
+    fun start(scope: CoroutineScope) {
+        job?.takeIf { it.isActive }?.let {
+            onTimeoutResultCallBack?.onSkip(this@TimeoutTask)
+            it.cancel()
         }
         job = scope.launch {
             supervisorScope {
                 launch(exceptionHandler) {
                     coroutineContext.job.invokeOnCompletion {
-                        onTimeoutResultCallBack?.onFinal(this@TimeoutTask, isSkip)
+                        onTimeoutResultCallBack?.onFinal(it, this@TimeoutTask)
                     }
                     onTimeoutResultCallBack?.onStart(this@TimeoutTask)
                     try {
                         delay(delayTime)
-                        throw TimeoutThrowable.TimeOutError
+                        throw TimeoutThrowable.TimeOutError()
                     } catch (e: CancellationException) {
                         throw e.cause ?: Throwable()
                     }
@@ -74,8 +66,8 @@ class TimeoutTask(
     fun fail() {
         job?.takeIf { it.isActive }?.cancel(
             CancellationException(
-                TimeoutThrowable.ActiveError.message,
-                TimeoutThrowable.ActiveError
+                TimeoutThrowable.ActiveError().message,
+                TimeoutThrowable.ActiveError()
             )
         )
     }
@@ -83,8 +75,8 @@ class TimeoutTask(
     fun success() {
         job?.takeIf { it.isActive }?.cancel(
             CancellationException(
-                TimeoutThrowable.Success.message,
-                TimeoutThrowable.Success
+                TimeoutThrowable.Success().message,
+                TimeoutThrowable.Success()
             )
         )
     }
@@ -105,24 +97,16 @@ class TimeoutTask(
         fun onError(task: TimeoutTask, e: Throwable?, isActive: Boolean) {}
         fun onSuccess(task: TimeoutTask) {}
         fun onSkip(task: TimeoutTask) {}
-        fun onFinal(task: TimeoutTask, isSkip: Boolean) {}
+        fun onFinal(e: Throwable?, task: TimeoutTask) {}
     }
 
     sealed class TimeoutThrowable(message: String? = null) : Throwable(message) {
-        object Success : TimeoutThrowable("success") {
-            private fun readResolve(): Any = Success
-        }
+        class Success : TimeoutThrowable("success")
 
-        object ActiveError : TimeoutThrowable("error") {
-            private fun readResolve(): Any = ActiveError
-        }
+        class ActiveError : TimeoutThrowable("error")
 
-        object TimeOutError : TimeoutThrowable("time out") {
-            private fun readResolve(): Any = TimeOutError
-        }
+        class TimeOutError : TimeoutThrowable("time out")
 
-        object SkipError : TimeoutThrowable("skip") {
-            private fun readResolve(): Any = SkipError
-        }
+        class SkipError : TimeoutThrowable("skip")
     }
 }

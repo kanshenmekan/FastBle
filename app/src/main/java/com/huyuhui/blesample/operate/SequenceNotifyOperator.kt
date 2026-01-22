@@ -6,17 +6,17 @@ import com.huyuhui.fastble.BleManager
 import com.huyuhui.fastble.callback.BleNotifyCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
-import com.huyuhui.fastble.queue.TaskResult
 import com.huyuhui.fastble.queue.operate.DELAY_WRITE_DEFAULT
 import com.huyuhui.fastble.queue.operate.PRIORITY_WRITE_DEFAULT
 import com.huyuhui.fastble.queue.operate.SequenceBleOperator
-import kotlinx.coroutines.channels.Channel
-import java.lang.ref.WeakReference
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 
 @SuppressLint("MissingPermission")
 @Suppress("unused")
-class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
-    SequenceBleOperator(priority, delay) {
+class SequenceNotifyOperator private constructor(priority: Int) :
+    SequenceBleOperator(priority) {
     var serviceUUID: String? = null
         private set
     var characteristicUUID: String? = null
@@ -25,62 +25,70 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
         private set
     var useCharacteristicDescriptor: Boolean = false
         private set
-    private var mContinuous = false
-    private var mTimeout = 0L
-    private var channelWeakReference: WeakReference<Channel<TaskResult>>? = null
-    private val wrappedBleNotifyCallback = object : BleNotifyCallback() {
-        override fun onNotifySuccess(
-            bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic,
-        ) {
-            bleNotifyCallback?.onNotifySuccess(bleDevice, characteristic)
-            channelWeakReference?.get()
-                ?.trySend(TaskResult(this@SequenceNotifyOperator, true))
-        }
+    var continuous = false
+        private set
+    var timeout = 0L
+        private set
+    var delay: Long = 0L
+        private set
 
-        override fun onNotifyFailure(
-            bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic?,
-            exception: BleException,
-        ) {
-            bleNotifyCallback?.onNotifyFailure(bleDevice, characteristic, exception)
-            channelWeakReference?.get()
-                ?.trySend(TaskResult(this@SequenceNotifyOperator, false))
-        }
+    private suspend fun notifyForResult(bleDevice: BleDevice): Boolean {
+        val deferred = CompletableDeferred<Boolean>()
+        val wrappedBleNotifyCallback = object : BleNotifyCallback() {
+            override fun onNotifySuccess(
+                bleDevice: BleDevice,
+                characteristic: BluetoothGattCharacteristic,
+            ) {
+                bleNotifyCallback?.onNotifySuccess(bleDevice, characteristic)
+                deferred.complete(true)
+            }
 
-        override fun onNotifyCancel(
-            bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic,
-        ) {
-            bleNotifyCallback?.onNotifyCancel(bleDevice, characteristic)
-        }
+            override fun onNotifyFailure(
+                bleDevice: BleDevice,
+                characteristic: BluetoothGattCharacteristic?,
+                exception: BleException,
+            ) {
+                bleNotifyCallback?.onNotifyFailure(bleDevice, characteristic, exception)
+                deferred.complete(false)
+            }
 
-        override fun onCharacteristicChanged(
-            bleDevice: BleDevice,
-            characteristic: BluetoothGattCharacteristic,
-            data: ByteArray,
-        ) {
-            bleNotifyCallback?.onCharacteristicChanged(bleDevice, characteristic, data)
-        }
+            override fun onNotifyCancel(
+                bleDevice: BleDevice,
+                characteristic: BluetoothGattCharacteristic,
+            ) {
+                bleNotifyCallback?.onNotifyCancel(bleDevice, characteristic)
+            }
 
+            override fun onCharacteristicChanged(
+                bleDevice: BleDevice,
+                characteristic: BluetoothGattCharacteristic,
+                data: ByteArray,
+            ) {
+                bleNotifyCallback?.onCharacteristicChanged(bleDevice, characteristic, data)
+            }
+        }
+        BleManager.notify(
+            bleDevice,
+            serviceUUID!!,
+            characteristicUUID!!,
+            callback = wrappedBleNotifyCallback,
+            useCharacteristicDescriptor = useCharacteristicDescriptor
+        )
+        return deferred.await()
     }
 
-    override fun execute(bleDevice: BleDevice, channel: Channel<TaskResult>) {
+    override suspend fun execute(bleDevice: BleDevice) {
         if (serviceUUID.isNullOrEmpty() || characteristicUUID.isNullOrEmpty()) {
-            if (continuous) {
-                channel.trySend(TaskResult(this, false))
-            }
             return
         }
         if (continuous) {
-            channelWeakReference = WeakReference(channel)
-            BleManager.notify(
-                bleDevice,
-                serviceUUID!!,
-                characteristicUUID!!,
-                callback = wrappedBleNotifyCallback,
-                useCharacteristicDescriptor = useCharacteristicDescriptor
-            )
+            if (timeout > 0) {
+                withTimeoutOrNull(timeout) {
+                    notifyForResult(bleDevice)
+                }
+            } else {
+                notifyForResult(bleDevice)
+            }
         } else {
             BleManager.notify(
                 bleDevice,
@@ -90,12 +98,8 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
                 useCharacteristicDescriptor = useCharacteristicDescriptor
             )
         }
+        delay(delay)
     }
-
-    override val continuous: Boolean
-        get() = mContinuous
-    override val timeout: Long
-        get() = mTimeout
 
     class Builder() {
         private var priority: Int = PRIORITY_WRITE_DEFAULT
@@ -157,13 +161,14 @@ class SequenceNotifyOperator private constructor(priority: Int, delay: Long) :
             notifyOperator.serviceUUID = this.serviceUUID
             notifyOperator.characteristicUUID = this.characteristicUUID
             notifyOperator.bleNotifyCallback = this.bleNotifyCallback
-            notifyOperator.mContinuous = this.continuous
-            notifyOperator.mTimeout = this.timeout
+            notifyOperator.continuous = this.continuous
+            notifyOperator.timeout = this.timeout
             notifyOperator.useCharacteristicDescriptor = this.useCharacteristicDescriptor
+            notifyOperator.delay = delay
         }
 
         fun build(): SequenceNotifyOperator {
-            return SequenceNotifyOperator(priority, delay).apply {
+            return SequenceNotifyOperator(priority).apply {
                 applySequenceNotifyOperator(this)
             }
         }

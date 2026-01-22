@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal class BleBluetooth(val bleDevice: BleDevice) :
     CoroutineScope by BleMainScope({ _, throwable ->
         BleLog.e("BleDevice $bleDevice: a coroutine error has occurred ${throwable.message}")
-        BleManager.cancelOrDisconnect(bleDevice)
+        BleManager.disconnect(bleDevice)
     }) {
 
     companion object {
@@ -382,12 +382,13 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         // 仅当旧值存在且与新值不同时，销毁旧值
         if (oldOperator != null && oldOperator != operator) {
             if (oldOperator.hasTask()) {
-                oldOperator.bleWriteCallback?.onWriteFailure(
-                    bleDevice, oldOperator.mCharacteristic, BleException.OtherException(
-                        BleException.COROUTINE_SCOPE_CANCELLED,
-                        "CoroutineScope Cancelled when sending"
-                    ), justWrite = oldOperator.data
-                )
+//                oldOperator.bleWriteCallback?.onWriteFailure(
+//                    bleDevice, oldOperator.mCharacteristic, BleException.OtherException(
+//                        BleException.COROUTINE_SCOPE_CANCELLED,
+//                        "CoroutineScope Cancelled when sending"
+//                    ), justWrite = oldOperator.data
+//                )
+                BleLog.e("be careful,send too fast")
             }
             oldOperator.destroy()
         }
@@ -679,8 +680,9 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
 //                    }
                 val data = it.data
                 it.removeTimeOut()
-                //这里改用BleBluetooth的协程作用域，当发送很快，触发这个回调也很快，上一个operator可能被当前这个取消，导致回调不能被执行
+                //这里改用BleBluetooth的协程作用域，当发送很快，触发这个回调也很快，launch还没有被调度，上一个operator可能被当前这个取消，导致回调不能被执行
                 //operator销毁之后callback也被置为null了，这里先记录一下
+                //不能用start = CoroutineStart.UNDISPATCHED，这会导致在没有遇到挂起点之前没有切换线程，导致回调在子线程运行
                 val callback = it.bleWriteCallback
                 launch(Dispatchers.Main.immediate) {
                     if (status == BluetoothGatt.GATT_SUCCESS) {

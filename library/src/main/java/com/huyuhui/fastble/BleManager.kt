@@ -642,33 +642,23 @@ object BleManager {
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun disconnect(bleDevice: BleDevice?) {
-        multipleBluetoothController.disconnect(bleDevice)
+        multipleBluetoothController.cancelOrDisconnect(bleDevice)
     }
 
     @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
     fun disconnectAllDevice() {
         multipleBluetoothController.disconnectAllDevice()
+        multipleBluetoothController.cancelAllConnectingDevice()
     }
 
     fun scannerDestroy() {
         BleScanner.destroy()
     }
 
-    fun cancelOrDisconnect(bleDevice: BleDevice?) {
-        multipleBluetoothController.cancelOrDisconnect(bleDevice)
-    }
-
     fun removeScanCallback() {
         BleScanner.bleScanCallback = null
     }
 
-    fun cancelConnecting(bleDevice: BleDevice?) {
-        multipleBluetoothController.cancelConnecting(bleDevice, false)
-    }
-
-    fun cancelAllConnectingDevice() {
-        multipleBluetoothController.cancelAllConnectingDevice()
-    }
 
     fun isConnecting(bleDevice: BleDevice?): Boolean {
         return multipleBluetoothController.isConnecting(bleDevice)

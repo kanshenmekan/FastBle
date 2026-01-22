@@ -7,17 +7,17 @@ import com.huyuhui.fastble.bluetooth.BleOperator
 import com.huyuhui.fastble.callback.BleWriteCallback
 import com.huyuhui.fastble.data.BleDevice
 import com.huyuhui.fastble.exception.BleException
-import com.huyuhui.fastble.queue.TaskResult
-import kotlinx.coroutines.channels.Channel
-import java.lang.ref.WeakReference
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 
 const val PRIORITY_WRITE_DEFAULT = 500
 const val DELAY_WRITE_DEFAULT: Long = 100
 
 @SuppressLint("MissingPermission")
 @Suppress("unused")
-class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
-    SequenceBleOperator(priority, delay) {
+class SequenceWriteOperator private constructor(priority: Int) :
+    SequenceBleOperator(priority) {
     var serviceUUID: String? = null
         private set
     var characteristicUUID: String? = null
@@ -37,16 +37,36 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
         private set
     var writeType: Int = BleOperator.WRITE_TYPE_DEFAULT
         private set
-    private var mContinuous = false
+
+    var delay: Long = 0
+        private set
+
+    /**
+     * 当continuous 为true的时候，等待任务完成之后（触发回调或者超时）,才会进行delay任务，之后获取下一个任务
+     * 为false的时候，会直接进行delay任务，之后获取下一个任务
+     * @see timeout
+     */
+    var continuous = false
+        private set
 
     //在队列中的超时时间
-    private var mTimeout = 0L
+
+    /**
+     * @see continuous
+     * 当continuous为true之后，这个设置才有效果，如果任务在时间内没有回调，直接忽略掉，进行delay任务，之后获取下一个任务
+     * 建议给一个适当的时长，以便任务有足够时间触发回调
+     * 如果timeout为0，则会一直等待，直到任务回调触发
+     */
+    var timeout = 0L
+        private set
 
     //这个写入过程的超时时间
-    private var operateTimeout = BleManager.operateTimeout
-    private var channelWeakReference: WeakReference<Channel<TaskResult>>? = null
-    private val wrappedBleWriteCallback by lazy {
-        object : BleWriteCallback() {
+    var operateTimeout = BleManager.operateTimeout
+        private set
+
+    private suspend fun writeDataForResult(bleDevice: BleDevice, data: ByteArray?): Boolean {
+        val deferred = CompletableDeferred<Boolean>()
+        val wrappedBleWriteCallback = object : BleWriteCallback() {
             override fun onWriteSuccess(
                 bleDevice: BleDevice,
                 characteristic: BluetoothGattCharacteristic,
@@ -64,8 +84,7 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                     data
                 )
                 if (current == total) {
-                    channelWeakReference?.get()
-                        ?.trySend(TaskResult(this@SequenceWriteOperator, true))
+                    deferred.complete(true)
                 }
             }
 
@@ -90,36 +109,44 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                     isTotalFail
                 )
                 if (isTotalFail) {
-                    channelWeakReference?.get()
-                        ?.trySend(TaskResult(this@SequenceWriteOperator, false))
+                    deferred.complete(false)
                 }
             }
-
         }
+        BleManager.write(
+            bleDevice,
+            serviceUUID!!,
+            characteristicUUID!!,
+            callback = wrappedBleWriteCallback,
+            writeType = writeType,
+            data = data,
+            split = split,
+            splitNum = splitNum,
+            continueWhenLastFail = continueWhenLastFail,
+            intervalBetweenTwoPackage = intervalBetweenTwoPackage,
+            timeout = operateTimeout
+        )
+        return deferred.await()
     }
 
-    override fun execute(bleDevice: BleDevice, channel: Channel<TaskResult>) {
+    override suspend fun execute(bleDevice: BleDevice) {
         if (serviceUUID.isNullOrEmpty() || characteristicUUID.isNullOrEmpty()) {
-            if (continuous) {
-                channel.trySend(TaskResult(this, false))
-            }
+            bleWriteCallback?.onWriteFailure(
+                bleDevice, characteristic = null, exception = BleException.OtherException(
+                    BleException.ERROR_CODE_GATT, "gatt null"
+                ), justWrite = null, data = data
+            )
+            delay(delay)
             return
         }
         if (continuous) {
-            channelWeakReference = WeakReference(channel)
-            BleManager.write(
-                bleDevice,
-                serviceUUID!!,
-                characteristicUUID!!,
-                callback = wrappedBleWriteCallback,
-                writeType = writeType,
-                data = data,
-                split = split,
-                splitNum = splitNum,
-                continueWhenLastFail = continueWhenLastFail,
-                intervalBetweenTwoPackage = intervalBetweenTwoPackage,
-                timeout = operateTimeout
-            )
+            if (timeout > 0) {
+                withTimeoutOrNull(timeout) {
+                    writeDataForResult(bleDevice, data)
+                }
+            } else {
+                writeDataForResult(bleDevice, data)
+            }
         } else {
             BleManager.write(
                 bleDevice,
@@ -135,12 +162,8 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
                 timeout = operateTimeout
             )
         }
+        delay(delay)
     }
-
-    override val continuous: Boolean
-        get() = mContinuous
-    override val timeout: Long
-        get() = mTimeout
 
     open class Builder() {
         private var priority: Int = PRIORITY_WRITE_DEFAULT
@@ -256,13 +279,14 @@ class SequenceWriteOperator private constructor(priority: Int, delay: Long) :
             writeOperator.continueWhenLastFail = this.continueWhenLastFail
             writeOperator.intervalBetweenTwoPackage = this.intervalBetweenTwoPackage
             writeOperator.writeType = this.writeType
-            writeOperator.mContinuous = this.continuous
-            writeOperator.mTimeout = this.timeout
+            writeOperator.continuous = this.continuous
+            writeOperator.delay = this.delay
+            writeOperator.timeout = this.timeout
             writeOperator.operateTimeout = this.operateTimeout
         }
 
         fun build(): SequenceWriteOperator {
-            return SequenceWriteOperator(priority, delay).apply {
+            return SequenceWriteOperator(priority).apply {
                 applySequenceWriteOperator(this)
             }
         }
