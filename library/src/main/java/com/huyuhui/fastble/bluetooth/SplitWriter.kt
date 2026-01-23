@@ -74,14 +74,20 @@ internal class SplitWriter(private val writeOperator: BleWriteOperator) {
                 }
                 .collectIndexed { position, bytes ->
                     currentData = bytes
+                    //重置当前currentPosition为position + 1，坐标从1开始
                     currentPosition = position + 1
                     val result = writeDataForResult(bytes, writeType = writeType, currentPosition)
-                    if (position < dataQueue.size - 1 && mIntervalBetweenTwoPackage > 0) {
-                        delay(mIntervalBetweenTwoPackage)
+                    //writeDataForResult里面已经执行完了回调，这个时候再失败（协程被取消等等）就是下一个position
+                    if (currentPosition < dataQueue.size) {
+                        currentPosition += 1
                     }
                     if (!result && !mContinueWhenLastFail) {
                         cancel("send $position error", Throwable())
                     }
+                    if (position < dataQueue.size - 1 && mIntervalBetweenTwoPackage > 0) {
+                        delay(mIntervalBetweenTwoPackage)
+                    }
+
                 }
         }
     }

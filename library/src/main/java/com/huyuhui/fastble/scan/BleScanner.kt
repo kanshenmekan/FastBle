@@ -23,6 +23,7 @@ import kotlinx.coroutines.withContext
 @SuppressLint("MissingPermission")
 internal object BleScanner : ScanCallback(), CoroutineScope by BleMainScope({ _, throwable ->
     BleLog.e("BleScanner: a coroutine error has occurred ${throwable.message}")
+    BleScanner.stopLeScan()
 }) {
     var mBleScanState = BleScanState.STATE_IDLE
         private set

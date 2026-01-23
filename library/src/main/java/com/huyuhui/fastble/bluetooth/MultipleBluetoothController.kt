@@ -151,7 +151,7 @@ internal class MultipleBluetoothController {
                 true,
                 it.bleDevice,
                 it.bluetoothGatt,
-                BluetoothGatt.GATT_SUCCESS
+                BluetoothProfile.STATE_DISCONNECTED
             )
             it.destroy()
         }

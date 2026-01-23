@@ -146,14 +146,17 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
 
     private fun connectedFail(exception: BleException) {
         BleManager.multipleBluetoothController.removeConnectingBle(this@BleBluetooth)
+        BleLog.i("Connection failure,$exception")
         lastState = LastState.CONNECT_FAILURE
         launch(Dispatchers.Main.immediate) {
-            bleGattCallback?.onConnectFail(
-                bleDevice,
-                exception
-            )
-            BleLog.i("Connection failure,$exception")
-            destroy()
+            try {
+                bleGattCallback?.onConnectFail(
+                    bleDevice,
+                    exception
+                )
+            } finally {
+                destroy()
+            }
         }
     }
 
@@ -476,20 +479,23 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                             connect(BleManager.context!!, false, currentConnectRetryCount)
                         }
                     } else {
-                        connectedFail(BleException.ConnectException(bluetoothGatt, status))
+                        connectedFail(BleException.ConnectException(bluetoothGatt, newState))
                     }
                 } else if (lastState == LastState.CONNECT_CONNECTED) {
                     lastState = LastState.CONNECT_DISCONNECT
                     BleManager.multipleBluetoothController.removeConnectedBleBluetooth(this@BleBluetooth)
+                    BleLog.i("disconnect,$bleDevice,isActiveDisconnect = $isActiveDisconnect")
                     launch {
-                        bleGattCallback?.onDisConnected(
-                            isActiveDisconnect,
-                            bleDevice,
-                            bluetoothGatt,
-                            status
-                        )
-                        BleLog.i("disconnect,$bleDevice,isActiveDisconnect = $isActiveDisconnect")
-                        destroy()
+                        try {
+                            bleGattCallback?.onDisConnected(
+                                isActiveDisconnect,
+                                bleDevice,
+                                bluetoothGatt,
+                                newState
+                            )
+                        } finally {
+                            destroy()
+                        }
                     }
                 }
             }
