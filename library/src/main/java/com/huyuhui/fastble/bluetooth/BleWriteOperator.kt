@@ -8,12 +8,21 @@ import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
 
 @SuppressLint("MissingPermission")
-internal class BleWriteOperator(
-    bleBluetooth: BleBluetooth,
-    timeout: Long,
-    uuidService: String,
-    uuidCharacteristic: String
-) : BleCharacteristicOperator(bleBluetooth, timeout, uuidService, uuidCharacteristic) {
+internal class BleWriteOperator : BleCharacteristicOperator {
+
+    constructor(
+        bleBluetooth: BleBluetooth,
+        timeout: Long,
+        uuidService: String,
+        uuidCharacteristic: String
+    ) : super(bleBluetooth, timeout, uuidService, uuidCharacteristic)
+
+    constructor(
+        bleBluetooth: BleBluetooth,
+        timeout: Long,
+        characteristic: BluetoothGattCharacteristic?
+    ) : super(bleBluetooth, timeout, characteristic)
+
     var bleWriteCallback: BleWriteCallback? = null
         private set
 
@@ -29,7 +38,7 @@ internal class BleWriteOperator(
         this.data = data
         if (data == null || data.isEmpty()) {
             bleWriteCallback?.onWriteFailure(
-                bleDevice, mCharacteristic,
+                bleDevice, gattCharacteristic,
                 BleException.OtherException(
                     BleException.DATA_NULL,
                     "the data to be written is empty"
@@ -38,11 +47,22 @@ internal class BleWriteOperator(
             )
             return
         }
-        if (mCharacteristic == null
-            || mCharacteristic.properties and (BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE or BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE) == 0
+        val characteristic = gattCharacteristic
+        if (characteristic == null) {
+            bleWriteCallback?.onWriteFailure(
+                bleDevice,
+                characteristic,
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_ERROR,
+                    "characteristic is null!"
+                ), justWrite = data
+            )
+            return
+        }
+        if (characteristic.properties and (BluetoothGattCharacteristic.PROPERTY_WRITE or BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE or BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE) == 0
         ) {
             bleWriteCallback?.onWriteFailure(
-                bleDevice, mCharacteristic,
+                bleDevice, characteristic,
                 BleException.OtherException(
                     BleException.CHARACTERISTIC_NOT_SUPPORT,
                     "this characteristic not support write!"
@@ -52,9 +72,9 @@ internal class BleWriteOperator(
             return
         }
         val finalWriteType = if (writeType == WRITE_TYPE_DEFAULT) {
-            if (mCharacteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE > 0) {
+            if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0) {
                 BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            } else if (mCharacteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE > 0) {
+            } else if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) {
                 BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
             } else {
                 BluetoothGattCharacteristic.WRITE_TYPE_SIGNED
@@ -62,12 +82,12 @@ internal class BleWriteOperator(
         } else {
             writeType
         }
-        mCharacteristic.writeType = finalWriteType
+        characteristic.writeType = finalWriteType
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             this.bleWriteCallback = bleWriteCallback
             timeOutTask.start(this)
             bleBluetooth.addWriteOperator(key, this)
-            mBluetoothGatt!!.writeCharacteristic(mCharacteristic, data, finalWriteType)
+            mBluetoothGatt!!.writeCharacteristic(characteristic, data, finalWriteType)
             //这里会触发一次，onCharacteristicWrite里面还会触发一次
 //            val status = mBluetoothGatt!!.writeCharacteristic(mCharacteristic!!, data, writeType)
 //            if (status != BluetoothStatusCodes.SUCCESS) {
@@ -78,11 +98,11 @@ internal class BleWriteOperator(
 //                )
 //            }
         } else {
-            if (mCharacteristic.setValue(data)) {
+            if (characteristic.setValue(data)) {
                 this.bleWriteCallback = bleWriteCallback
                 timeOutTask.start(this)
                 bleBluetooth.addWriteOperator(key, this)
-                mBluetoothGatt!!.writeCharacteristic(mCharacteristic)
+                mBluetoothGatt!!.writeCharacteristic(characteristic)
 //                if (!mBluetoothGatt!!.writeCharacteristic(mCharacteristic)) {
 //                    removeTimeOut()
 //                    bleWriteCallback?.onWriteFailure(
@@ -92,7 +112,7 @@ internal class BleWriteOperator(
 //                }
             } else {
                 bleWriteCallback?.onWriteFailure(
-                    bleDevice, mCharacteristic,
+                    bleDevice, characteristic,
                     BleException.OtherException(
                         BleException.CHARACTERISTIC_ERROR,
                         "Updates the locally stored value of this characteristic fail"
@@ -110,7 +130,7 @@ internal class BleWriteOperator(
     ) {
         bleWriteCallback?.onWriteFailure(
             bleDevice,
-            mCharacteristic,
+            gattCharacteristic,
             BleException.TimeoutException(),
             justWrite = data
         )

@@ -4,19 +4,41 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import com.huyuhui.fastble.data.BleOperatorKey
 
-internal abstract class BleCharacteristicOperator(
+internal abstract class BleCharacteristicOperator private constructor(
     bleBluetooth: BleBluetooth,
     timeout: Long,
-    uuidService: String,
-    uuidCharacteristic: String
 ) : BleOperator(bleBluetooth, timeout) {
 
-    val mGattService: BluetoothGattService? =
-        fromUUID(uuidService)?.let { mBluetoothGatt?.getService(it) }
+    var gattService: BluetoothGattService? = null
+        private set
 
-    val mCharacteristic: BluetoothGattCharacteristic? = fromUUID(uuidCharacteristic)?.let {
-        mGattService?.getCharacteristic(it)
+    var gattCharacteristic: BluetoothGattCharacteristic? = null
+        private set
+    lateinit var key: BleOperatorKey
+
+    constructor(
+        bleBluetooth: BleBluetooth,
+        timeout: Long,
+        uuidService: String,
+        uuidCharacteristic: String
+    ) : this(bleBluetooth, timeout) {
+        gattService =
+            fromUUID(uuidService)?.let { mBluetoothGatt?.getService(it) }
+
+        gattCharacteristic = fromUUID(uuidCharacteristic)?.let {
+            gattService?.getCharacteristic(it)
+        }
+        key = BleOperatorKey(uuidService, uuidCharacteristic)
     }
 
-    val key = BleOperatorKey(uuidService, uuidCharacteristic)
+    constructor(
+        bleBluetooth: BleBluetooth,
+        timeout: Long,
+        characteristic: BluetoothGattCharacteristic?
+    ) : this(bleBluetooth, timeout) {
+        gattCharacteristic = characteristic
+        gattService = characteristic?.service
+        key = BleOperatorKey(gattService?.uuid.toString(), gattCharacteristic?.uuid.toString())
+    }
+
 }

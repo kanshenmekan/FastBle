@@ -416,6 +416,64 @@ object BleManager {
         }
     }
 
+    @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
+    fun write(
+        bleDevice: BleDevice,
+        data: ByteArray?,
+        characteristic: BluetoothGattCharacteristic? = null,
+        split: Boolean = true,
+        splitNum: Int = splitWriteNum,
+        continueWhenLastFail: Boolean = false,
+        intervalBetweenTwoPackage: Long = 0,
+        callback: BleWriteCallback?,
+        @BleWriteType writeType: Int = WRITE_TYPE_AUTO,
+        timeout: Long = operateTimeout
+    ) {
+        if (data == null) {
+            BleLog.e("data is Null!")
+            callback?.onWriteFailure(
+                bleDevice,
+                null,
+                BleException.OtherException(BleException.DATA_NULL, "data is Null!"),
+                justWrite = null
+            )
+            return
+        }
+        if (data.size > 20 && !split) {
+            BleLog.w("Be careful: data's length beyond 20! Ensure MTU higher than 23, or use spilt write!")
+        }
+        val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        if (bleBluetooth == null) {
+            callback?.onWriteFailure(
+                bleDevice, null,
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device is not connect!"
+                ),
+                justWrite = data
+            )
+        } else {
+            if (split && data.size > splitNum) {
+                SplitWriter(
+                    bleBluetooth.buildWriteOperator(
+                        characteristic,
+                        timeout
+                    )
+                ).splitWrite(
+                    data,
+                    splitNum,
+                    continueWhenLastFail,
+                    intervalBetweenTwoPackage,
+                    callback,
+                    writeType
+                )
+            } else {
+                bleBluetooth.buildWriteOperator(characteristic, timeout)
+                    .writeCharacteristic(data, callback, writeType)
+            }
+        }
+    }
+
     /**
      * read
      *
@@ -434,6 +492,26 @@ object BleManager {
     ) {
         val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
         bleBluetooth?.buildReadOperator(uuidService, uuidRead, timeout)
+            ?.readCharacteristic(callback)
+            ?: callback?.onReadFailure(
+                bleDevice,
+                null,
+                BleException.OtherException(
+                    BleException.DEVICE_NOT_CONNECT,
+                    "This device is not connected!"
+                )
+            )
+    }
+
+    @RequiresPermission(value = "android.permission.BLUETOOTH_CONNECT")
+    fun read(
+        bleDevice: BleDevice,
+        characteristic: BluetoothGattCharacteristic? = null,
+        callback: BleReadCallback?,
+        timeout: Long = operateTimeout
+    ) {
+        val bleBluetooth = multipleBluetoothController.getConnectedBleBluetooth(bleDevice)
+        bleBluetooth?.buildReadOperator(characteristic, timeout)
             ?.readCharacteristic(callback)
             ?: callback?.onReadFailure(
                 bleDevice,

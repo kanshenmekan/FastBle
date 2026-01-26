@@ -9,7 +9,6 @@ import android.os.Build
 import com.huyuhui.fastble.callback.BleNotifyCallback
 import com.huyuhui.fastble.common.TimeoutTask
 import com.huyuhui.fastble.exception.BleException
-import kotlinx.coroutines.launch
 
 @SuppressLint("MissingPermission")
 internal class BleNotifyOperator(
@@ -17,7 +16,7 @@ internal class BleNotifyOperator(
     timeout: Long,
     uuidService: String,
     uuidCharacteristic: String
-) : BleCharacteristicOperator(bleBluetooth, timeout, uuidService, uuidCharacteristic)  {
+) : BleCharacteristicOperator(bleBluetooth, timeout, uuidService, uuidCharacteristic) {
     var bleNotifyCallback: BleNotifyCallback? = null
         private set
 
@@ -28,40 +27,51 @@ internal class BleNotifyOperator(
         bleNotifyCallback: BleNotifyCallback?,
         useCharacteristicDescriptor: Boolean,
     ) {
-        if (mCharacteristic != null && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
-            this@BleNotifyOperator.bleNotifyCallback = bleNotifyCallback
-            bleBluetooth.addNotifyOperator(key, this)
-            timeOutTask.start(this)
-            setCharacteristicNotification(
-                mBluetoothGatt,
-                mCharacteristic,
-                true,
-                bleNotifyCallback,
-                useCharacteristicDescriptor
-            )
-        } else {
-            launch {
-                bleNotifyCallback?.onNotifyFailure(
-                    bleDevice,
-                    mCharacteristic,
-                    BleException.OtherException(
-                        BleException.CHARACTERISTIC_NOT_SUPPORT,
-                        "this characteristic not support notify!"
-                    )
+        val characteristic = gattCharacteristic
+        if (characteristic == null) {
+            bleNotifyCallback?.onNotifyFailure(
+                bleDevice,
+                characteristic,
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_ERROR,
+                    "characteristic is null!"
                 )
-            }
+            )
+            return
         }
+        if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY == 0) {
+            bleNotifyCallback?.onNotifyFailure(
+                bleDevice,
+                characteristic,
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_NOT_SUPPORT,
+                    "this characteristic not support notify!"
+                )
+            )
+            return
+        }
+        this@BleNotifyOperator.bleNotifyCallback = bleNotifyCallback
+        bleBluetooth.addNotifyOperator(key, this)
+        timeOutTask.start(this)
+        setCharacteristicNotification(
+            mBluetoothGatt,
+            characteristic,
+            true,
+            bleNotifyCallback,
+            useCharacteristicDescriptor
+        )
     }
 
     /**
      * stop notify
      */
     fun disableCharacteristicNotify(useCharacteristicDescriptor: Boolean): Boolean {
-        return if (mCharacteristic != null
-            && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
+        val characteristic = gattCharacteristic
+        return if (characteristic != null
+            && characteristic.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0
         ) {
             setCharacteristicNotification(
-                mBluetoothGatt, mCharacteristic, false, null, useCharacteristicDescriptor
+                mBluetoothGatt, characteristic, false, null, useCharacteristicDescriptor
             )
         } else {
             false
@@ -160,7 +170,7 @@ internal class BleNotifyOperator(
     ) {
         bleNotifyCallback?.onNotifyFailure(
             bleDevice,
-            mCharacteristic,
+            gattCharacteristic,
             BleException.TimeoutException()
         )
     }

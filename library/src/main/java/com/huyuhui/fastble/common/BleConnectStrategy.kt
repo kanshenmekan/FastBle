@@ -72,6 +72,20 @@ class BleConnectStrategy private constructor() {
     var phy: Int = 1
         private set
 
+    //设置默认的uuid写入
+    var defaultWriteServiceUUID: String? = null
+        private set
+
+    var defaultWriteCharacteristicUUID: String? = null
+        private set
+
+    //设置默认Read的uuid
+    var defaultReadServiceUUID: String? = null
+        private set
+
+    var defaultReadCharacteristicUUID: String? = null
+        private set
+
     class Builder() {
         private var connectBackpressureStrategy = CONNECT_BACKPRESSURE_DROP
         private var reConnectCount = DEFAULT_CONNECT_RETRY_COUNT
@@ -92,6 +106,11 @@ class BleConnectStrategy private constructor() {
          */
         private var phy: Int = 1
 
+        private var defaultWriteServiceUUID: String? = null
+        private var defaultWriteCharacteristicUUID: String? = null
+
+        private var defaultReadServiceUUID: String? = null
+        private var defaultReadCharacteristicUUID: String? = null
 
         constructor(bleConnectStrategy: BleConnectStrategy) : this() {
             connectBackpressureStrategy = bleConnectStrategy.connectBackpressureStrategy
@@ -102,6 +121,10 @@ class BleConnectStrategy private constructor() {
             transport = bleConnectStrategy.transport
             phy = bleConnectStrategy.phy
             discoverServiceTimeout = bleConnectStrategy.discoverServiceTimeout
+            defaultWriteServiceUUID = bleConnectStrategy.defaultWriteServiceUUID
+            defaultWriteCharacteristicUUID = bleConnectStrategy.defaultWriteCharacteristicUUID
+            defaultReadServiceUUID = bleConnectStrategy.defaultReadServiceUUID
+            defaultReadCharacteristicUUID = bleConnectStrategy.defaultReadCharacteristicUUID
         }
 
         fun setConnectBackpressureStrategy(backpressureStrategy: Int): Builder {
@@ -123,9 +146,11 @@ class BleConnectStrategy private constructor() {
             connectOverTime = time
             return this
         }
-        fun setDiscoverServiceTimeout(discoverServiceTimeout: Long) = apply{
+
+        fun setDiscoverServiceTimeout(discoverServiceTimeout: Long) = apply {
             this.discoverServiceTimeout = discoverServiceTimeout
         }
+
         fun setAutoConnect(autoConnect: Boolean): Builder {
             mAutoConnect = autoConnect
             return this
@@ -141,6 +166,17 @@ class BleConnectStrategy private constructor() {
             this.phy = phy
         }
 
+        fun defaultWriteUUID(defaultServiceUUID: String, defaultCharacteristicUUID: String) =
+            apply {
+                this.defaultWriteServiceUUID = defaultServiceUUID
+                this.defaultWriteCharacteristicUUID = defaultCharacteristicUUID
+            }
+
+        fun defaultReadUUID(defaultServiceUUID: String, defaultCharacteristicUUID: String) = apply {
+            this.defaultReadServiceUUID = defaultServiceUUID
+            this.defaultReadCharacteristicUUID = defaultCharacteristicUUID
+        }
+
         fun build(): BleConnectStrategy {
             val strategy = BleConnectStrategy()
             strategy.reConnectCount = this.reConnectCount
@@ -151,6 +187,10 @@ class BleConnectStrategy private constructor() {
             strategy.transport = this.transport
             strategy.phy = this.phy
             strategy.discoverServiceTimeout = this.discoverServiceTimeout
+            strategy.defaultWriteServiceUUID = this.defaultWriteServiceUUID
+            strategy.defaultWriteCharacteristicUUID = this.defaultWriteCharacteristicUUID
+            strategy.defaultReadServiceUUID = this.defaultReadServiceUUID
+            strategy.defaultReadCharacteristicUUID = this.defaultReadCharacteristicUUID
             return strategy
         }
     }

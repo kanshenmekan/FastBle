@@ -136,7 +136,7 @@ class OperateFragment : Fragment() {
     private fun setVisibility() {
         characteristic?.let {
             binding.readView.visibility =
-                if (it.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
+                if (it.properties and BluetoothGattCharacteristic.PROPERTY_READ != 0) {
                     View.VISIBLE
                 } else {
                     View.GONE
@@ -146,34 +146,34 @@ class OperateFragment : Fragment() {
             } else {
                 binding.writeView.visibility = View.VISIBLE
                 binding.btnWrite.visibility =
-                    if (it.properties and BluetoothGattCharacteristic.PROPERTY_WRITE > 0) {
+                    if (it.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) {
                         View.VISIBLE
                     } else {
                         View.GONE
                     }
 
                 binding.btnWriteNoResponse.visibility =
-                    if (it.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE > 0) {
+                    if (it.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0) {
                         View.VISIBLE
                     } else {
                         View.GONE
                     }
                 binding.btnWriteSigned.visibility =
-                    if (it.properties and BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE > 0) {
+                    if (it.properties and BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE != 0) {
                         View.VISIBLE
                     } else {
                         View.GONE
                     }
             }
             binding.notifyView.visibility =
-                if (it.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
+                if (it.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0) {
                     View.VISIBLE
                 } else {
                     View.GONE
                 }
 
             binding.indicateView.visibility =
-                if (it.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE > 0) {
+                if (it.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0) {
                     View.VISIBLE
                 } else {
                     View.GONE

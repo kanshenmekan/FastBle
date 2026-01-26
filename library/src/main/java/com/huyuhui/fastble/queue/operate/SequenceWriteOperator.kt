@@ -22,6 +22,8 @@ class SequenceWriteOperator private constructor(priority: Int) :
         private set
     var characteristicUUID: String? = null
         private set
+    var gattCharacteristic: BluetoothGattCharacteristic? = null
+        private set
     var data: ByteArray? = null
         private set
     var bleWriteCallback: BleWriteCallback? = null
@@ -113,46 +115,25 @@ class SequenceWriteOperator private constructor(priority: Int) :
                 }
             }
         }
-        BleManager.write(
-            bleDevice,
-            serviceUUID!!,
-            characteristicUUID!!,
-            callback = wrappedBleWriteCallback,
-            writeType = writeType,
-            data = data,
-            split = split,
-            splitNum = splitNum,
-            continueWhenLastFail = continueWhenLastFail,
-            intervalBetweenTwoPackage = intervalBetweenTwoPackage,
-            timeout = operateTimeout
-        )
-        return deferred.await()
-    }
-
-    override suspend fun execute(bleDevice: BleDevice) {
         if (serviceUUID.isNullOrEmpty() || characteristicUUID.isNullOrEmpty()) {
-            bleWriteCallback?.onWriteFailure(
-                bleDevice, characteristic = null, exception = BleException.OtherException(
-                    BleException.ERROR_CODE_GATT, "gatt null"
-                ), justWrite = null, data = data
+            BleManager.write(
+                bleDevice,
+                characteristic = gattCharacteristic,
+                callback = wrappedBleWriteCallback,
+                writeType = writeType,
+                data = data,
+                split = split,
+                splitNum = splitNum,
+                continueWhenLastFail = continueWhenLastFail,
+                intervalBetweenTwoPackage = intervalBetweenTwoPackage,
+                timeout = operateTimeout
             )
-            delay(delay)
-            return
-        }
-        if (continuous) {
-            if (timeout > 0) {
-                withTimeoutOrNull(timeout) {
-                    writeDataForResult(bleDevice, data)
-                }
-            } else {
-                writeDataForResult(bleDevice, data)
-            }
         } else {
             BleManager.write(
                 bleDevice,
                 serviceUUID!!,
                 characteristicUUID!!,
-                callback = bleWriteCallback,
+                callback = wrappedBleWriteCallback,
                 writeType = writeType,
                 data = data,
                 split = split,
@@ -162,6 +143,50 @@ class SequenceWriteOperator private constructor(priority: Int) :
                 timeout = operateTimeout
             )
         }
+
+        return deferred.await()
+    }
+
+    override suspend fun execute(bleDevice: BleDevice) {
+        if (continuous) {
+            if (timeout > 0) {
+                withTimeoutOrNull(timeout) {
+                    writeDataForResult(bleDevice, data)
+                }
+            } else {
+                writeDataForResult(bleDevice, data)
+            }
+        } else {
+            if (serviceUUID.isNullOrEmpty() || characteristicUUID.isNullOrEmpty()) {
+                BleManager.write(
+                    bleDevice,
+                    characteristic = gattCharacteristic,
+                    callback = bleWriteCallback,
+                    writeType = writeType,
+                    data = data,
+                    split = split,
+                    splitNum = splitNum,
+                    continueWhenLastFail = continueWhenLastFail,
+                    intervalBetweenTwoPackage = intervalBetweenTwoPackage,
+                    timeout = operateTimeout
+                )
+            } else {
+                BleManager.write(
+                    bleDevice,
+                    serviceUUID!!,
+                    characteristicUUID!!,
+                    callback = bleWriteCallback,
+                    writeType = writeType,
+                    data = data,
+                    split = split,
+                    splitNum = splitNum,
+                    continueWhenLastFail = continueWhenLastFail,
+                    intervalBetweenTwoPackage = intervalBetweenTwoPackage,
+                    timeout = operateTimeout
+                )
+            }
+
+        }
         delay(delay)
     }
 
@@ -170,6 +195,8 @@ class SequenceWriteOperator private constructor(priority: Int) :
         private var delay: Long = DELAY_WRITE_DEFAULT
         private var serviceUUID: String? = null
         private var characteristicUUID: String? = null
+
+        private var gattCharacteristic: BluetoothGattCharacteristic? = null
         private var data: ByteArray? = null
         private var bleWriteCallback: BleWriteCallback? = null
         private var split: Boolean = true
@@ -217,6 +244,10 @@ class SequenceWriteOperator private constructor(priority: Int) :
         fun characteristicUUID(characteristicUUID: String): Builder {
             this.characteristicUUID = characteristicUUID
             return this
+        }
+
+        fun gattCharacteristic(gattCharacteristic: BluetoothGattCharacteristic) = apply {
+            this.gattCharacteristic = gattCharacteristic
         }
 
         fun data(data: ByteArray?): Builder {

@@ -25,26 +25,36 @@ internal class BleIndicateOperator(
         bleIndicateCallback: BleIndicateCallback?,
         useCharacteristicDescriptor: Boolean,
     ) {
-        if (mCharacteristic != null
-            && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
-        ) {
-            this.bleIndicateCallback = bleIndicateCallback
-            bleBluetooth.addIndicateOperator(key, this)
-            timeOutTask.start(this)
-            setCharacteristicIndication(
-                mBluetoothGatt, mCharacteristic,
-                true, bleIndicateCallback, useCharacteristicDescriptor
-            )
-        } else {
+        val characteristic = gattCharacteristic
+        if (characteristic == null) {
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
-                mCharacteristic,
+                characteristic,
+                BleException.OtherException(
+                    BleException.CHARACTERISTIC_ERROR,
+                    "characteristic is null!"
+                )
+            )
+            return
+        }
+        if (characteristic.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE == 0) {
+            bleIndicateCallback?.onIndicateFailure(
+                bleDevice,
+                characteristic,
                 BleException.OtherException(
                     BleException.CHARACTERISTIC_NOT_SUPPORT,
                     "this characteristic not support indicate!"
                 )
             )
+            return
         }
+        this.bleIndicateCallback = bleIndicateCallback
+        bleBluetooth.addIndicateOperator(key, this)
+        timeOutTask.start(this)
+        setCharacteristicIndication(
+            mBluetoothGatt, characteristic,
+            true, bleIndicateCallback, useCharacteristicDescriptor
+        )
     }
 
 
@@ -52,11 +62,12 @@ internal class BleIndicateOperator(
      * stop indicate
      */
     fun disableCharacteristicIndicate(useCharacteristicDescriptor: Boolean): Boolean {
-        return if (mCharacteristic != null
-            && mCharacteristic.properties or BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
+        val characteristic = gattCharacteristic
+        return if (characteristic != null
+            && characteristic.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0
         ) {
             setCharacteristicIndication(
-                mBluetoothGatt, mCharacteristic,
+                mBluetoothGatt, characteristic,
                 false, null, useCharacteristicDescriptor
             )
         } else {
@@ -79,7 +90,7 @@ internal class BleIndicateOperator(
             removeTimeOut()
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
-                mCharacteristic,
+                characteristic,
                 BleException.OtherException(
                     BleException.GATT_NULL,
                     "gatt or characteristic equal null"
@@ -92,7 +103,7 @@ internal class BleIndicateOperator(
             removeTimeOut()
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
-                mCharacteristic,
+                characteristic,
                 BleException.OtherException(
                     BleException.CHARACTERISTIC_ERROR,
                     "gatt setCharacteristicNotification fail"
@@ -107,7 +118,7 @@ internal class BleIndicateOperator(
             removeTimeOut()
             bleIndicateCallback?.onIndicateFailure(
                 bleDevice,
-                mCharacteristic,
+                characteristic,
                 BleException.OtherException(BleException.DESCRIPTOR_NULL, "descriptor equals null")
             )
             false
@@ -125,7 +136,7 @@ internal class BleIndicateOperator(
                     removeTimeOut()
                     bleIndicateCallback?.onIndicateFailure(
                         bleDevice,
-                        mCharacteristic,
+                        characteristic,
                         BleException.OtherException(
                             BleException.DESCRIPTOR_ERROR,
                             "gatt writeDescriptor fail"
@@ -139,7 +150,7 @@ internal class BleIndicateOperator(
                     removeTimeOut()
                     bleIndicateCallback?.onIndicateFailure(
                         bleDevice,
-                        mCharacteristic,
+                        characteristic,
                         BleException.OtherException(
                             BleException.DESCRIPTOR_ERROR,
                             "gatt writeDescriptor fail"
@@ -158,7 +169,7 @@ internal class BleIndicateOperator(
     ) {
         bleIndicateCallback?.onIndicateFailure(
             bleDevice,
-            mCharacteristic,
+            gattCharacteristic,
             BleException.TimeoutException()
         )
     }

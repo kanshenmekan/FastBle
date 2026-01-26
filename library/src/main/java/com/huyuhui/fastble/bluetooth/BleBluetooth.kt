@@ -28,6 +28,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @SuppressLint("MissingPermission")
@@ -76,6 +77,11 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
     private lateinit var bleConnectStrategy: BleConnectStrategy
     val deviceKey
         get() = bleDevice.key
+
+    var defaultWriteGattCharacteristic: BluetoothGattCharacteristic? = null
+        private set
+    var defaultReadGattCharacteristic: BluetoothGattCharacteristic? = null
+        private set
 
     @Synchronized
     fun connect(
@@ -184,12 +190,26 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         return BleWriteOperator(this, timeout, uuidService, uuidCharacteristic)
     }
 
+    fun buildWriteOperator(
+        characteristic: BluetoothGattCharacteristic?,
+        timeout: Long
+    ): BleWriteOperator {
+        return BleWriteOperator(this, timeout, characteristic ?: defaultWriteGattCharacteristic)
+    }
+
     fun buildReadOperator(
         uuidService: String,
         uuidCharacteristic: String,
         timeout: Long
     ): BleReadOperator {
         return BleReadOperator(this, timeout, uuidService, uuidCharacteristic)
+    }
+
+    fun buildReadOperator(
+        characteristic: BluetoothGattCharacteristic?,
+        timeout: Long
+    ): BleReadOperator {
+        return BleReadOperator(this, timeout, characteristic ?: defaultReadGattCharacteristic)
     }
 
     fun buildRssiOperator(timeout: Long): BleReadRssiOperator {
@@ -515,6 +535,25 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
             bluetoothGatt = gatt
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 connectAndDiscoverSuccess(status)
+                if (!bleConnectStrategy.defaultWriteServiceUUID.isNullOrEmpty() && !bleConnectStrategy.defaultWriteCharacteristicUUID.isNullOrEmpty()) {
+                    val service = fromUUID(bleConnectStrategy.defaultWriteServiceUUID)?.let {
+                        gatt?.getService(it)
+                    }
+                    defaultWriteGattCharacteristic =
+                        fromUUID(bleConnectStrategy.defaultWriteCharacteristicUUID)?.let {
+                            service?.getCharacteristic(it)
+                        }
+                }
+
+                if (!bleConnectStrategy.defaultReadServiceUUID.isNullOrEmpty() && !bleConnectStrategy.defaultReadCharacteristicUUID.isNullOrEmpty()) {
+                    val service = fromUUID(bleConnectStrategy.defaultReadServiceUUID)?.let {
+                        gatt?.getService(it)
+                    }
+                    defaultReadGattCharacteristic =
+                        fromUUID(bleConnectStrategy.defaultReadCharacteristicUUID)?.let {
+                            service?.getCharacteristic(it)
+                        }
+                }
             } else {
                 discoverFail()
             }
@@ -868,4 +907,13 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         }
     }
 
+    fun fromUUID(uuid: String?): UUID? {
+        if (uuid == null) return null
+        return try {
+            UUID.fromString(uuid)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+
+    }
 }

@@ -52,12 +52,12 @@ internal class SplitWriter(private val writeOperator: BleWriteOperator) {
             dataQueue.asFlow()
                 .onCompletion {
                     dataQueue.clear()
-                    //不是被主动取消的，是协程被取消了,并且不是等待结果期间。如果hasTask，替换writeOperator会抛异常
+                    //不是被主动取消的，是协程被取消了
                     if (it is CancellationException && it.cause == null) {
                         withContext(NonCancellable + Dispatchers.Main) {
                             mCallback?.onWriteFailure(
                                 writeOperator.bleDevice,
-                                writeOperator.mCharacteristic,
+                                writeOperator.gattCharacteristic,
                                 BleException.OtherException(
                                     BleException.COROUTINE_SCOPE_CANCELLED,
                                     "CoroutineScope Cancelled when sending"
