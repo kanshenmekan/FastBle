@@ -74,7 +74,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
         private set
     private var currentConnectRetryCount = 0
 
-    private lateinit var bleConnectStrategy: BleConnectStrategy
+    private var bleConnectStrategy: BleConnectStrategy = BleManager.bleConnectStrategy
     val deviceKey
         get() = bleDevice.key
 
@@ -534,7 +534,6 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
             )
             bluetoothGatt = gatt
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                connectAndDiscoverSuccess(status)
                 if (!bleConnectStrategy.defaultWriteServiceUUID.isNullOrEmpty() && !bleConnectStrategy.defaultWriteCharacteristicUUID.isNullOrEmpty()) {
                     val service = fromUUID(bleConnectStrategy.defaultWriteServiceUUID)?.let {
                         gatt?.getService(it)
@@ -554,6 +553,7 @@ internal class BleBluetooth(val bleDevice: BleDevice) :
                             service?.getCharacteristic(it)
                         }
                 }
+                connectAndDiscoverSuccess(status)
             } else {
                 discoverFail()
             }

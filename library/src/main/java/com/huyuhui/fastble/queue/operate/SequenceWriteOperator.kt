@@ -214,6 +214,7 @@ class SequenceWriteOperator private constructor(priority: Int) :
             this.delay = writeOperator.delay
             this.serviceUUID = writeOperator.serviceUUID
             this.characteristicUUID = writeOperator.characteristicUUID
+            this.gattCharacteristic = writeOperator.gattCharacteristic
             this.data = writeOperator.data
             this.bleWriteCallback = writeOperator.bleWriteCallback
             this.split = writeOperator.split
@@ -236,17 +237,17 @@ class SequenceWriteOperator private constructor(priority: Int) :
             return this
         }
 
-        fun serviceUUID(serviceUUID: String): Builder {
+        fun serviceUUID(serviceUUID: String?): Builder {
             this.serviceUUID = serviceUUID
             return this
         }
 
-        fun characteristicUUID(characteristicUUID: String): Builder {
+        fun characteristicUUID(characteristicUUID: String?): Builder {
             this.characteristicUUID = characteristicUUID
             return this
         }
 
-        fun gattCharacteristic(gattCharacteristic: BluetoothGattCharacteristic) = apply {
+        fun gattCharacteristic(gattCharacteristic: BluetoothGattCharacteristic?) = apply {
             this.gattCharacteristic = gattCharacteristic
         }
 
@@ -303,6 +304,7 @@ class SequenceWriteOperator private constructor(priority: Int) :
         fun applySequenceWriteOperator(writeOperator: SequenceWriteOperator) {
             writeOperator.serviceUUID = this.serviceUUID
             writeOperator.characteristicUUID = this.characteristicUUID
+            writeOperator.gattCharacteristic = this.gattCharacteristic
             writeOperator.data = this.data
             writeOperator.bleWriteCallback = this.bleWriteCallback
             writeOperator.split = this.split

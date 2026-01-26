@@ -185,7 +185,7 @@ class OperateFragment : Fragment() {
     private fun read() {
         characteristic?.let {
             BleManager.read(
-                bleDevice!!, it.service.uuid.toString(), it.uuid.toString(),
+                bleDevice!!, it,
                 object : BleReadCallback() {
                     override fun onReadSuccess(
                         bleDevice: BleDevice,
@@ -259,9 +259,9 @@ class OperateFragment : Fragment() {
     private fun writeByQueue(data: ByteArray, writeType: Int, continuous: Boolean = false) {
         characteristic?.let {
             val sequenceWriteOperator =
-                SequenceWriteOperator.Builder().serviceUUID(it.service.uuid.toString())
+                SequenceWriteOperator.Builder()
                     .priority(PRIORITY_WRITE_DEFAULT)
-                    .characteristicUUID(it.uuid.toString()).data(data).writeType(writeType)
+                    .gattCharacteristic(it).data(data).writeType(writeType)
                     .bleWriteCallback(bleWriteCallback)
                     .continuous(continuous)
                     .delay(if (continuous) 10 else 2000)
@@ -289,9 +289,8 @@ class OperateFragment : Fragment() {
         characteristic?.let {
             BleManager.write(
                 bleDevice!!,
-                it.service.uuid.toString(),
-                it.uuid.toString(),
                 data,
+                it,
                 writeType = writeType,
                 callback = bleWriteCallback
             )
